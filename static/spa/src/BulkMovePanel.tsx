@@ -309,14 +309,23 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     );
   }
 
+  const renderFlexboxEqualWidthGrowPanel = () => {
+    return (
+      <div className="flex-box-equal-width-grow-panel"></div>
+    );
+  }
+
   const renderFilterPanel = () => {
     return (
-      <div className="target-panel">
-        <h3>Step 1</h3>
-        <h4>Select issue filter options</h4>
-        {renderFromProjectSelect()}
-        {selectedFromProject ? renderIssueTypesSelect(selectedFromProject) : null}
-        {renderLabelsSelect()}
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 1</h3>
+          <h4>Select issue filter options</h4>
+          {renderFromProjectSelect()}
+          {selectedFromProject ? renderIssueTypesSelect(selectedFromProject) : null}
+          {renderLabelsSelect()}
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
       </div>
     );
   }
@@ -432,14 +441,17 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       );
     }) : null;
     return (
-      <div className="issue-panel">
+      <div className="padding-panel">
+        <div className="content-panel">
         <h3>Step 2</h3>
-        <h4>Confirm issues to move</h4>
-        {renderIssueLoading()}
-        <FormSection>
-          {renderedSelectAllRow}
-          {renderedIssues}
-        </FormSection>
+          <h4>Confirm issues to move</h4>
+          {renderIssueLoading()}
+          <FormSection>
+            {renderedSelectAllRow}
+            {renderedIssues}
+          </FormSection>
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
       </div>
     );
   }
@@ -460,25 +472,31 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const renderTargetPanel = () => {
     return (
-      <div className="target-panel">
-        <h3>Step 3</h3>
-        <h4>Select target project</h4>
-        {renderToProjectSelect()}
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 3</h3>
+          <h4>Select target project</h4>
+          {renderToProjectSelect()}
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
       </div>
     );
   }
 
   const renderMoveActivityPanel = () => {
     return (
-      <div className="target-panel">
-        <h3>Step 4</h3>
-        <h4>Move issues</h4>
-        <FormSection>
-          {renderStartMoveButton()}
-        </FormSection>
-        {renderIssueMoveLoading()}
-        {renderIssueMoveRequestOutcome()}
-        {renderIssueMoveOutcome()}
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 4</h3>
+          <h4>Move issues</h4>
+          <FormSection>
+            {renderStartMoveButton()}
+          </FormSection>
+          {renderIssueMoveLoading()}
+          {renderIssueMoveRequestOutcome()}
+          {renderIssueMoveOutcome()}
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
       </div>
     );
   }
