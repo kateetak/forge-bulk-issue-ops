@@ -2,7 +2,7 @@ import Resolver from '@forge/resolver';
 import { getIssueTypes } from './getIssueTypes';
 import { getLabelsInfo } from './getLabelsInfo';
 import { getProjectSearchInfo } from './getProjectSearchInfo';
-import { getIssueSearchInfo } from './getIssueSearchInfo';
+import { getIssueSearchInfo, getIssueSearchInfoByJql } from './getIssueSearchInfo';
 import { initiateBulkIssuesMove } from './initiateBulkIssuesMove';
 import { BulkIssueMoveRequestData } from './types/BulkIssueMoveRequestData';
 import { getTaskOutcome } from './getTaskOutcome';
@@ -20,9 +20,14 @@ resolver.define('getIssueSearchInfo', async (args: any) => {
   const { payload, context } = args;
   // console.log(`payload = ${JSON.stringify(payload, null, 2)}`);
   // console.log(`context = ${JSON.stringify(context, null, 2)}`);
-  const issueSearchParameters: IssueSearchParameters = payload.issueSearchParameters;
-  const issueSearchInfo = await getIssueSearchInfo(issueSearchParameters);
-  return issueSearchInfo;
+  if (payload.jql) {
+    const issueSearchInfo = await getIssueSearchInfoByJql(payload.jql);
+    return issueSearchInfo;
+  } else if (payload.issueSearchParameters) {
+    const issueSearchParameters: IssueSearchParameters = payload.issueSearchParameters;
+    const issueSearchInfo = await getIssueSearchInfo(issueSearchParameters);
+    return issueSearchInfo;
+  }
 });
 
 resolver.define('getIssueTypes', async (args: any) => {

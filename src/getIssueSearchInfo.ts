@@ -15,7 +15,10 @@ export const getIssueSearchInfo = async (issueSearchParameters: IssueSearchParam
     const labelsCsv = issueSearchParameters.labels.join(',');
     jql += ` and labels in (${labelsCsv})`;
   }
-  // const jql = `created >= -30d AND project=10000`
+  return await getIssueSearchInfoByJql(jql);
+}
+
+export const getIssueSearchInfoByJql = async (jql: string): Promise<IssueSearchInfo> => {
   const maxResults = 100;
   const fields = 'summary,description';
   const expand = '';

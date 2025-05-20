@@ -4,6 +4,17 @@ body {
   padding: 0px;
 }
 
+div.warning-message {
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+  background-color: #BF2600;
+  color: #fff;
+}
+
 div.bulk-move-main-panel {
   margin-top: 20px;
   display: flex;
@@ -18,7 +29,6 @@ div.bulk-move-main-panel > div {
   padding: 10px;
   flex-grow: 1;
   background-color: #fff;
-  border: 1px solid #ccc;
 }
 
 div.flex-box-equal-width-grow-panel {
@@ -37,8 +47,28 @@ div.filter-panel {
 div.padding-panel {
   margin: 0px 5px;
   border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
+div.padding-panel:hover {
+  border: 1px solid #4C9AFF;
+}
+
+div.filter-model-panel {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+div.filter-model-panel > div {
+  margin-left: 10px;
+}
+  
+div.filter-model-panel > div:first-child {
+  margin-left: 0px;
+}
+  
 div.content-panel {
   min-width: 300px;
 }
@@ -67,6 +97,10 @@ div.issue-selection-panel {
 .error-message {
   color: #BF2600;
   font-weight: bold;
+}
+
+.disabled-text {
+  color: #ccc;
 }
 
 .debug-panel {

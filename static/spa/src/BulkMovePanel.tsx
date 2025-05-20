@@ -24,8 +24,9 @@ import { IssueMoveRequestOutcome } from './types/IssueMoveRequestOutcome';
 import jiraUtil from './controller/jiraUtil';
 import { allowSupportForOnlyOneIssueType } from './model/frontendConfig';
 import { IssueMoveOutcomeResult } from './types/IssueMoveOutcomeResult';
+import JQLInputPanel from './widget/JQLInputPanel';
 
-const showDebug = false;
+const showDebug = true;
 
 export type BulkMovePanelProps = {
   invoke: any;
@@ -36,9 +37,13 @@ type DebugInfo = {
   issueTypes: IssueType[];
 }
 
+type FilterMode = 'basic' | 'advanced';
+
 const BulkMovePanel = (props: BulkMovePanelProps) => {
 
-  const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
+  const [mainWarningMessage, setMainWarningMessage] = useState<string>('');
+  const [filterMode, setFilterMode] = useState<FilterMode>('basic');
+  const [enteredJql, setEnteredJql] = useState<string>('');
   const [allProjectSearchInfo, setAllProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
   const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
   const [eligibleToProjectSearchInfo, setEligibleToProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
@@ -60,7 +65,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
   const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
   const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
-
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
 
   const retrieveAndSetDebugInfo = async (): Promise<void> => {
     const debugInfo: DebugInfo = {
@@ -106,6 +111,29 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     }
   }
 
+  const computeFromProjectBasedOnJQlResults = async (issueSearchInfo: IssueSearchInfo): Promise<void> => {
+    const allProjectSearchInfo: ProjectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
+    const projectsFromIssueSearchResults: Project[] = []
+    for (const issue of issueSearchInfo.issues) {
+      const project: Project = allProjectSearchInfo.values.find((project: Project) => {
+        return issue.key.startsWith(`${project.key}-`);
+      })
+      projectsFromIssueSearchResults.push(project);
+    }
+    const uniqueProjects = Array.from(new Set(projectsFromIssueSearchResults));
+    if (uniqueProjects.length === 0) {
+      setSelectedFromProject(undefined);
+      setSelectedFromProjectTime(Date.now());
+    } else {
+      const firstProject = uniqueProjects[0];
+      if (uniqueProjects.length > 1) {
+        setMainWarningMessage(`Multiple projects found - only issues in the first project, "${firstProject.key}: ${firstProject.name}", will be moved.`);
+      }
+      setSelectedFromProject(firstProject);
+      setSelectedFromProjectTime(Date.now());
+    }
+  }
+
   const updateAllProjectInfo = async (): Promise<void> => {
     const allProjectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
     setAllProjectSearchInfo(allProjectSearchInfo);
@@ -133,17 +161,9 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setIssueSearchInfoTime(Date.now());
   }
 
-  const onSearchIssues = async (project: Project, issueTypes: IssueType[], labels: string[]): Promise<void> => {
-    const previousSelectedToProject = selectedToProject;
+  const onBasicModeSearchIssues = async (project: Project, issueTypes: IssueType[], labels: string[]): Promise<void> => {
     const noIssues = nilIssueSearchInfo();
     onIssuesLoaded(true, noIssues);
-
-
-    // setIssueSearchInfo(noIssues);
-    // setSelectedIssueKeys(noIssues.issues.map(issue => issue.key));
-    // setIssueSearchInfoTime(Date.now());
-    // setSelectedToProject(undefined);
-
     setIssueLoadingState('busy');
     setTimeout(async () => {
       const issueSearchParameters: IssueSearchParameters = {
@@ -152,22 +172,43 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         labels: labels
       }
       const params = {
-        // projectId: project.id,
-        // labels: selectedLabels,
         issueSearchParameters: issueSearchParameters
       }
       const issueSearchInfo = await props.invoke('getIssueSearchInfo', params);
       onIssuesLoaded(true, issueSearchInfo);
       setIssueLoadingState('idle');
+    }, 0);
+  }
 
-    }, 1000);
+  const onAdvancedModeSearchIssues = async (jql: string): Promise<void> => {
+    const noIssues = nilIssueSearchInfo();
+    onIssuesLoaded(true, noIssues);
+    setIssueLoadingState('busy');
+    setTimeout(async () => {
+      const params = {
+        jql: jql
+      }
+      const issueSearchInfo = await props.invoke('getIssueSearchInfo', params);
+      onIssuesLoaded(true, issueSearchInfo);
+      setIssueLoadingState('idle');
+      computeFromProjectBasedOnJQlResults(issueSearchInfo);
+    }, 0);
+  }
+
+  const onJQLChange = async (jql: string): Promise<void> => {
+    setEnteredJql(jql);
+  }
+
+  const onExecuteJQL = async (jql: string): Promise<void> => {
+    setEnteredJql(jql);
+    await onAdvancedModeSearchIssues(jql);
   }
 
   const onFromProjectSelect = async (selectedProject: undefined | Project): Promise<void> => {
     // console.log(`selectedFromProject: `, selectedProject);
     setSelectedFromProject(selectedProject);
     setSelectedFromProjectTime(Date.now());
-    await onSearchIssues(selectedProject, selectedIssueTypes, selectedLabels);
+    await onBasicModeSearchIssues(selectedProject, selectedIssueTypes, selectedLabels);
 
     const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
     const selectableIssueTypes = jiraUtil.filterProjectIssueTypes(selectedProject, allIssueTypes);
@@ -185,7 +226,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     console.log(`selectedIssueTypes: `, selectedIssueTypes);
     setSelectedIssueTypes(selectedIssueTypes);
     setSelectedIssueTypesTime(Date.now());
-    await onSearchIssues(selectedFromProject, selectedIssueTypes, selectedLabels);
+    await onBasicModeSearchIssues(selectedFromProject, selectedIssueTypes, selectedLabels);
     await updateToProjectInfo(selectedFromProject, selectedIssueTypes);
   }
 
@@ -193,7 +234,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     console.log(`selectedLabels: `, selectedLabels);
     setSelectedLabels(selectedLabels);
     setSelectedLabelsTime(Date.now());
-    await onSearchIssues(selectedFromProject, selectedIssueTypes, selectedLabels);
+    await onBasicModeSearchIssues(selectedFromProject, selectedIssueTypes, selectedLabels);
   }
 
   const onToggleAllIssuesSelection = (event: any) => {
@@ -246,6 +287,18 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       setIssueMoveOutcome(issueMoveOutcome);
       setCurrentIssueMoveTaskId(undefined);  
     }
+  }
+
+  const renderJQLInputPanel = () => {
+    return (
+      <FormSection>
+       <JQLInputPanel
+          label="JQL"
+          placeholder="JQL query"
+          onJQLChange={onJQLChange}
+          onExecute={onExecuteJQL} />
+      </FormSection>
+    )
   }
 
   const renderFromProjectSelect = () => {
@@ -315,15 +368,60 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     );
   }
 
+  const renderFilterModeSelect = () => {
+    return (
+      <FormSection>
+        <div className="filter-model-panel">
+          <div>
+            <Label htmlFor="filter-mode-select">Advanced</Label>
+            <Toggle
+              id={`toggle-filter-mode-advanced`}
+              isChecked={filterMode === 'advanced'}
+              onChange={(event: any) => {
+                setFilterMode(filterMode === 'basic' ? 'advanced' : 'basic');
+              }}
+            />
+          </div>
+        </div>
+      </FormSection>
+    );
+  }
+
+  const renderBasicFileInputs = () => {
+    if (filterMode === 'advanced') {
+      return null;
+    } else {
+      return (
+        <>
+          {renderFromProjectSelect()}
+          {selectedFromProject ? renderIssueTypesSelect(selectedFromProject) : null}
+          {renderLabelsSelect()}
+        </>
+      );  
+    }
+  }
+
+  const renderAdvancedFileInputs = () => {
+    if (filterMode === 'advanced') {
+      return (
+        <>
+          {renderJQLInputPanel()}
+        </>
+      );
+    } else {
+      return null;      
+    }
+  }
+
   const renderFilterPanel = () => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
           <h3>Step 1</h3>
           <h4>Select issue filter options</h4>
-          {renderFromProjectSelect()}
-          {selectedFromProject ? renderIssueTypesSelect(selectedFromProject) : null}
-          {renderLabelsSelect()}
+          {renderFilterModeSelect()}
+          {renderBasicFileInputs()}
+          {renderAdvancedFileInputs()}
           {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
@@ -418,6 +516,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       </div>
     );
     const renderedIssues = hasIssues ? issueSearchInfo.issues.map((issue: Issue) => {
+      const issueIsInSelectedFromProject = selectedFromProject && issue.key.startsWith(`${selectedFromProject.key}-`);
       return (
         <div 
           key={`issue-select-${issue.key}`}
@@ -428,13 +527,14 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
               key={`issue-select-${issue.key}`}
               id={`toggle-${issue.key}`}
               isChecked={!!selectedIssueKeys.find(selectedIssueKey => selectedIssueKey === issue.key)}
+              isDisabled={!issueIsInSelectedFromProject}
               onChange={(event: any) => {
                 // console.log(`Issue toggle event: ${JSON.stringify(event, null, 2)}`);
                 onToggleIssueSelection(issue);
               }}
             />
           </div>
-          <div key={`issue-${issue.key}`} className="issue-summary-panel">
+          <div key={`issue-${issue.key}`} className={`issue-summary-panel ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
             {issue.key}: {issue.fields.summary}
           </div>
         </div>
@@ -502,10 +602,37 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const renderDebugPanel = () => {
+    const projectsToIssueTypes: {} = {};
+    if (debugInfo.projects && debugInfo.projects.length) {
+      for (const project of debugInfo.projects) {
+        const issueTypes = jiraUtil.filterProjectIssueTypes(project, debugInfo.issueTypes);
+        for (const issueType of issueTypes) {
+          const issueTypeRepresentation = `${issueType.name} (${issueType.id})`;
+          if (projectsToIssueTypes[project.name]) {
+            projectsToIssueTypes[project.name].push(issueTypeRepresentation);
+          } else {
+            projectsToIssueTypes[project.name] = [issueTypeRepresentation];
+          }
+        }
+      }
+    }
+    const renderedProjectsTossueTypes = Object.keys(projectsToIssueTypes).map((projectName: string) => {
+      return (
+        <li key={projectName}>
+          <strong>{projectName}</strong>: {projectsToIssueTypes[projectName].join(', ')}
+        </li>
+      );
+    });
+    
     if (showDebug) {
       return (
         <div className="debug-panel">
           <h3>Debug</h3>
+
+          <h4>Projects to issue types</h4>
+          <ul>
+            {renderedProjectsTossueTypes}
+          </ul>
 
           <h4>Projects</h4>
           <pre>
@@ -524,9 +651,21 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     }
   }
 
+  const rendermainWarningMessage = () => {
+    if (mainWarningMessage) {
+      return (
+        <div className="warning-message">
+          {mainWarningMessage}
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
   return (
     <div>
-      <h2>Custom Bulk Move</h2>
+      {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
         {renderFilterPanel()}
         {renderIssuesPanel()}

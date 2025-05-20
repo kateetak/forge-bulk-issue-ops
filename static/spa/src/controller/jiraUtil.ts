@@ -1,4 +1,3 @@
-import issueTypesCache from "src/model/issueTypesCache";
 import { IssueType } from "src/types/IssueType";
 import { Project } from "src/types/Project";
 import { ProjectSearchInfo } from "src/types/ProjectSearchInfo";
@@ -54,25 +53,9 @@ class JiraUtil {
     return filteredProjects;
   }
 
-  isIssueTypeInProjectByIds = (issueTypeId: string, projectId: string, issueTypes: IssueType[], projects: Project[]): boolean => {
-    const project = projects.find(project => project.id === projectId);
-    const issueType = issueTypes.find(issueType => issueType.id === issueTypeId);
-    if (project) {
-      if (issueType) {
-        return this.isIssueTypeInProject(issueType, project, issueTypes, projects);
-      } else {
-        console.warn(`isIssueTypeInProject: issueType not found for issueTypeId ${issueTypeId}`);
-        return false;
-      }
-    } else {
-      console.warn(`isIssueTypeInProject: project not found for projectId ${projectId}`);
-      return false;
-    }
-  }
-
   isIssueTypeInProject = (subjectIssueType: IssueType, subjectProject: Project, issueTypes: IssueType[], projects: Project[]): boolean => {
     const projectIssueTypes = this.getProjectIssueTypes(projects.find(project => project.id === subjectProject.id)!, issueTypes);
-    const foundIssueType = projectIssueTypes.find(issueType => issueType.id === subjectIssueType.id);
+    const foundIssueType = projectIssueTypes.find(issueType => issueType.id === subjectIssueType.id || issueType.name === subjectIssueType.name);
     return !!foundIssueType;
   }
 

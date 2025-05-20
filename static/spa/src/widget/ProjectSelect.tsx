@@ -5,7 +5,6 @@ import { Option } from '../types/Option'
 import { Project } from 'src/types/Project';
 import { ProjectSearchInfo } from 'src/types/ProjectSearchInfo';
 import { nilProjectSearchInfo } from 'src/model/nilProjectSearchInfo';
-import projectSearchInfoCache from 'src/model/projectSearchInfoCache';
 
 export type ProjectSelectProps = {
   label: string;
