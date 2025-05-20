@@ -1,0 +1,64 @@
+
+body {
+  background-color: initial;
+  padding: 0px;
+}
+
+div.bulk-move-main-panel {
+  display: flex;
+  flex-direction: row;
+  /* justify-content: flex-start; */
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.bulk-move-main-panel > div {
+  margin-left: 10px;
+  flex-grow: 1;
+}
+
+.bulk-move-main-panel > div:first-child {
+  margin-left: 0px;
+}
+
+div.filter-panel {
+  min-width: 300px;
+}
+
+div.issue-panel {
+  min-width: 300px;
+}
+
+div.target-panel {
+  min-width: 300px;
+}
+
+div.issue-selection-panel {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.issue-selection-panel > div {
+  margin-left: 10px;
+}
+
+.issue-selection-panel > div:first-child {
+  margin-left: 0px;
+}
+
+.issue-summary-panel {
+  max-width: calc(300px - 50px);
+  overflow-x: hidden;
+  white-space: nowrap;
+}
+
+.error-message {
+  color: #BF2600;
+  font-weight: bold;
+}
+
+.debug-panel {
+  margin-top: 30px
+}
