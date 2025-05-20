@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import BulkMovePanel from './BulkMovePanel';
 import '@atlaskit/css-reset';
 import './BulkMove.css';
-import { mockBackend } from './config';
+import { mockBackend } from './model/frontendConfig';
 
 setTimeout(async () => {
   const invoke = mockBackend ? 

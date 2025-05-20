@@ -3,7 +3,6 @@ import { Label } from '@atlaskit/form';
 import { CheckboxSelect } from '@atlaskit/select';
 import { Option } from '../types/Option'
 import { IssueType } from '../types/IssueType';
-import issueTypesCache from '../model/issueTypesCache';
 import projectSearchInfoCache from '../model/projectSearchInfoCache';
 import { Project } from '../types/Project';
 
@@ -18,18 +17,8 @@ export type IssueTypesSelectProps = {
 
 const IssueTypesSelect = (props: IssueTypesSelectProps) => {
 
-  const [projectId, setProjectId] = useState<string>(props.projectId);
-  // const [issueTypes, setIssueTypes] = useState<IssueType[]>(props.selectableIssueTypes);
   const [issueTypeInfoRetrievalTime, setIssueTypeInfoRetrievalTime] = useState<number>(0);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
-
-  // const refreshIssueTypeInfo = async () => {
-  //   console.log(`IssueTypesSelect: Refreshing issue types for projectId ${projectId}...`);
-  //   // const issueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
-  //   // setIssueTypes(issueTypes);
-  //   setIssueTypes(props.selectableIssueTypes);
-  //   setIssueTypeInfoRetrievalTime(Date.now());
-  // }
 
   const retrieveProjects = async () => {
     const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
@@ -37,14 +26,8 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
   }
 
   useEffect(() => {
-    // setIssueTypes(props.selectableIssueTypes);
-    // jiraUtil.filterProjectIssueTypes(props.invoke, projectSearchInfoCache, issueTypes)
     retrieveProjects();
   }, []);
-
-  // useEffect(() => {
-  //   refreshIssueTypeInfo();
-  // }, [projectId]);
 
   const onChange = async (selectedOptions: Option[]): Promise<void> => {
     // console.log(`IssueTypesSelect.onChange: `, selectedOptions);

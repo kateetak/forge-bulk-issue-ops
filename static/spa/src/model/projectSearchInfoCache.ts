@@ -4,6 +4,7 @@ class ProjectSearchInfoCache {
 
   cachedProjectSearchInfo: undefined | ProjectSearchInfo = undefined;
 
+  // TODO: Implement memoization
   getProjectSearchInfo = async (invoke: any): Promise<ProjectSearchInfo> => {
     if (!this.cachedProjectSearchInfo) {
       this.cachedProjectSearchInfo = await invoke('getProjectSearchInfo');

@@ -1,10 +1,23 @@
 import issueTypesCache from "src/model/issueTypesCache";
 import { IssueType } from "src/types/IssueType";
 import { Project } from "src/types/Project";
+import { ProjectSearchInfo } from "src/types/ProjectSearchInfo";
 
 class JiraUtil {
 
-  filterProjectIssueTypes = async (project: Project, allIssueTypes: IssueType[]): Promise<IssueType[]> => {
+  removeProjectFromSearchInfo = (projectToRemove: Project, projectSearchInfo: ProjectSearchInfo): ProjectSearchInfo => {
+    const filteredProjects = projectSearchInfo.values.filter(project => project.id !== projectToRemove.id);
+    const filteredProjectSearchInfo: ProjectSearchInfo = {
+      maxResults: 0,
+      startAt: 0,
+      total: filteredProjects.length,
+      isLast: true,
+      values: filteredProjects
+    }
+    return filteredProjectSearchInfo;
+  }
+
+  filterProjectIssueTypes = (project: Project, allIssueTypes: IssueType[]): IssueType[] => {
     console.log(`filterProjectIssueTypes:`);
     console.log(` * project.id: ${project.id}`);
     console.log(` * project.name: ${project.name}`);
@@ -26,28 +39,64 @@ class JiraUtil {
     console.log(` * returning: ${JSON.stringify(filteredIssueTypes, null, 2)}`);
     return filteredIssueTypes;
   }
-  
-  determineProjectsWithIssueTypes = async (invoke: any, projects: Project[], issueTypes: IssueType[]): Promise<Project[]> => {
+
+  determineProjectsWithIssueTypes = async (subjectIssueType: IssueType, projects: Project[], issueTypes: IssueType[]): Promise<Project[]> => {
+    console.log(`determineProjectsWithIssueTypes:`);
+    console.log(` * subjectIssueType: ${JSON.stringify(subjectIssueType, null, 2)}`);
+    console.log(` * projects: ${JSON.stringify(projects, null, 2)}`);
+    console.log(` * issueTypes: ${JSON.stringify(issueTypes, null, 2)}`);
     const filteredProjects: Project[] = [];
     for (const project of projects) {
-      const isTeamManagedProject = project.simplified;
-      if (isTeamManagedProject) {
-        const issueTypesForProject: IssueType[] = await issueTypesCache.getissueTypes(invoke);
-        if (issueTypesForProject.length > 0) {
-          filteredProjects.push(project);
-        }
+      if (this.isIssueTypeInProject(subjectIssueType, project, issueTypes, projects)) {
+        filteredProjects.push(project);
       }
-    }  
-
-    for (const issueType of issueTypes) {
-      for (const project of projects) {
-      
-      }  
     }
     return filteredProjects;
-    // const issueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke, projectId);
   }
 
+  isIssueTypeInProjectByIds = (issueTypeId: string, projectId: string, issueTypes: IssueType[], projects: Project[]): boolean => {
+    const project = projects.find(project => project.id === projectId);
+    const issueType = issueTypes.find(issueType => issueType.id === issueTypeId);
+    if (project) {
+      if (issueType) {
+        return this.isIssueTypeInProject(issueType, project, issueTypes, projects);
+      } else {
+        console.warn(`isIssueTypeInProject: issueType not found for issueTypeId ${issueTypeId}`);
+        return false;
+      }
+    } else {
+      console.warn(`isIssueTypeInProject: project not found for projectId ${projectId}`);
+      return false;
+    }
+  }
+
+  isIssueTypeInProject = (subjectIssueType: IssueType, subjectProject: Project, issueTypes: IssueType[], projects: Project[]): boolean => {
+    const projectIssueTypes = this.getProjectIssueTypes(projects.find(project => project.id === subjectProject.id)!, issueTypes);
+    const foundIssueType = projectIssueTypes.find(issueType => issueType.id === subjectIssueType.id);
+    return !!foundIssueType;
+  }
+
+  getProjectIssueTypes = (project: Project, issueTypes: IssueType[]): IssueType[] => {
+    const isTeamManagedProject = project.simplified;
+    if (isTeamManagedProject) {
+      const projectIssueTypes: IssueType[] = [];
+      for (const issueType of issueTypes) {
+        if (issueType.scope && issueType.scope.type === 'PROJECT' && issueType.scope.project.id === project.id) {
+          projectIssueTypes.push(issueType);
+        }
+      }
+      return projectIssueTypes;
+    } else {
+      const filteredIssueTypes: IssueType[] = [];
+      for (const issueType of issueTypes) {
+        if (!issueType.scope) {
+          filteredIssueTypes.push(issueType);
+        }
+      }
+      return filteredIssueTypes;
+    }
+  }
+  
 }
 
 export default new JiraUtil();

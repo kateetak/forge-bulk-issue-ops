@@ -408,6 +408,21 @@
     bind-event-listener "^3.0.0"
     tiny-invariant "^1.2.0"
 
+"@atlaskit/lozenge@^12.2.3":
+  version "12.2.3"
+  resolved "https://registry.yarnpkg.com/@atlaskit/lozenge/-/lozenge-12.2.3.tgz#e4c8c110b6101e9f9fa7b2c07451989d41f49dfe"
+  integrity sha512-t9NNgfZ411qEntlfj5/PvN6KtDfnuXC1Ojl72LFb0RF6moZmxmSYQuu8H9XiyoU2SVi4xArCAn9wtmY1m8EJrQ==
+  dependencies:
+    "@atlaskit/codemod-utils" "^4.2.0"
+    "@atlaskit/css" "^0.10.0"
+    "@atlaskit/platform-feature-flags" "^1.1.0"
+    "@atlaskit/primitives" "^14.4.0"
+    "@atlaskit/theme" "^18.0.0"
+    "@atlaskit/tokens" "^4.8.0"
+    "@babel/runtime" "^7.0.0"
+    "@compiled/react" "^0.18.3"
+    "@emotion/react" "^11.7.1"
+
 "@atlaskit/menu@^5.0.0":
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/@atlaskit/menu/-/menu-5.0.1.tgz#e8a41fbdf2af62212d66784a5495f4f9956fa4c9"
@@ -554,7 +569,7 @@
     bind-event-listener "^3.0.0"
     tiny-invariant "^1.2.0"
 
-"@atlaskit/primitives@^14.2.0", "@atlaskit/primitives@^14.7.0":
+"@atlaskit/primitives@^14.2.0", "@atlaskit/primitives@^14.4.0", "@atlaskit/primitives@^14.7.0":
   version "14.7.3"
   resolved "https://registry.yarnpkg.com/@atlaskit/primitives/-/primitives-14.7.3.tgz#73457a593b7797030dd0f68c415cc83a277a75dd"
   integrity sha512-be5aJuF5u8BY9f83oJhdy50b+m9TtaVEJ8FgV2IS4qKetuv/NgZT13RMbw9Y3JNLtzSxKXXxN5N3rV0ORbxmqg==
@@ -11294,11 +11309,6 @@ yargs@^16.2.0:
     string-width "^4.2.0"
     y18n "^5.0.5"
     yargs-parser "^20.2.2"
-
-yarn@^1.22.22:
-  version "1.22.22"
-  resolved "https://registry.yarnpkg.com/yarn/-/yarn-1.22.22.tgz#ac34549e6aa8e7ead463a7407e1c7390f61a6610"
-  integrity sha512-prL3kGtyG7o9Z9Sv8IPfBNrWTDmXB4Qbes8A9rEzt6wkJV8mUvoirjU0Mp3GGAU06Y0XQyA3/2/RQFVuK7MTfg==
 
 yocto-queue@^0.1.0:
   version "0.1.0"

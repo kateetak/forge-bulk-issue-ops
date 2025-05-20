@@ -10,6 +10,7 @@
     "@atlaskit/dropdown-menu": "^14.0.2",
     "@atlaskit/form": "^8.11.12",
     "@atlaskit/icon": "^25.5.0",
+    "@atlaskit/lozenge": "^12.2.3",
     "@atlaskit/progress-bar": "4.0.4",
     "@atlaskit/section-message": "^6.4.11",
     "@atlaskit/select": "^20.4.1",
@@ -28,8 +29,7 @@
     "prettier": "^3.5.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "styled-components": "^5.3.11",
-    "yarn": "^1.22.22"
+    "styled-components": "^5.3.11"
   },
   "devDependencies": {
     "react-scripts": "^5.0.1"

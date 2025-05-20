@@ -22,14 +22,14 @@ import taskModel from './controller/issueMoveController';
 import { IssueSearchParameters } from './types/IssueSearchParameters';
 import { IssueMoveRequestOutcome } from './types/IssueMoveRequestOutcome';
 import jiraUtil from './controller/jiraUtil';
+import { allowSupportForOnlyOneIssueType } from './model/frontendConfig';
+import { IssueMoveOutcomeResult } from './types/IssueMoveOutcomeResult';
 
 const showDebug = false;
 
 export type BulkMovePanelProps = {
   invoke: any;
 }
-
-const issueMovePollPeriodMillis = 2000;
 
 type DebugInfo = {
   projects: Project[];
@@ -39,7 +39,10 @@ type DebugInfo = {
 const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
-  const [cachedProjectSearchInfo, setCachedProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
+  const [allProjectSearchInfo, setAllProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
+  const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
+  const [eligibleToProjectSearchInfo, setEligibleToProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
+  const [eligibleToProjectSearchInfoTime, setEligibleToProjectSearchInfoTime] = useState<number>(0);
   const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
   const [selectedFromProject, setSelectedFromProject] = useState<undefined | Project>(undefined);
   const [selectedFromProjectTime, setSelectedFromProjectTime] = useState<number>(0);
@@ -68,26 +71,51 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   useEffect(() => {
+    updateAllProjectInfo();
     if (showDebug) {
       retrieveAndSetDebugInfo();
     }
   }, []);
 
-  const toProjectInfoRetriever = async (): Promise<ProjectSearchInfo> => {
-    const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
-    const toProjectSearchInfo = Object.assign({}, projectSearchInfo);
-    const toProjects: Project[] = [];
-    for (const project of toProjectSearchInfo.values) {
-      if (selectedFromProject) {
-        if (selectedFromProject.id !== project.id) {
-          toProjects.push(project);
-        }  
-      } else {
-        toProjects.push(project);
+  const computeToProjectInfo = async (selectedFromProject: Project, selectedIssueTypes: IssueType[]): Promise<ProjectSearchInfo> => {
+    console.log(`BulkMovePanel: computeToProjectInfo:`);
+    if (selectedIssueTypes.length === 0) {
+      console.warn(`BulkMovePanel: computeToProjectInfo: return nilProjectSearchInfo() since no issue type is selected.`);
+      return nilProjectSearchInfo();
+    } else {
+      if (selectedIssueTypes.length > 1) {
+        if (!allowSupportForOnlyOneIssueType) {
+          console.log(`BulkMovePanel: computeToProjectInfo: more than one issue type selected. Only the first one will be used.`);
+        } else {
+          throw new Error(`BulkMovePanel: computeToProjectInfo: more than one issue type selected. Only the first one will be used.`);
+        }
       }
+      console.log(`BulkMovePanel: computeToProjectInfo: selectedIssueTypes: ${JSON.stringify(selectedIssueTypes, null, 2)}`);
+      const subjectIssueType: IssueType = selectedIssueTypes.length ? selectedIssueTypes[0] : undefined;
+      const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
+      const projectSearchInfoMinusSelectedFromProject: ProjectSearchInfo = jiraUtil.removeProjectFromSearchInfo(selectedFromProject, projectSearchInfo); 
+      const filteredProjects = await jiraUtil.determineProjectsWithIssueTypes(subjectIssueType, projectSearchInfoMinusSelectedFromProject.values, [subjectIssueType]);
+      const filteredProjectSearchInfo: ProjectSearchInfo = {
+        maxResults: filteredProjects.length, // e.g. 4,
+        startAt: 0,
+        total: filteredProjects.length,
+        isLast: projectSearchInfo.isLast,
+        values: filteredProjects,
+      }
+      return filteredProjectSearchInfo;
     }
-    toProjectSearchInfo.values = toProjects;
-    return toProjectSearchInfo;
+  }
+
+  const updateAllProjectInfo = async (): Promise<void> => {
+    const allProjectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
+    setAllProjectSearchInfo(allProjectSearchInfo);
+    setAllProjectSearchInfoTime(Date.now());
+  }
+
+  const updateToProjectInfo = async (selectedFromProject: Project, selectedIssueTypes: IssueType[]): Promise<void> => {
+    const toProjectSearchInfo = await computeToProjectInfo(selectedFromProject, selectedIssueTypes);
+    setEligibleToProjectSearchInfo(toProjectSearchInfo);
+    setEligibleToProjectSearchInfoTime(Date.now());
   }
 
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
@@ -142,8 +170,9 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     await onSearchIssues(selectedProject, selectedIssueTypes, selectedLabels);
 
     const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
-    const selectableIssueTypes = await jiraUtil.filterProjectIssueTypes(selectedProject, allIssueTypes);
+    const selectableIssueTypes = jiraUtil.filterProjectIssueTypes(selectedProject, allIssueTypes);
     setSelectableIssueTypes(selectableIssueTypes);
+    await updateToProjectInfo(selectedProject, selectedIssueTypes);
   }
 
   const onToProjectSelect = async (selectedProject: undefined | Project): Promise<void> => {
@@ -157,6 +186,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setSelectedIssueTypes(selectedIssueTypes);
     setSelectedIssueTypesTime(Date.now());
     await onSearchIssues(selectedFromProject, selectedIssueTypes, selectedLabels);
+    await updateToProjectInfo(selectedFromProject, selectedIssueTypes);
   }
 
   const onLabelsSelect = async (selectedLabels: string[]): Promise<void> => {
@@ -199,12 +229,14 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     const destinationIssueTypeId: string = selectedIssueTypes[0].id;
     const issueIds = selectedIssueKeys;
     setIssueMoveRequestOutcome(undefined);
+    setCurrentIssueMoveTaskId("hack-to-show-activity-bar");
     const outcome: IssueMoveRequestOutcome = await taskModel.initiateMove(
       props.invoke,
       destinationProjectId,
       destinationIssueTypeId,
       issueIds
     );
+    setCurrentIssueMoveTaskId(undefined);
     console.log(`BulkMovePanel: issue move request outcome: ${JSON.stringify(outcome, null, 2)}`);
     setIssueMoveRequestOutcome(outcome);
     if (outcome.statusCode === 201 && outcome.taskId) {
@@ -220,10 +252,10 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return (
       <FormSection>
         <ProjectSelect 
-          key={`from-project`}
+          key={`from-project=${allProjectSearchInfoTime}`}
           label="From project"
           selectedProjectId={undefined}
-          invoke={props.invoke}
+          projectInfo={allProjectSearchInfo}
           onProjectSelect={onFromProjectSelect}
         />
       </FormSection>
@@ -235,12 +267,12 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return (
       <FormSection>
         <ProjectSelect 
-          key={`to-project-${selectedFromProjectTime}`}
+          key={`to-project-${selectedFromProjectTime}-${eligibleToProjectSearchInfoTime}`}
           label="To project"
           selectedProjectId={undefined}
           isDisabled={!allowSelection}
-          invoke={props.invoke}
-          projectInfoRetriever={toProjectInfoRetriever}
+          projectInfo={eligibleToProjectSearchInfo}
+          // projectInfoRetriever={toProjectInfoRetriever}
           onProjectSelect={onToProjectSelect}
         />
       </FormSection>
@@ -307,7 +339,6 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const renderIssueMoveRequestOutcome = () => {
     if (issueMoveRequestOutcome) {
-      // const renderedTaskId = issueMoveRequestOutcome.taskId ? <div>{issueMoveRequestOutcome.taskId}</div> : null;
       const renderedErrors = issueMoveRequestOutcome.errors ? issueMoveRequestOutcome.errors.map((error: Error, index: number) => {
         return (
           <div key={`issue-move-request-error-${index}`} className="error-message">
@@ -317,7 +348,6 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       }) : null;
       return (
         <div>
-          {/* renderedTaskId */}
           {renderedErrors}
         </div>
       );
@@ -326,28 +356,35 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     }
   }
 
+  const renderIssueMoveResult = (moveResult: IssueMoveOutcomeResult) => {
+    const movedCount = moveResult.successfulIssues.length;
+    const failedCount = moveResult.totalIssueCount - movedCount;
+    return (
+      <div>
+        <div>
+          # issues moved: <Lozenge appearance="success">{movedCount}</Lozenge>
+        </div>
+        <div>
+          # issues not moved: <Lozenge appearance="removed">{failedCount}</Lozenge>
+        </div>
+      </div>
+    );
+}
+
   const renderIssueMoveOutcome = () => {
     if (issueMoveOutcome) {
-      // const renderedMessage = issueMoveOutcome.message ? <div>{issueMoveOutcome.message}</div> : null;
-      // const renderedErrors = issueMoveOutcome.errors ? issueMoveOutcome.errors.map((error: string, index: number) => {
-      //   return (
-      //     <div key={`issue-move-error-${index}`}>
-      //       {error}
-      //     </div>
-      //   );
-      // }) : null;
       const statusAppearance = issueMoveOutcome.status === 'COMPLETE' ? 'success' : 'removed';
       const renderedStatus = issueMoveOutcome.status ? <Lozenge appearance={statusAppearance}>{issueMoveOutcome.status}</Lozenge> : null;
-      const movedCount = issueMoveOutcome.result ? issueMoveOutcome.result.successfulIssues[0] : 0;
-      // const failedIssueKeys = issueMoveOutcome.result ? Object.keys(issueMoveOutcome.result.failedIssues) : [];
-      const outcomeJson = JSON.stringify(issueMoveOutcome, null, 2);
+      const renderedIssueMoveResult = issueMoveOutcome.result ? renderIssueMoveResult(issueMoveOutcome.result) : null;
+      const renderedOutcomeDebugJson = showDebug ? <pre>{JSON.stringify(issueMoveOutcome, null, 2)}</pre> : null;
       return (
         <div>
-          Issue move outcome: <br/>
-          Status: {issueMoveOutcome.status} <br/>
-          Issues moved:  <br/>
-
-          <pre>{outcomeJson}</pre>
+          Issue move outcome:
+          <ul>
+            <li>Status: {renderedStatus}</li>
+            <li>{renderedIssueMoveResult}</li>
+          </ul>
+          {renderedOutcomeDebugJson}
         </div>
       );
     } else {

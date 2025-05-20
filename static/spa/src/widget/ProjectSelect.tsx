@@ -11,8 +11,7 @@ export type ProjectSelectProps = {
   label: string;
   selectedProjectId: string;
   isDisabled?: boolean;
-  invoke: any;
-  projectInfoRetriever?: () => Promise<ProjectSearchInfo>
+  projectInfo: ProjectSearchInfo;
   onProjectSelect: (selectedProject: undefined | Project) => Promise<void>;
 }
 
@@ -22,10 +21,7 @@ const ProjectSelect = (props: ProjectSelectProps) => {
   const [projectInfoRetrievalTime, setProjectInfoRetrievalTime] = useState<number>(0);
 
   const refreshProjectInfo = async () => {
-    const projectInfo = props.projectInfoRetriever ?
-      await props.projectInfoRetriever() :
-      await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
-    // const projectInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
+    const projectInfo = props.projectInfo;
     setProjectInfo(projectInfo);
     setProjectInfoRetrievalTime(Date.now());
   }
@@ -37,9 +33,7 @@ const ProjectSelect = (props: ProjectSelectProps) => {
   const onChange = async (selectedOption: undefined | Option): Promise<void> => {
     // console.log(`ProjectSelect.onChange: `, selectedOption);
     if (selectedOption) {
-      // const project = projectInfo.values.find((project: Project) => project.id === selectedOption.value)
       const project = projectInfo.values.find((project: Project) => {
-        // console.log(`Testing project ${project.id}`);
         return project.id === selectedOption.value;
       })
       await props.onProjectSelect(project);
