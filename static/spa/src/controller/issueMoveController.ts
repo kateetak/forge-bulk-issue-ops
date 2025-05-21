@@ -1,4 +1,4 @@
-import { TaskOutcome } from "src/types/TaskOutcome";
+import { TaskOutcome, TaskStatus } from "src/types/TaskOutcome";
 import { BulkIssueMoveRequestDataBuilder, ProjectIssueTypeClassificationBuilder } from "./BulkIssueMoveRequestDataBuilder";
 import { IssueMoveRequestOutcome } from "src/types/IssueMoveRequestOutcome";
 import projectSearchInfoCache from "src/model/projectSearchInfoCache";
@@ -6,7 +6,6 @@ import issueTypesCache from "src/model/issueTypesCache";
 import { IssueType } from "src/types/IssueType";
 import { IssueSearchInfo } from "src/types/IssueSearchInfo";
 import { Issue } from "src/types/Issue";
-import jiraUtil from "./jiraUtil";
 
 const issueMovePollPeriodMillis = 2000;
 
@@ -15,7 +14,6 @@ class IssueMoveController {
   initiateMove = async (
     invoke: any,
     destinationProjectId: string,
-    // destinationIssueTypeId: string,
     issueKeys: string[],
     issueSearchInfo: IssueSearchInfo
   ): Promise<IssueMoveRequestOutcome> => {
@@ -59,25 +57,6 @@ class IssueMoveController {
         }
       }
     }
-
-    // const projectIds
-
-    // const bulkIssueMoveRequestData = new BulkIssueMoveRequestDataBuilder()
-    //   .addMapping(
-    //     destinationProjectId,
-    //     destinationIssueTypeId,
-    //     new ProjectIssueTypeClassificationBuilder()
-    //       .setIssueIdsOrKeys(issueIds)
-    //       .setInferClassificationDefaults(true)
-    //       .setInferFieldDefaults(true)
-    //       .setInferStatusDefaults(true)
-    //       .setInferSubtaskTypeDefault(true)
-    //       .setTargetClassification([])
-    //       .setTargetMandatoryFields([])
-    //       .build()
-    //     )
-    //   .build();
-
     const bulkIssueMoveRequestData = bulkIssueMoveRequestDataBuilder.build();
     console.log(` * bulkIssueMoveRequestData: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
     const params = {
@@ -87,13 +66,18 @@ class IssueMoveController {
     return requestOutcome;
   }
 
+  pollMoveProgress = async (invoke: any, taskId: string): Promise<TaskOutcome> => {
+    const params = {
+      taskId: taskId,
+    }
+    const issueMoveOutcome = await invoke('getIssueMoveOutcome', params);
+    return issueMoveOutcome;
+  }
+
   awaitMoveCompletion = async (invoke: any, taskId: string): Promise<TaskOutcome> => {
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
-        const params = {
-          taskId: taskId,
-        }
-        const issueMoveOutcome = await invoke('getIssueMoveOutcome', params);
+        const issueMoveOutcome = await this.pollMoveProgress(invoke, taskId);
         if (issueMoveOutcome) {
           // console.log(` * Found issueMoveOutcome for taskId ${taskId}`);
           resolve(issueMoveOutcome);
@@ -104,6 +88,16 @@ class IssueMoveController {
         }
       }, issueMovePollPeriodMillis);
     });
+  }
+
+  isDone = (status: TaskStatus): boolean => {
+    if (status === 'ENQUEUED' || status === 'RUNNING') {
+      return false;
+    } else if (status === 'COMPLETE' || status === 'FAILED' || status === 'CANCEL_REQUESTED' || status === 'CANCELLED' || status === 'DEAD') {
+      return true;
+    } else {
+      throw new Error(`Unknown status: ${status}`);
+    }
   }
 
 }

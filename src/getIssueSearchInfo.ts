@@ -6,13 +6,16 @@ import { IssueSearchParameters } from "./types/IssueSearchParameters";
 
 
 export const getIssueSearchInfo = async (issueSearchParameters: IssueSearchParameters): Promise<IssueSearchInfo> => {
+
+  console.log(`getIssueSearchInfo: building JQL from ${JSON.stringify(issueSearchParameters, null, 2)}`);
+
   let jql = '';
   if (issueSearchParameters.projects.length) {
     const projectIdsCsv = issueSearchParameters.projects.map(project => project.id).join(',');
     jql += `project in (${projectIdsCsv})`;
   }
   if (issueSearchParameters.issueTypes.length) {
-    const issueTypeIdsCsv = issueSearchParameters.projects.map(issueType => issueType.id).join(',');
+    const issueTypeIdsCsv = issueSearchParameters.issueTypes.map(issueType => issueType.id).join(',');
     jql += ` and issuetype in (${issueTypeIdsCsv})`;
   }
 

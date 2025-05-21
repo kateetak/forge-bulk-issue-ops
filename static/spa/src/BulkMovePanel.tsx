@@ -18,7 +18,8 @@ import { nilIssueSearchInfo } from './model/nilIssueSearchInfo';
 import projectSearchInfoCache from './model/projectSearchInfoCache';
 import issueTypesCache from './model/issueTypesCache';
 import { TaskOutcome } from './types/TaskOutcome';
-import taskModel from './controller/issueMoveController';
+import issueMoveController from './controller/issueMoveController';
+// import issueMoveController from './mock/mockIssueMoveController';
 import { IssueSearchParameters } from './types/IssueSearchParameters';
 import { IssueMoveRequestOutcome } from './types/IssueMoveRequestOutcome';
 import jiraUtil from './controller/jiraUtil';
@@ -298,13 +299,29 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setSelectedIssueKeys(newSelectedIssueKeys);
   }
 
+  const pollPollMoveOutcome = async (taskId: string): Promise<void> => {
+    const outcome: TaskOutcome = await issueMoveController.pollMoveProgress(props.invoke, taskId);
+    setIssueMoveOutcome(outcome);
+    if (issueMoveController.isDone(outcome.status)) {
+      setCurrentIssueMoveTaskId(undefined);
+    } else {
+      asyncPollMoveOutcome(taskId);
+    }
+  }
+
+  const asyncPollMoveOutcome = async (taskId: string): Promise<void> => {
+    setTimeout(async () => {
+      await pollPollMoveOutcome(taskId);
+    }, 500);
+  }
+
   const onMoveIssues = async (): Promise<void> => {
+    // Step 1: Initiate the move request...
     const destinationProjectId: string = selectedToProject.id;
-    // const destinationIssueTypeId: string = selectedIssueTypes[0].id;
     const issueKeys = selectedIssueKeys;
     setIssueMoveRequestOutcome(undefined);
     setCurrentIssueMoveTaskId("hack-to-show-activity-bar");
-    const outcome: IssueMoveRequestOutcome = await taskModel.initiateMove(
+    const initiateOutcome: IssueMoveRequestOutcome = await issueMoveController.initiateMove(
       props.invoke,
       destinationProjectId,
       // destinationIssueTypeId,
@@ -312,15 +329,21 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       issueSearchInfo
     );
     setCurrentIssueMoveTaskId(undefined);
-    console.log(`BulkMovePanel: issue move request outcome: ${JSON.stringify(outcome, null, 2)}`);
-    setIssueMoveRequestOutcome(outcome);
-    if (outcome.statusCode === 201 && outcome.taskId) {
-      setCurrentIssueMoveTaskId(outcome.taskId);
-      setIssueMoveOutcome(undefined);
-      const issueMoveOutcome = await taskModel.awaitMoveCompletion(props.invoke, outcome.taskId);
-      setIssueMoveOutcome(issueMoveOutcome);
-      setCurrentIssueMoveTaskId(undefined);  
-    }
+    console.log(`BulkMovePanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
+
+    // Step 2: Start polling for the outcome...
+    setCurrentIssueMoveTaskId(initiateOutcome.taskId);
+    pollPollMoveOutcome(initiateOutcome.taskId);
+
+    // Step 3: (redundant if polling is active) Wait for the outcome...
+    // setIssueMoveRequestOutcome(initiateOutcome);
+    // if (initiateOutcome.statusCode === 201 && initiateOutcome.taskId) {
+    //   setCurrentIssueMoveTaskId(initiateOutcome.taskId);
+    //   setIssueMoveOutcome(undefined);
+    //   const issueMoveOutcome = await issueMoveController.awaitMoveCompletion(props.invoke, initiateOutcome.taskId);
+    //   setIssueMoveOutcome(issueMoveOutcome);
+    //   setCurrentIssueMoveTaskId(undefined);  
+    // }
   }
 
   const renderJQLInputPanel = () => {
@@ -483,9 +506,11 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const renderIssueMoveLoading = () => {
+    // https://mui.com/material-ui/api/linear-progress/
+    const progressPercent = issueMoveOutcome ? issueMoveOutcome.progress : 0;
     return (
       <div style={{margin: '12px 0px 12px 0px'}}>
-        {currentIssueMoveTaskId ? <LinearProgress color="secondary" /> : <div style={{height: '4px'}}></div>} 
+        {currentIssueMoveTaskId ? <LinearProgress variant="determinate" value={progressPercent} color="secondary" /> : <div style={{height: '4px'}}></div>} 
       </div>
     );
   }
@@ -530,12 +555,15 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       const renderedStatus = issueMoveOutcome.status ? <Lozenge appearance={statusAppearance}>{issueMoveOutcome.status}</Lozenge> : null;
       const renderedIssueMoveResult = issueMoveOutcome.result ? renderIssueMoveResult(issueMoveOutcome.result) : null;
       const renderedOutcomeDebugJson = showDebug ? <pre>{JSON.stringify(issueMoveOutcome, null, 2)}</pre> : null;
+      const progressPercent = issueMoveOutcome.progress ?? 0;
+      const renderedProgress = <div>Progress: {progressPercent}%</div>;
       return (
         <div>
           Issue move outcome:
           <ul>
             <li>Status: {renderedStatus}</li>
             <li>{renderedIssueMoveResult}</li>
+            <li>{renderedProgress}</li>
           </ul>
           {renderedOutcomeDebugJson}
         </div>
@@ -670,6 +698,14 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         </li>
       );
     });
+
+    const renderedSelectedIssueTypes = selectedIssueTypes.map((issueType: IssueType) => {
+      return (
+        <li key={issueType.id}>
+          <strong>{issueType.name}</strong> ({issueType.id})
+        </li>
+      );
+    });
     
     if (showDebug) {
       return (
@@ -679,6 +715,11 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           <h4>Projects to issue types</h4>
           <ul>
             {renderedProjectsTossueTypes}
+          </ul>
+
+          <h4>Selected issue types</h4>
+          <ul>
+            {renderedSelectedIssueTypes}
           </ul>
 
           <h4>Projects</h4>

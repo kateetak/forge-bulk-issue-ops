@@ -42,8 +42,8 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
   }
 
   const issueTypeToLabel = (issueType: IssueType): string => {
-    // let label = `${issueType.name} (${issueType.id})`;
-    let label = `${issueType.name}`;
+    let label = `${issueType.name} (${issueType.id})`;
+    // let label = `${issueType.name}`;
     if (issueType.scope) {
       const maybeProject = allProjects.find(project => project.id === issueType.scope.project.id);
       label += ` - ${maybeProject ? maybeProject.name : issueType.scope.project.id}`;
