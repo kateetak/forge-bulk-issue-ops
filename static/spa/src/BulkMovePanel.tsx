@@ -27,7 +27,7 @@ import JQLInputPanel from './widget/JQLInputPanel';
 import ProjectsSelect from './widget/ProjectsSelect';
 
 const showDebug = true;
-const assumeAllIssueTypesWhenNoneAreSelected = true;
+const implyAllIssueTypesWhenNoneAreSelected = true;
 
 export type BulkMovePanelProps = {
   invoke: any;
@@ -47,6 +47,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   const [enteredJql, setEnteredJql] = useState<string>('');
   const [allProjectSearchInfo, setAllProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
   const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
+  const [allIssueTypes, setAllIssueTypes] = useState<IssueType[]>([]);
+  const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
   const [eligibleToProjectSearchInfo, setEligibleToProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
   const [eligibleToProjectSearchInfoTime, setEligibleToProjectSearchInfoTime] = useState<number>(0);
   const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
@@ -78,6 +80,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const initialiseSelectedIssueTypes = async (): Promise<void> => {
     const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
+    setAllIssueTypes(allIssueTypes);
+    setAllIssueTypesTime(Date.now());
     if (selectedIssueTypesTime === 0) {
       setSelectedIssueTypes(allIssueTypes);
     } else {
@@ -224,9 +228,14 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
     await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
-    const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
+    // const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
     // const selectableIssueTypes = jiraUtil.filterProjectIssueTypes(selectedProjects, allIssueTypes);
-    setSelectableIssueTypes(allIssueTypes);
+
+    // setSelectableIssueTypes(allIssueTypes);
+    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
+    setSelectableIssueTypes(selectableIssueTypes);
+
+
     await updateToProjectInfo(selectedProjects, selectedIssueTypes);
   }
 
@@ -240,8 +249,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     console.log(`selectedIssueTypes: `, selectedIssueTypes);
 
     if (selectedIssueTypes.length === 0) {
-      if (assumeAllIssueTypesWhenNoneAreSelected) {
-        const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
+      if (implyAllIssueTypesWhenNoneAreSelected) {
+        // const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
         setSelectedIssueTypes(allIssueTypes);
       } else {
         setSelectedIssueTypes(selectedIssueTypes);  
@@ -357,13 +366,26 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     );
   }
 
-  const renderIssueTypesSelect = (selectedFromProjects: Project[]) => {
+  const renderIssueTypesSelect = () => {
+    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
+
+    const issueTypesAlreadySelected = selectedIssueTypes.length !== allIssueTypes.length;
+    console.log(`BulkMovePanel: renderIssueTypesSelect: issueTypesAlreadySelected: ${issueTypesAlreadySelected}`);
+    const candidateIssueTypes: IssueType[] = issueTypesAlreadySelected ?
+      selectedIssueTypes :
+      [];
+    console.log(`BulkMovePanel: renderIssueTypesSelect: candidateIssueTypes: ${JSON.stringify(candidateIssueTypes, null, 2)}`);
+    const selectedIssueTypeIds = candidateIssueTypes.length ? candidateIssueTypes.map(issueType => issueType.id) : [];
+    console.log(`BulkMovePanel: renderIssueTypesSelect: selectedIssueTypeIds: ${JSON.stringify(selectedIssueTypeIds, null, 2)}`);
+
+    
+
     return (
       <FormSection>
         <IssueTypesSelect 
           key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
           label="Issue types"
-          selectedIssueTypeIds={selectedIssueTypes.map(issueType => issueType.id)}
+          selectedIssueTypeIds={selectedIssueTypeIds}
           invoke={props.invoke}
           selectableIssueTypes={selectableIssueTypes}
           onIssueTypesSelect={onIssueTypesSelect}
@@ -418,7 +440,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       return (
         <>
           {renderFromProjectSelect()}
-          {selectedFromProjects.length ? renderIssueTypesSelect(selectedFromProjects) : null}
+          {selectedFromProjects.length ? renderIssueTypesSelect() : null}
           {renderLabelsSelect()}
         </>
       );  

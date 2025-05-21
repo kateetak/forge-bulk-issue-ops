@@ -34,6 +34,35 @@ class JiraUtil {
     return filteredProjectSearchInfo;
   }
 
+  filterProjectsIssueTypes = (projects: Project[], allIssueTypes: IssueType[]): IssueType[] => {
+    const filteredIssueTypes = new Set<IssueType>();
+    // const isTeamManagedProject = project.simplified;
+    for (const issueType of allIssueTypes) {
+      if (this.isIssueTypeInProjects(issueType, projects)) {
+        filteredIssueTypes.add(issueType);
+      }
+    }
+    return Array.from(filteredIssueTypes);
+  }
+
+  isIssueTypeInProjects = (issueType: IssueType, projects: Project[]): boolean => {
+    const isTeamManagedProject = issueType.scope && issueType.scope.type === 'PROJECT';
+    if (isTeamManagedProject) {
+      for (const project of projects) {
+        if (issueType.scope && issueType.scope.type === 'PROJECT' && issueType.scope.project.id === project.id) {
+          return true;
+        }
+      }
+    } else {
+      if (issueType.scope) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    
+  }
+
   filterProjectIssueTypes = (project: Project, allIssueTypes: IssueType[]): IssueType[] => {
     // console.log(`filterProjectIssueTypes:`);
     // console.log(` * project.id: ${project.id}`);

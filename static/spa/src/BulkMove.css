@@ -42,7 +42,7 @@ div.flex-box-equal-width-grow-panel {
 
 div.filter-panel {
   min-width: 300px;
-  max-width: 400px;
+  /* max-width: 400px; */
 }
 
 div.padding-panel {
@@ -55,23 +55,9 @@ div.padding-panel:hover {
   border: 1px solid #4C9AFF;
 }
 
-div.filter-model-panel {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
-}
-
-div.filter-model-panel > div {
-  margin-left: 10px;
-}
-  
-div.filter-model-panel > div:first-child {
-  margin-left: 0px;
-}
-  
 div.content-panel {
   min-width: 300px;
+  max-width: 400px;
 }
 
 div.issue-selection-panel {
