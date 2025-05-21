@@ -53,17 +53,6 @@
     prop-types "^15.5.10"
     use-memo-one "^1.1.1"
 
-"@atlaskit/analytics-next@^9.1.0":
-  version "9.3.4"
-  resolved "https://registry.yarnpkg.com/@atlaskit/analytics-next/-/analytics-next-9.3.4.tgz#c087eef9f106757909ab2ae8ca289ed7a1a2dfe4"
-  integrity sha512-N8icz0+9OUwFPpR5lOzUnB9Kcm8bPjH2ZCeCbi+vmexWw3JLunQ1ah9w5W/TeRPpLPR23Y/4ntEaROGdeb07nQ==
-  dependencies:
-    "@atlaskit/analytics-next-stable-react-context" "1.0.1"
-    "@atlaskit/platform-feature-flags" "^0.3.0"
-    "@babel/runtime" "^7.0.0"
-    prop-types "^15.5.10"
-    use-memo-one "^1.1.1"
-
 "@atlaskit/app-provider@^1.8.0":
   version "1.8.1"
   resolved "https://registry.yarnpkg.com/@atlaskit/app-provider/-/app-provider-1.8.1.tgz#15ab9d4884eb45139e51a3bacb2ea5755d5fa9c0"
@@ -223,7 +212,7 @@
     "@emotion/react" "^11.7.1"
     bind-event-listener "^3.0.0"
 
-"@atlaskit/ds-lib@^2.4.0", "@atlaskit/ds-lib@^2.6.0":
+"@atlaskit/ds-lib@^2.6.0":
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/@atlaskit/ds-lib/-/ds-lib-2.7.0.tgz#78ce94cea2132d8b90f2a555377a3c68363916ca"
   integrity sha512-+U4aPE2dBRFUBYWCM9vkrwJGrLAYVcK30ZpEiQDNpM2D7K41223TfEijC8azaN4VM3tsCgwSKBWwniloNxqYbA==
@@ -292,20 +281,23 @@
     "@babel/runtime" "^7.0.0"
     "@emotion/react" "^11.7.1"
 
-"@atlaskit/form@^8.11.12":
-  version "8.11.13"
-  resolved "https://registry.yarnpkg.com/@atlaskit/form/-/form-8.11.13.tgz#6f45db4a77a93818676d6ea88caf2ec343a24fa9"
-  integrity sha512-JFEkQEwlop9XlKAHvtFbwcgTVrJOlN+heT07H12V+7TxES0oA1lJPQlmMNgcq4f++/4p/v752p+K6IlWKXjTiw==
+"@atlaskit/form@^12.0.4":
+  version "12.0.4"
+  resolved "https://registry.yarnpkg.com/@atlaskit/form/-/form-12.0.4.tgz#6339abe1cf522cc8f0a0097509346ee29600174f"
+  integrity sha512-G6u3JInpStUI6+QYgU0Z++AHstECh6rX/4z/kjg5Lk8/YDHSxI1uGHp/k9srwJViYVE5NlzIZiaoCiOsJWMxFw==
   dependencies:
-    "@atlaskit/icon" "^21.12.0"
-    "@atlaskit/theme" "^12.6.0"
-    "@atlaskit/tokens" "^1.26.0"
+    "@atlaskit/css" "^0.10.0"
+    "@atlaskit/ds-lib" "^4.0.0"
+    "@atlaskit/heading" "^5.2.0"
+    "@atlaskit/icon" "^26.0.0"
+    "@atlaskit/primitives" "^14.7.0"
+    "@atlaskit/theme" "^18.0.0"
+    "@atlaskit/tokens" "^4.8.0"
     "@babel/runtime" "^7.0.0"
-    "@emotion/react" "^11.7.1"
-    final-form "^4.20.1"
+    "@compiled/react" "^0.18.3"
+    final-form "^4.20.3"
     final-form-focus "^1.1.2"
     lodash "^4.17.21"
-    react-uid "^2.2.0"
     tiny-invariant "^1.2.0"
 
 "@atlaskit/heading@^4.3.0":
@@ -320,15 +312,16 @@
     "@compiled/react" "^0.18.2"
     "@emotion/react" "^11.7.1"
 
-"@atlaskit/icon@^21.12.0":
-  version "21.12.8"
-  resolved "https://registry.yarnpkg.com/@atlaskit/icon/-/icon-21.12.8.tgz#51af17f3a15824bf1e01fe959e98bd9a4af8d15e"
-  integrity sha512-cKqjg51VHZv8RTsncGhaSJAk8tWx6lrgRLM4zMexHbP3MBS1vcW7A+jZa2zggA3NOW7rsGZ3yFdbq8J6kPGT+A==
+"@atlaskit/heading@^5.2.0":
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/@atlaskit/heading/-/heading-5.2.0.tgz#8a9baa5eb74112e76bf16f1ad6c6a5cffda28be8"
+  integrity sha512-Gui3JYeoXHMXCCCcazUzDM8VJhAqwTCaUb7x1NxleT5AG4ooMCbLEnhaeEc8s08wqPi1f6kdKl5XR+O7CHhItQ==
   dependencies:
-    "@atlaskit/theme" "^12.6.0"
-    "@atlaskit/tokens" "^1.28.0"
+    "@atlaskit/css" "^0.10.0"
+    "@atlaskit/primitives" "^14.4.0"
+    "@atlaskit/tokens" "^4.7.0"
     "@babel/runtime" "^7.0.0"
-    "@emotion/react" "^11.7.1"
+    "@compiled/react" "^0.18.3"
 
 "@atlaskit/icon@^22.24.0":
   version "22.28.0"
@@ -471,13 +464,6 @@
     "@babel/runtime" "^7.0.0"
     "@compiled/react" "^0.18.3"
     bind-event-listener "^3.0.0"
-
-"@atlaskit/platform-feature-flags@^0.2.0":
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/@atlaskit/platform-feature-flags/-/platform-feature-flags-0.2.6.tgz#46a0b8bbdbc2d4f82045e3143b55d855fa3ee33f"
-  integrity sha512-jcTEix5NdW7buYOdEABjH9F7CAHHXGL4Gy+Aod52VpI4yi5CBZ/0Wa1yeTZ2CExkmwuJUowLDB6ES79kEI0SzQ==
-  dependencies:
-    "@babel/runtime" "^7.0.0"
 
 "@atlaskit/platform-feature-flags@^0.3.0":
   version "0.3.0"
@@ -702,27 +688,17 @@
     "@babel/runtime" "^7.0.0"
     "@compiled/react" "^0.18.3"
 
-"@atlaskit/textfield@^5.6.6":
-  version "5.6.8"
-  resolved "https://registry.yarnpkg.com/@atlaskit/textfield/-/textfield-5.6.8.tgz#9f2b6c397db2c0b142d0e772c90212fe7a366c78"
-  integrity sha512-kUlbZIMn2/VrN83KGAAgJNjFjzVF4GB9Ifn+uXLSXXW1hq0D4q7b1f5Yy05crv2R68JXm88/+tjy29uAJ7v9Hw==
+"@atlaskit/textfield@^8.0.5":
+  version "8.0.5"
+  resolved "https://registry.yarnpkg.com/@atlaskit/textfield/-/textfield-8.0.5.tgz#15b26cb3c42f484a7e1646ba105e8fc052984ce0"
+  integrity sha512-Mg1UktsGpwwwqlNV6Kk6WQf0nPaj+fFpr3gnuKvwqHlAzyArtxbvt/tfPyt05lOQddhOykSN+dv6b623A9iHDA==
   dependencies:
-    "@atlaskit/analytics-next" "^9.1.0"
-    "@atlaskit/platform-feature-flags" "^0.2.0"
-    "@atlaskit/theme" "^12.6.0"
-    "@atlaskit/tokens" "^1.25.0"
+    "@atlaskit/analytics-next" "^11.0.0"
+    "@atlaskit/platform-feature-flags" "^1.1.0"
+    "@atlaskit/theme" "^18.0.0"
+    "@atlaskit/tokens" "^4.8.0"
     "@babel/runtime" "^7.0.0"
-    "@emotion/react" "^11.7.1"
-
-"@atlaskit/theme@^12.6.0":
-  version "12.12.0"
-  resolved "https://registry.yarnpkg.com/@atlaskit/theme/-/theme-12.12.0.tgz#d338ee0d463ff5e85656f975256892db7eb3875d"
-  integrity sha512-HHJ60r+74BInccPoeOEXTNl6eAvASKLCDi+e6ScZ4WG/9KQwgv4OgXzgubY83DOu1cS2FidHSPsX6lOcIJ8fgw==
-  dependencies:
-    "@atlaskit/codemod-utils" "^4.2.0"
-    "@atlaskit/ds-lib" "^2.4.0"
-    "@atlaskit/tokens" "^1.58.0"
-    "@babel/runtime" "^7.0.0"
+    "@compiled/react" "^0.18.3"
 
 "@atlaskit/theme@^14.0.0":
   version "14.1.0"
@@ -771,7 +747,7 @@
     "@compiled/react" "^0.18.3"
     bind-event-listener "^3.0.0"
 
-"@atlaskit/tokens@^1.25.0", "@atlaskit/tokens@^1.26.0", "@atlaskit/tokens@^1.28.0", "@atlaskit/tokens@^1.58.0":
+"@atlaskit/tokens@^1.58.0":
   version "1.61.0"
   resolved "https://registry.yarnpkg.com/@atlaskit/tokens/-/tokens-1.61.0.tgz#101856f96be03daaaeb3a756d68a665af297de06"
   integrity sha512-gRkBDZOaQffJHg9g+hYFgPjQ0Hz4XIDaK5WEttIGyhi2USsGsvDvUeED8liqcQNwssH/5UFxIFp3FmEwo0DoFA==
@@ -5779,7 +5755,7 @@ final-form-focus@^1.1.2:
   resolved "https://registry.yarnpkg.com/final-form-focus/-/final-form-focus-1.1.2.tgz#8ea5c4bd802e220cebaa47a587bb0be164eb6806"
   integrity sha512-Gd+Bd2Ll7ijo3/sd6kJ/bwLkhc2bUJPxTON6fIqee/008EJpACWhT+zoWCm9q6NcfMcWRS+Sp5ikRX8iqdXeGQ==
 
-final-form@^4.20.1:
+final-form@^4.20.3:
   version "4.20.10"
   resolved "https://registry.yarnpkg.com/final-form/-/final-form-4.20.10.tgz#1a484be6e9a91989121c054dcbd6f48bad051ecc"
   integrity sha512-TL48Pi1oNHeMOHrKv1bCJUrWZDcD3DIG6AGYVNOnyZPr7Bd/pStN0pL+lfzF5BNoj/FclaoiaLenk4XUIFVYng==

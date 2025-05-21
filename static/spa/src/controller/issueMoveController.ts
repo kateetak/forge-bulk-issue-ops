@@ -6,6 +6,7 @@ import issueTypesCache from "src/model/issueTypesCache";
 import { IssueType } from "src/types/IssueType";
 import { IssueSearchInfo } from "src/types/IssueSearchInfo";
 import { Issue } from "src/types/Issue";
+import { getTaskOutcome, initiateBulkIssuesMove } from "./jiraClient";
 
 const issueMovePollPeriodMillis = 2000;
 
@@ -17,25 +18,18 @@ class IssueMoveController {
     issueKeys: string[],
     issueSearchInfo: IssueSearchInfo
   ): Promise<IssueMoveRequestOutcome> => {
-
     const allProjectsSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(invoke);
     const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(invoke);
-
-    const bulkIssueMoveRequestDataBuilder = new BulkIssueMoveRequestDataBuilder();
-    const projectIssueTypeKeysToBuilders = new Map<string, ProjectIssueTypeClassificationBuilder>();
-    for (const issueKey of issueKeys) {
-      const issue = issueSearchInfo.issues.find((i: Issue) => i.key === issueKey);
-      if (issue) {
-        const issueType = allIssueTypes.find(issueType => issueType.id === issue.fields.issuetype.id);
-        if (issueType) {
-          // const projectsWithIssueType = jiraUtil.determineProjectsWithIssueTypes(issueType, allProjectsSearchInfo.values, allIssueTypes);
-
-
-          // const project = allProjectsSearchInfo.values.find(project => project.id === issueType.scope?.project.id);
-          const project = allProjectsSearchInfo.values.find(project => project.id === destinationProjectId);
-
-          if (project) {
-            const projectIssueTypeKey = `${project.id}-${issueType.id}`;
+    const destinationProject = allProjectsSearchInfo.values.find(project => project.id === destinationProjectId);
+    if (destinationProject) {
+      const bulkIssueMoveRequestDataBuilder = new BulkIssueMoveRequestDataBuilder();
+      const projectIssueTypeKeysToBuilders = new Map<string, ProjectIssueTypeClassificationBuilder>();
+      for (const issueKey of issueKeys) {
+        const issue = issueSearchInfo.issues.find((i: Issue) => i.key === issueKey);
+        if (issue) {
+          const issueType = allIssueTypes.find(issueType => issueType.id === issue.fields.issuetype.id);
+          if (issueType) {
+            const projectIssueTypeKey = `${destinationProject.id}-${issueType.id}`;
             let projectIssueTypeClassificationBuilder: undefined | ProjectIssueTypeClassificationBuilder = projectIssueTypeKeysToBuilders.get(projectIssueTypeKey);
             if (!projectIssueTypeClassificationBuilder) {
               projectIssueTypeClassificationBuilder = new ProjectIssueTypeClassificationBuilder()
@@ -47,7 +41,7 @@ class IssueMoveController {
                 .setTargetMandatoryFields([])
               projectIssueTypeKeysToBuilders.set(projectIssueTypeKey, projectIssueTypeClassificationBuilder);
               bulkIssueMoveRequestDataBuilder.addMapping(
-                project.id,
+                destinationProject.id,
                 issueType.id,
                 projectIssueTypeClassificationBuilder.build()
               );
@@ -56,21 +50,24 @@ class IssueMoveController {
           }
         }
       }
+      const bulkIssueMoveRequestData = bulkIssueMoveRequestDataBuilder.build();
+      console.log(` * bulkIssueMoveRequestData: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
+      // const params = {
+      //   bulkIssueMoveRequestData: bulkIssueMoveRequestData,
+      // };
+      const requestOutcome: IssueMoveRequestOutcome = await initiateBulkIssuesMove(bulkIssueMoveRequestData);
+      return requestOutcome;
+    } else {
+      throw new Error(`Destination project ${destinationProjectId} not found`);
     }
-    const bulkIssueMoveRequestData = bulkIssueMoveRequestDataBuilder.build();
-    console.log(` * bulkIssueMoveRequestData: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
-    const params = {
-      bulkIssueMoveRequestData: bulkIssueMoveRequestData,
-    };
-    const requestOutcome: IssueMoveRequestOutcome = await invoke('initiateMove', params);
-    return requestOutcome;
   }
 
   pollMoveProgress = async (invoke: any, taskId: string): Promise<TaskOutcome> => {
     const params = {
       taskId: taskId,
     }
-    const issueMoveOutcome = await invoke('getIssueMoveOutcome', params);
+    // const issueMoveOutcome = await invoke('getIssueMoveOutcome', params);
+    const issueMoveOutcome = await getTaskOutcome(taskId);
     return issueMoveOutcome;
   }
 

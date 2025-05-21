@@ -1,4 +1,5 @@
-import { ProjectSearchInfo } from "src/types/ProjectSearchInfo";
+import { getProjectSearchInfo } from "../controller/jiraClient";
+import { ProjectSearchInfo } from "../types/ProjectSearchInfo";
 
 class ProjectSearchInfoCache {
 
@@ -7,7 +8,8 @@ class ProjectSearchInfoCache {
   // TODO: Implement memoization
   getProjectSearchInfo = async (invoke: any): Promise<ProjectSearchInfo> => {
     if (!this.cachedProjectSearchInfo) {
-      this.cachedProjectSearchInfo = await invoke('getProjectSearchInfo');
+      // this.cachedProjectSearchInfo = await invoke('getProjectSearchInfo');
+      this.cachedProjectSearchInfo = await getProjectSearchInfo();
     }
     return this.cachedProjectSearchInfo;
   }

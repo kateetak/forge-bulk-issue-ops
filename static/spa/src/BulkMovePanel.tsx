@@ -26,6 +26,7 @@ import jiraUtil from './controller/jiraUtil';
 import { IssueMoveOutcomeResult } from './types/IssueMoveOutcomeResult';
 import JQLInputPanel from './widget/JQLInputPanel';
 import ProjectsSelect from './widget/ProjectsSelect';
+import { getIssueSearchInfo, getIssueSearchInfoByJql } from './controller/jiraClient';
 
 const showDebug = true;
 const implyAllIssueTypesWhenNoneAreSelected = true;
@@ -138,7 +139,6 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     const newlySelectedProjects: Project[] = uniqueProjects.length === 0 ? [] : uniqueProjects;
     setSelectedFromProjects(newlySelectedProjects);
     setSelectedFromProjectsTime(Date.now());
-    // eligibleToProjectSearchInfo
     const toProjectSearchInfo = await computeToProjectInfo(newlySelectedProjects, selectedIssueTypes);
     setEligibleToProjectSearchInfo(toProjectSearchInfo);
     setEligibleToProjectSearchInfoTime(Date.now());
@@ -185,10 +185,11 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           issueTypes: issueTypes,
           labels: labels
         }
-        const params = {
-          issueSearchParameters: issueSearchParameters
-        }
-        const issueSearchInfo = await props.invoke('getIssueSearchInfo', params) as IssueSearchInfo;
+        // const params = {
+        //   issueSearchParameters: issueSearchParameters
+        // }
+        // const issueSearchInfo = await props.invoke('getIssueSearchInfo', params) as IssueSearchInfo;
+        const issueSearchInfo = await getIssueSearchInfo(issueSearchParameters) as IssueSearchInfo;
         if (issueSearchInfo.errorMessages && issueSearchInfo.errorMessages.length) {
           const joinedErrors = issueSearchInfo.errorMessages.join( );
           setMainWarningMessage(joinedErrors);
@@ -208,7 +209,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       const params = {
         jql: jql
       }
-      const issueSearchInfo = await props.invoke('getIssueSearchInfo', params);
+      // const issueSearchInfo = await props.invoke('getIssueSearchInfo', params);
+      const issueSearchInfo = await getIssueSearchInfoByJql(jql) as IssueSearchInfo;
       onIssuesLoaded(true, issueSearchInfo);
       setIssueLoadingState('idle');
       computeFromProjectBasedOnJQlResults(issueSearchInfo);
