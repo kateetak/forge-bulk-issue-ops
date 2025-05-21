@@ -19,7 +19,7 @@ export class BulkIssueMoveRequestDataBuilder {
 
 }
 
-export class ProjectIssueTypClassificationBuilder {
+export class ProjectIssueTypeClassificationBuilder {
 
   classification: ProjectIssueTypClassification = {
     inferClassificationDefaults: true,
@@ -29,37 +29,37 @@ export class ProjectIssueTypClassificationBuilder {
     issueIdsOrKeys: []
   };
 
-  setIssueIdsOrKeys = (issueIdsOrKeys: string[]): ProjectIssueTypClassificationBuilder => {
-    this.classification.issueIdsOrKeys = issueIdsOrKeys;
+  addIssueIdOrKey = (issueIdOrKey: string): ProjectIssueTypeClassificationBuilder => {
+    this.classification.issueIdsOrKeys.push(issueIdOrKey);
     return this;
   }
 
-  setInferClassificationDefaults = (inferClassificationDefaults: boolean): ProjectIssueTypClassificationBuilder => {
+  setInferClassificationDefaults = (inferClassificationDefaults: boolean): ProjectIssueTypeClassificationBuilder => {
     this.classification.inferClassificationDefaults = inferClassificationDefaults;
     return this;
   }
 
-  setInferFieldDefaults = (inferFieldDefaults: boolean): ProjectIssueTypClassificationBuilder => {
+  setInferFieldDefaults = (inferFieldDefaults: boolean): ProjectIssueTypeClassificationBuilder => {
     this.classification.inferFieldDefaults = inferFieldDefaults;
     return this;
   }
 
-  setInferStatusDefaults = (inferStatusDefaults: boolean): ProjectIssueTypClassificationBuilder => {
+  setInferStatusDefaults = (inferStatusDefaults: boolean): ProjectIssueTypeClassificationBuilder => {
     this.classification.inferStatusDefaults = inferStatusDefaults;
     return this;
   }
 
-  setInferSubtaskTypeDefault = (inferSubtaskTypeDefault: boolean): ProjectIssueTypClassificationBuilder => {
+  setInferSubtaskTypeDefault = (inferSubtaskTypeDefault: boolean): ProjectIssueTypeClassificationBuilder => {
     this.classification.inferSubtaskTypeDefault = inferSubtaskTypeDefault;
     return this;
   }
 
-  setTargetClassification = (targetClassification: TargetClassification[]): ProjectIssueTypClassificationBuilder => {
+  setTargetClassification = (targetClassification: TargetClassification[]): ProjectIssueTypeClassificationBuilder => {
     this.classification.targetClassification = targetClassification;
     return this;
   }
 
-  setTargetMandatoryFields = (targetMandatoryFields: TargetMandatoryField[]): ProjectIssueTypClassificationBuilder => {
+  setTargetMandatoryFields = (targetMandatoryFields: TargetMandatoryField[]): ProjectIssueTypeClassificationBuilder => {
     this.classification.targetMandatoryFields = targetMandatoryFields;
     return this;
   }

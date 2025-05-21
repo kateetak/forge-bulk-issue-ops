@@ -24,7 +24,6 @@ permissions:
   external:
     fetch:
       backend:
-        - 'api.anthropic.com'
         - '*.public.atlastunnel.com'
     scripts:
       - cdn.jsdelivr.net

@@ -1,6 +1,8 @@
+import { IssueType } from "./IssueType";
+import { Project } from "./Project";
 
 export type IssueSearchParameters = {
-  projectId: string;
-  issueTypeIds: string[];
+  projects: Project[];
+  issueTypes: IssueType[];
   labels: string[];
 }

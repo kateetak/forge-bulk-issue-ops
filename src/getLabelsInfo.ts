@@ -12,6 +12,6 @@ export const getLabelsInfo = async () => {
   
   // console.log(`Response: ${response.status} ${response.statusText}`);
   const labels = await response.json();
-  console.log(`Labels: ${JSON.stringify(labels, null, 2)}`);
+  // console.log(`Labels: ${JSON.stringify(labels, null, 2)}`);
   return labels;
 }

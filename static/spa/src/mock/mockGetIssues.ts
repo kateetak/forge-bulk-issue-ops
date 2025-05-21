@@ -3,6 +3,7 @@ import { IssueSearchInfo } from "src/types/IssueSearchInfo"
 
 export const getIssueSearchInfo = async (projectId: string): Promise<IssueSearchInfo> => {
   const issueA = {
+    id: '',
     key: 'FEAT-1',
     fields: {
       summary: `My test issue`,

@@ -4,6 +4,24 @@ import { ProjectSearchInfo } from "src/types/ProjectSearchInfo";
 
 class JiraUtil {
 
+  removeProjectsFromSearchInfo = (projectsToRemove: Project[], projectSearchInfo: ProjectSearchInfo): ProjectSearchInfo => {
+    const filteredProjects = projectSearchInfo.values.filter(project => {
+      const foundProject = projectsToRemove.find(projectToRemove => projectToRemove.id === project.id);
+      if (foundProject) { 
+        return false;
+      }
+      return true;
+    });
+    const filteredProjectSearchInfo: ProjectSearchInfo = {
+      maxResults: 0,
+      startAt: 0,
+      total: filteredProjects.length,
+      isLast: true,
+      values: filteredProjects
+    }
+    return filteredProjectSearchInfo;
+  }
+
   removeProjectFromSearchInfo = (projectToRemove: Project, projectSearchInfo: ProjectSearchInfo): ProjectSearchInfo => {
     const filteredProjects = projectSearchInfo.values.filter(project => project.id !== projectToRemove.id);
     const filteredProjectSearchInfo: ProjectSearchInfo = {
@@ -17,9 +35,9 @@ class JiraUtil {
   }
 
   filterProjectIssueTypes = (project: Project, allIssueTypes: IssueType[]): IssueType[] => {
-    console.log(`filterProjectIssueTypes:`);
-    console.log(` * project.id: ${project.id}`);
-    console.log(` * project.name: ${project.name}`);
+    // console.log(`filterProjectIssueTypes:`);
+    // console.log(` * project.id: ${project.id}`);
+    // console.log(` * project.name: ${project.name}`);
     const filteredIssueTypes: IssueType[] = [];
     const isTeamManagedProject = project.simplified;
     for (const issueType of allIssueTypes) {
@@ -35,7 +53,7 @@ class JiraUtil {
         }
       }
     }
-    console.log(` * returning: ${JSON.stringify(filteredIssueTypes, null, 2)}`);
+    // console.log(` * returning: ${JSON.stringify(filteredIssueTypes, null, 2)}`);
     return filteredIssueTypes;
   }
 

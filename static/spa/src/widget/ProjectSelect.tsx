@@ -9,30 +9,31 @@ import { nilProjectSearchInfo } from 'src/model/nilProjectSearchInfo';
 export type ProjectSelectProps = {
   label: string;
   selectedProjectId: string;
+  selectableProjects: Project[];
   isDisabled?: boolean;
-  projectInfo: ProjectSearchInfo;
+  // projectInfo: ProjectSearchInfo;
   onProjectSelect: (selectedProject: undefined | Project) => Promise<void>;
 }
 
 const ProjectSelect = (props: ProjectSelectProps) => {
 
-  const [projectInfo, setProjectInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
-  const [projectInfoRetrievalTime, setProjectInfoRetrievalTime] = useState<number>(0);
+  // const [projectInfo, setProjectInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
+  // const [projectInfoRetrievalTime, setProjectInfoRetrievalTime] = useState<number>(0);
 
-  const refreshProjectInfo = async () => {
-    const projectInfo = props.projectInfo;
-    setProjectInfo(projectInfo);
-    setProjectInfoRetrievalTime(Date.now());
-  }
+  // const refreshProjectInfo = async () => {
+  //   // const projectInfo = props.projectInfo;
+  //   // setProjectInfo(projectInfo);
+  //   setProjectInfoRetrievalTime(Date.now());
+  // }
 
-  useEffect(() => {
-    refreshProjectInfo();
-  }, []);
+  // useEffect(() => {
+  //   refreshProjectInfo();
+  // }, []);
 
   const onChange = async (selectedOption: undefined | Option): Promise<void> => {
     // console.log(`ProjectSelect.onChange: `, selectedOption);
     if (selectedOption) {
-      const project = projectInfo.values.find((project: Project) => {
+      const project = props.selectableProjects.find((project: Project) => {
         return project.id === selectedOption.value;
       })
       await props.onProjectSelect(project);
@@ -42,7 +43,7 @@ const ProjectSelect = (props: ProjectSelectProps) => {
   }
 
   const renderSelect = () => {
-    const options: Option[] = projectInfo.values.map((project: any) => ({
+    const options: Option[] = props.selectableProjects.map((project: any) => ({
       label: project.name,
       value: project.id,
     }));
@@ -50,7 +51,6 @@ const ProjectSelect = (props: ProjectSelectProps) => {
     const defaultValue = options.find((option) => option.value === props.selectedProjectId);
     return (
       <RadioSelect
-        key={`project-select-${projectInfoRetrievalTime}`}
         inputId="radio-select-example"
         testId="project-select"
         isDisabled={props.isDisabled}

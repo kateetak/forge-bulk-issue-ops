@@ -8,7 +8,6 @@ import { Project } from '../types/Project';
 
 export type IssueTypesSelectProps = {
   label: string;
-  projectId: string;
   selectedIssueTypeIds: string[];
   selectableIssueTypes: IssueType[];
   invoke: any;

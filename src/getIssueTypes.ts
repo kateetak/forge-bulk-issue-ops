@@ -11,6 +11,6 @@ export const getIssueTypes = async () => {
   });
   
   const issueTypes = await response.json();
-  console.log(`Issue Types: ${JSON.stringify(issueTypes, null, 2)}`);
+  // console.log(`Issue Types: ${JSON.stringify(issueTypes, null, 2)}`);
   return issueTypes;
 }

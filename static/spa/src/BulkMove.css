@@ -42,6 +42,7 @@ div.flex-box-equal-width-grow-panel {
 
 div.filter-panel {
   min-width: 300px;
+  max-width: 400px;
 }
 
 div.padding-panel {

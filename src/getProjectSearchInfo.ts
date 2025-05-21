@@ -12,6 +12,6 @@ export const getProjectSearchInfo = async () => {
   
   // console.log(`Response: ${response.status} ${response.statusText}`);
   const projects = await response.json();
-  console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
+  // console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
   return projects;
 }
