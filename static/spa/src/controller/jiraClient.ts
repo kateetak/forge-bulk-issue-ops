@@ -2,10 +2,13 @@ import { requestJira } from '@forge/bridge';
 import { getMockProjectSearchInfo } from 'src/mock/mockGetProjects';
 import { mockGetProjects } from 'src/model/frontendConfig';
 import { BulkIssueMoveRequestData } from "src/types/BulkIssueMoveRequestData";
+import { FieldConfigurationItem } from 'src/types/FieldConfigurationItem';
+import { FieldConfigurationItemsResponse } from 'src/types/FieldConfigurationItemsResponse';
 import { IssueMoveRequestOutcome } from "src/types/IssueMoveRequestOutcome";
 import { IssueSearchInfo } from 'src/types/IssueSearchInfo';
 import { IssueSearchParameters } from 'src/types/IssueSearchParameters';
 import { ProjectSearchInfo } from 'src/types/ProjectSearchInfo';
+import { ProjectsFieldConfigurationSchemeMappings } from 'src/types/ProjectsFieldConfigurationSchemeMappings';
 
 export const getIssueSearchInfo = async (issueSearchParameters: IssueSearchParameters): Promise<IssueSearchInfo> => {
 
@@ -125,3 +128,86 @@ export const getTaskOutcome = async (taskId: string): Promise<any> => {
   console.log(`Task outcome: ${JSON.stringify(outcome, null, 2)}`);
   return outcome;
 }
+
+export const getFieldConfigurationItemsForProjects = async (projectIds: string[]): Promise<FieldConfigurationItem[]> => {
+  let allFieldConfigurationItems: FieldConfigurationItem[] = [];
+  let loadMoreItems = true;
+  let startAt = 0;
+  let maxResultsPerPage = 50;
+  while (loadMoreItems) {
+    const projectsFieldConfigurationSchemeMappings = await getFieldConfigurationSchemesForProjects(projectIds, startAt, maxResultsPerPage);
+    console.log(`projectsFieldConfigurationSchemeMappings = ${JSON.stringify(projectsFieldConfigurationSchemeMappings, null, 2)}`);
+    for (const projectFieldConfigurationSchemeMapping of projectsFieldConfigurationSchemeMappings.values) {
+      if (projectFieldConfigurationSchemeMapping.fieldConfigurationScheme) {
+        const fieldConfigurationId = projectFieldConfigurationSchemeMapping.fieldConfigurationScheme.id;
+        const fieldConfigurationItems = await getAllFieldConfigurationItems(fieldConfigurationId);
+        for (const fieldConfigurationItem of fieldConfigurationItems) {
+          allFieldConfigurationItems.push(fieldConfigurationItem);
+        }
+      }
+    }
+    loadMoreItems = !projectsFieldConfigurationSchemeMappings.isLast;
+    startAt += maxResultsPerPage;
+  }
+  return allFieldConfigurationItems;
+}
+
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-field-configurations/#api-rest-api-3-fieldconfigurationscheme-project-get
+export const getFieldConfigurationSchemesForProjects = async (
+    projectIds: string[],
+    startAt: number = 0,
+    maxResults: number = 50
+): Promise<ProjectsFieldConfigurationSchemeMappings> => {
+  let projectQueryArgs = '';
+  let nextSeparator = '';
+  for (const projectId of projectIds) {
+    projectQueryArgs += `${nextSeparator}projectId=${projectId}`;
+    nextSeparator = '&';
+  }
+  const response = await requestJira(`/rest/api/3/fieldconfigurationscheme/project?${projectQueryArgs}&startAt=${startAt}&maxResults=${maxResults}`, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  });
+ 
+  // console.log(`Response: ${response.status} ${response.statusText}`);
+  const outcome = await response.json();
+  console.log(`Project field configuration schemes: ${JSON.stringify(outcome, null, 2)}`);
+  return outcome;
+}
+
+export const getAllFieldConfigurationItems = async (fieldConfigurationId: string): Promise<FieldConfigurationItem[]> => {
+  let allFieldConfigurationItems: FieldConfigurationItem[] = [];
+  let loadMoreItems = true;
+  let startAt = 0;
+  let maxResultsPerPage = 50;
+  while (loadMoreItems) {
+    const fieldConfigurationItems = await getFieldConfigurationItems(fieldConfigurationId, startAt, maxResultsPerPage);
+    for (const fieldConfigurationItem of fieldConfigurationItems.values) {
+      allFieldConfigurationItems.push(fieldConfigurationItem);
+    }
+    loadMoreItems = !fieldConfigurationItems.isLast;
+    startAt += maxResultsPerPage;
+  }
+  return allFieldConfigurationItems;
+}
+
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-field-configurations/#api-rest-api-3-fieldconfiguration-id-fields-get
+export const getFieldConfigurationItems = async (
+    fieldConfigurationId: string,
+    startAt: number = 0,
+    maxResults: number = 50): Promise<FieldConfigurationItemsResponse> => {
+  const response = await requestJira(`/rest/api/3/fieldconfiguration/${fieldConfigurationId}/fields?startAt=${startAt}&maxResults=${maxResults}`, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  });
+ 
+  // console.log(`Response: ${response.status} ${response.statusText}`);
+  const outcome = await response.json();
+  console.log(`Field configuration items: ${JSON.stringify(outcome, null, 2)}`);
+  return outcome;
+}
+
+
+
