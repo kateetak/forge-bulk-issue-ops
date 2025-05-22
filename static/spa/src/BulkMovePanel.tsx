@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Button from '@atlaskit/button/new';
-import ProjectSelect from './widget/ProjectSelect';
 import LabelSelect from './widget/LabelsSelect';
 import { Project } from './types/Project';
 import { FormSection, Label } from '@atlaskit/form';
@@ -15,25 +14,21 @@ import { LoadingState } from './types/LoadingState';
 import { ProjectSearchInfo } from './types/ProjectSearchInfo';
 import { nilProjectSearchInfo } from './model/nilProjectSearchInfo';
 import { nilIssueSearchInfo } from './model/nilIssueSearchInfo';
-import projectSearchInfoCache from './model/projectSearchInfoCache';
 import issueTypesCache from './model/issueTypesCache';
 import { TaskOutcome } from './types/TaskOutcome';
 import issueMoveController from './controller/issueMoveController';
-// import issueMoveController from './mock/mockIssueMoveController';
 import { IssueSearchParameters } from './types/IssueSearchParameters';
 import { IssueMoveRequestOutcome } from './types/IssueMoveRequestOutcome';
 import jiraUtil from './controller/jiraUtil';
 import { IssueMoveOutcomeResult } from './types/IssueMoveOutcomeResult';
 import JQLInputPanel from './widget/JQLInputPanel';
+import { getIssueSearchInfo, getIssueSearchInfoByJql, getProjectSearchInfo } from './controller/jiraClient';
 import ProjectsSelect from './widget/ProjectsSelect';
-import { getIssueSearchInfo, getIssueSearchInfoByJql } from './controller/jiraClient';
-import ProjectsSearchSelect from './widget/ProjectsSearchSelect';
 
 const showDebug = true;
 const implyAllIssueTypesWhenNoneAreSelected = true;
 
 export type BulkMovePanelProps = {
-  // invoke: any;
 }
 
 type DebugInfo = {
@@ -75,7 +70,8 @@ const BulkMovePanel = () => {
 
   const retrieveAndSetDebugInfo = async (): Promise<void> => {
     const debugInfo: DebugInfo = {
-      projects: (await projectSearchInfoCache.getProjectSearchInfo()).values,
+      // projects: (await projectSearchInfoCache.getProjectSearchInfo()).values,
+      projects: (await getProjectSearchInfo()).values,
       issueTypes: await issueTypesCache.getissueTypes()
     }
     setDebugInfo(debugInfo);
@@ -108,7 +104,8 @@ const BulkMovePanel = () => {
     } else {
       console.log(`BulkMovePanel: computeToProjectInfo: selectedIssueTypes: ${JSON.stringify(selectedIssueTypes, null, 2)}`);
       const subjectIssueType: IssueType = selectedIssueTypes.length ? selectedIssueTypes[0] : undefined;
-      const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+      // const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+      const projectSearchInfo = await getProjectSearchInfo();
       const projectSearchInfoMinusSelectedFromProject: ProjectSearchInfo = jiraUtil.removeProjectsFromSearchInfo(
         selectedFromProjects, projectSearchInfo); 
       const filteredProjects = await jiraUtil.determineProjectsWithIssueTypes(
@@ -127,8 +124,13 @@ const BulkMovePanel = () => {
     }
   }
 
+  const filterProjectsForToSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
+    const allowableToProjects = await computeToProjectInfo(selectedFromProjects, selectableIssueTypes);
+    return allowableToProjects.values;
+  }
+
   const computeFromProjectBasedOnJQlResults = async (issueSearchInfo: IssueSearchInfo): Promise<void> => {
-    const allProjectSearchInfo: ProjectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+    const allProjectSearchInfo: ProjectSearchInfo = await getProjectSearchInfo();
     const projectsFromIssueSearchResults: Project[] = []
     for (const issue of issueSearchInfo.issues) {
       const project: Project = allProjectSearchInfo.values.find((project: Project) => {
@@ -147,7 +149,7 @@ const BulkMovePanel = () => {
   }
 
   const updateAllProjectInfo = async (): Promise<void> => {
-    const allProjectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+    const allProjectSearchInfo = await getProjectSearchInfo();
     setAllProjectSearchInfo(allProjectSearchInfo);
     setAllProjectSearchInfoTime(Date.now());
   }
@@ -363,31 +365,35 @@ const BulkMovePanel = () => {
   const renderFromProjectSelect = () => {
     return (
       <FormSection>
-        <ProjectsSearchSelect 
+        <ProjectsSelect 
           key={`from-project=${allProjectSearchInfoTime}`}
           label="From projects"
+          isMulti={true}
           // selectableProjects={allProjectSearchInfo.values}
           selectedProjects={selectedFromProjects}
-          onProjectsSearchSelect={async (selectedProject: Project[]): Promise<void> => {
-            console.log(`BulkMovePanel: renderFromProjectSelect: selectedProject: ${JSON.stringify(selectedProject, null, 2)}`);
-          }}
+          onProjectsSelect={onFromProjectsSelect}
         />
       </FormSection>
     );
   }
 
   const renderToProjectSelect = () => {
-    const allowSelection = selectedFromProjects.length;
+    const issueTypesSelected = selectedIssueTypes.length > 0 && selectedIssueTypes.length < allIssueTypes.length && selectedIssueKeys.length > 0;
+    const allowSelection = selectedFromProjects.length && issueTypesSelected;
     return (
       <FormSection>
-        <ProjectSelect 
+        <ProjectsSelect 
           key={`to-project-${selectedFromProjectsTime}-${eligibleToProjectSearchInfoTime}`}
           label="To project"
-          selectedProjectId={selectedToProject ? selectedToProject.id : undefined}
-          selectableProjects={eligibleToProjectSearchInfo.values}
+          isMulti={false}
           isDisabled={!allowSelection}
-          // projectInfoRetriever={toProjectInfoRetriever}
-          onProjectSelect={onToProjectSelect}
+          selectedProjects={[selectedToProject]}
+          filterProjects={filterProjectsForToSelection}
+          onProjectsSelect={async (selected: Project[]): Promise<void> => {
+            console.log(`Select to projects: ${JSON.stringify(selected, null, 2)}`);
+            const selectedToProject: undefined | Project = selected.length > 0 ? selected[0] : undefined;
+            onToProjectSelect(selectedToProject);
+          }}
         />
       </FormSection>
     );

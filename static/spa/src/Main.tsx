@@ -24,22 +24,9 @@ export type HomeProps = {
   history: any;
 }
 
-
+// https://developer.atlassian.com/platform/forge/add-routing-to-a-full-page-app/
+// https://developer.atlassian.com/platform/forge/apis-reference/ui-api-bridge/view/#createhistory
 const Home = (props: HomeProps) => {
-
-
-  // const renderMainPanelOld = (path: string, title: string) => {
-  //   return (
-  //     <a href={`./${path}`}>
-  //       <div className="padding-panel">
-  //         <div className="content-panel">
-  //           <h3>Step 1</h3>
-  //           <h4>Select issue filter options</h4>
-  //         </div>
-  //       </div>
-  //     </a>
-  //   );
-  // }
 
   const renderMainPanel = (path: string, title: string, description: string) => {
     return (

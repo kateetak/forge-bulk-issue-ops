@@ -1,20 +1,20 @@
-import { getProjectSearchInfo } from "../controller/jiraClient";
-import { ProjectSearchInfo } from "../types/ProjectSearchInfo";
+// import { getProjectSearchInfo } from "../controller/jiraClient";
+// import { ProjectSearchInfo } from "../types/ProjectSearchInfo";
 
-class ProjectSearchInfoCache {
+// class ProjectSearchInfoCache {
 
-  cachedProjectSearchInfo: undefined | ProjectSearchInfo = undefined;
+//   cachedProjectSearchInfo: undefined | ProjectSearchInfo = undefined;
 
-  // TODO: Implement memoization
-  getProjectSearchInfo = async (): Promise<ProjectSearchInfo> => {
-    if (!this.cachedProjectSearchInfo) {
-      // this.cachedProjectSearchInfo = await invoke('getProjectSearchInfo');
-      this.cachedProjectSearchInfo = await getProjectSearchInfo();
-    }
-    return this.cachedProjectSearchInfo;
-  }
+//   // TODO: Implement memoization
+//   getProjectSearchInfo = async (): Promise<ProjectSearchInfo> => {
+//     if (!this.cachedProjectSearchInfo) {
+//       // this.cachedProjectSearchInfo = await invoke('getProjectSearchInfo');
+//       this.cachedProjectSearchInfo = await getProjectSearchInfo();
+//     }
+//     return this.cachedProjectSearchInfo;
+//   }
 
-}
+// }
 
-const projectSearchInfoCache = new ProjectSearchInfoCache();
-export default projectSearchInfoCache;
+// const projectSearchInfoCache = new ProjectSearchInfoCache();
+// export default projectSearchInfoCache;

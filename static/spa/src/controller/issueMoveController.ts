@@ -1,12 +1,12 @@
 import { TaskOutcome, TaskStatus } from "src/types/TaskOutcome";
 import { BulkIssueMoveRequestDataBuilder, ProjectIssueTypeClassificationBuilder } from "./BulkIssueMoveRequestDataBuilder";
 import { IssueMoveRequestOutcome } from "src/types/IssueMoveRequestOutcome";
-import projectSearchInfoCache from "src/model/projectSearchInfoCache";
+// import projectSearchInfoCache from "../model/projectSearchInfoCache";
 import issueTypesCache from "src/model/issueTypesCache";
 import { IssueType } from "src/types/IssueType";
 import { IssueSearchInfo } from "src/types/IssueSearchInfo";
 import { Issue } from "src/types/Issue";
-import { getTaskOutcome, initiateBulkIssuesMove } from "./jiraClient";
+import { getProjectSearchInfo, getTaskOutcome, initiateBulkIssuesMove } from "./jiraClient";
 
 const issueMovePollPeriodMillis = 2000;
 
@@ -17,7 +17,8 @@ class IssueMoveController {
     issueKeys: string[],
     issueSearchInfo: IssueSearchInfo
   ): Promise<IssueMoveRequestOutcome> => {
-    const allProjectsSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+    // const allProjectsSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+    const allProjectsSearchInfo = await getProjectSearchInfo('');
     const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes();
     const destinationProject = allProjectsSearchInfo.values.find(project => project.id === destinationProjectId);
     if (destinationProject) {

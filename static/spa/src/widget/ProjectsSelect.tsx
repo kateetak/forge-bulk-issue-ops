@@ -1,68 +1,82 @@
 import React, { useEffect, useState } from 'react';
 import { Label } from '@atlaskit/form';
-import { CheckboxSelect } from '@atlaskit/select';
+import Select from '@atlaskit/select';
 import { Option } from '../types/Option'
 import { Project } from 'src/types/Project';
+import { getProjectSearchInfo } from 'src/controller/jiraClient';
 
 export type ProjectsSelectProps = {
   label: string;
   selectedProjects: Project[];
-  selectableProjects: Project[];
+  isMulti: boolean
   isDisabled?: boolean;
-  // projectInfo: ProjectSearchInfo;
+  filterProjects?: (projectsToFilter: Project[]) => Promise<Project[]>;
   onProjectsSelect: (selectedProject: Project[]) => Promise<void>;
 }
 
 const ProjectsSelect = (props: ProjectsSelectProps) => {
 
-  // const [projectInfo, setProjectInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
-  const [projectInfoRetrievalTime, setProjectInfoRetrievalTime] = useState<number>(0);
+  const [loadingOption, setLoadingOption] = useState<boolean>(false);
+  const [currentProjects, setCurrentProjects] = useState<Project[]>([]);
 
-  const refreshProjectInfo = async () => {
-    // const projectInfo = props.projectInfo;
-    // setProjectInfo(projectInfo);
-    setProjectInfoRetrievalTime(Date.now());
+  const onChange = async (selection: any): Promise<void> => {
+    // console.log(`ProjectsSelect.onChange: `, selectedOptions);
+    let selectedProjects: Project[] = [];
+    if (props.isMulti) {
+      const selectedOptions = selection as Option[];
+      for (const selectedOption of selectedOptions) {
+        const project = currentProjects.find(project => project.id === selectedOption.value);
+        if (project) {
+          selectedProjects.push(project);
+        }
+      }
+    } else {
+      const selectedOption = selection as Option;
+      const selectedProject = currentProjects.find(project => project.id === selectedOption.value);
+      selectedProjects = [selectedProject];
+    }
+    await props.onProjectsSelect(selectedProjects);  
   }
 
-  useEffect(() => {
-    refreshProjectInfo();
-  }, []);
+  const projectToOption = (project: Project): Option => {
+    const option: Option = {
+      label: `${project.name} (${project.key})`,
+      value: project.id,
+    };
+    return option;
+  }
 
-  const onChange = async (selectedOptions: Option[]): Promise<void> => {
-    // console.log(`ProjectsSelect.onChange: `, selectedOptions);
-    const selectedProjects: Project[] = [];
-    for (const selectedOption of selectedOptions) {
-      const project = props.selectableProjects.find(project => project.id === selectedOption.value);
-      if (project) {
-        selectedProjects.push(project);
+  const projectsToOptions = (projects: Project[]): Option[] => {
+    return projects.map(projectToOption);
+  }
+
+  const promiseOptions = async (inputValue: string): Promise<Option[]> => {
+    console.log(`ProjectsSearhSelect: In promiseOptions(${inputValue})`);
+    setLoadingOption(true);
+    try {
+      let retrevedProjectsInfo = await getProjectSearchInfo(inputValue);
+      let retrevedProjects = retrevedProjectsInfo.values;
+      if (props.filterProjects) {
+        retrevedProjects = await props.filterProjects(retrevedProjects);
       }
-    }
-    await props.onProjectsSelect(selectedProjects);
+      setCurrentProjects(retrevedProjects);
+      return projectsToOptions(retrevedProjects);
+    } finally {
+      setLoadingOption(false);
+    } 
   }
 
   const renderSelect = () => {
-    // const options: Option[] = projectInfo.values.map((project: any) => ({
-    const options: Option[] = props.selectableProjects.map((project: any) => ({
-      label: project.name,
-      value: project.id,
-    }));
-    // console.log(`Project options = ${JSON.stringify(options, null, 2)}`);
-    // const defaultValue = options.find((option) => option.value === props.selectedProjectId);
-    const initiallySelectedOptions: Option[] = [];
-    for (const option of options) {
-      const selected = props.selectedProjects.find(selectableProject => selectableProject.id === option.value);
-      // console.log(`Checking option ${option.label} / ${option.value} against ${JSON.stringify(props.selectedIssueTypeIds)}. selected = ${selected}`);
-      if (selected) {
-        initiallySelectedOptions.push(option);
-      }
-    }
     return (
-      <CheckboxSelect
-        key={`projects-select-${projectInfoRetrievalTime}`}
+      <Select
         inputId="checkbox-select-example"
         testId="projects-select"
-        defaultValue={initiallySelectedOptions}
-        options={options}
+        isMulti={props.isMulti}
+        isRequired={true}
+        defaultOptions
+        cacheOptions
+        isDisabled={props.isDisabled}
+				loadOptions={promiseOptions}
         placeholder={props.label}
         onChange={onChange}
       />

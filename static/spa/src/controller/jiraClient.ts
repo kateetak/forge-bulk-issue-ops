@@ -1,8 +1,11 @@
 import { requestJira } from '@forge/bridge';
+import { getMockProjectSearchInfo } from 'src/mock/mockGetProjects';
+import { mockGetProjects } from 'src/model/frontendConfig';
 import { BulkIssueMoveRequestData } from "src/types/BulkIssueMoveRequestData";
 import { IssueMoveRequestOutcome } from "src/types/IssueMoveRequestOutcome";
 import { IssueSearchInfo } from 'src/types/IssueSearchInfo';
 import { IssueSearchParameters } from 'src/types/IssueSearchParameters';
+import { ProjectSearchInfo } from 'src/types/ProjectSearchInfo';
 
 export const getIssueSearchInfo = async (issueSearchParameters: IssueSearchParameters): Promise<IssueSearchInfo> => {
 
@@ -29,26 +32,20 @@ export const getIssueSearchInfo = async (issueSearchParameters: IssueSearchParam
 
 export const getIssueSearchInfoByJql = async (jql: string): Promise<IssueSearchInfo> => {
   const maxResults = 100;
+  // Note that the following limits the amount of fields to be returned for performance reasons, but
+  // also could result in certain fields in the Issue type not being populated if these fields do 
+  // not cover them all.
   const fields = 'summary,description,issuetype';
-  // const fields = '*all';
   const expand = 'renderedFields';
-  console.log(` * jql=${jql}`);
+  // console.log(` * jql=${jql}`);
   const paramsString = `jql=${encodeURIComponent(jql)}&maxResults=${maxResults}&fields=${fields}&expand=${expand}`;
-  console.log(` * paramsString = ${paramsString}`);
-
-
+  // console.log(` * paramsString = ${paramsString}`);
   const queryParams = new URLSearchParams(paramsString);
-
-
-  // route`/rest/api/3/issue/${issueKey}?${queryParams}`;
-
   const response = await requestJira(`/rest/api/3/search/jql?${queryParams}`, {
     headers: {
       'Accept': 'application/json'
     }
   });
-  
-  // console.log(`Response: ${response.status} ${response.statusText}`);
   const issuesSearchInfo = await response.json();
   // console.log(`issuesSearchInfo: ${JSON.stringify(issuesSearchInfo, null, 2)}`);
   return issuesSearchInfo;
@@ -81,17 +78,22 @@ export const getLabelsInfo = async () => {
   return labels;
 }
 
-export const getProjectSearchInfo = async () => {
-  const response = await requestJira(`/rest/api/3/project/search`, {
-    headers: {
-      'Accept': 'application/json'
-    }
-  });
-  
-  // console.log(`Response: ${response.status} ${response.statusText}`);
-  const projects = await response.json();
-  // console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
-  return projects;
+// https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get
+export const getProjectSearchInfo = async (query: string = '', maxResults: number = 100): Promise<ProjectSearchInfo> => {
+  if (mockGetProjects) {
+    return await getMockProjectSearchInfo(query, maxResults);
+  } else {
+    const response = await requestJira(`/rest/api/3/project/search?query=${encodeURIComponent(query)}&maxResults=${maxResults}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    // console.log(`Response: ${response.status} ${response.statusText}`);
+    const projects = await response.json();
+    // console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
+    return projects;
+  }
 }
 
 export const initiateBulkIssuesMove = async (bulkIssueMoveRequestData: BulkIssueMoveRequestData): Promise<IssueMoveRequestOutcome> => {  

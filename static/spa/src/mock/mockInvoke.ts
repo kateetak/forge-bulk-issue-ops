@@ -1,7 +1,7 @@
 import { getIssueSearchInfo } from "./mockGetIssues";
 import { getIssueTypes } from "./mockGetIssueTypes";
 import { getLabelsInfo } from "./mockGetLabelsInfo";
-import { getProjectSearchInfo } from "./mockGetProjects";
+// import { getProjectSearchInfo } from "./mockGetProjects";
 import mockMoveIssues from "./mockMoveIssues";
 
 export const mockInvoke = async (method: string, args: any): Promise<any> => {
@@ -9,9 +9,11 @@ export const mockInvoke = async (method: string, args: any): Promise<any> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       // console.log(`Mock invoke called with method: "${method}", args:`, args);
-      if (method === 'getProjectSearchInfo') {
-        resolve(getProjectSearchInfo());
-      } else if (method === 'getIssueSearchInfo') {
+      // if (method === 'getProjectSearchInfo') {
+      //   resolve(getProjectSearchInfo());
+      // } else 
+      
+      if (method === 'getIssueSearchInfo') {
         const projectId = args.projectId;
         resolve(getIssueSearchInfo(projectId));
       } else if (method === 'getIssueTypes') {
