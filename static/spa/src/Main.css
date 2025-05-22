@@ -8,6 +8,14 @@ body {
   cursor: pointer;
 }
 
+.clip-text-300 {
+  /* This is used to clip text to a maximum of 200 pixels */
+  max-width: 300px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 div.warning-message {
   margin-left: auto;
   margin-right: auto;

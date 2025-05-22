@@ -1,6 +1,8 @@
 import { requestJira } from '@forge/bridge';
+import { getMockFieldConfigurationItems } from 'src/mock/mockGetMockFieldConfigurationItems';
+import { getMockFieldConfigurationSchemesForProjects } from 'src/mock/mockGetMockFieldConfigurationSchemesForProjects';
 import { getMockProjectSearchInfo } from 'src/mock/mockGetProjects';
-import { mockGetProjects } from 'src/model/frontendConfig';
+import { mockGetFieldConfigurationItems, mockGetFieldConfigurationSchemesForProjects, mockGetProjects } from 'src/model/frontendConfig';
 import { BulkIssueMoveRequestData } from "src/types/BulkIssueMoveRequestData";
 import { FieldConfigurationItem } from 'src/types/FieldConfigurationItem';
 import { FieldConfigurationItemsResponse } from 'src/types/FieldConfigurationItemsResponse';
@@ -147,6 +149,9 @@ export const getFieldConfigurationItemsForProjects = async (projectIds: string[]
       }
     }
     loadMoreItems = !projectsFieldConfigurationSchemeMappings.isLast;
+    // if (loadMoreItems) {
+
+    // }
     startAt += maxResultsPerPage;
   }
   return allFieldConfigurationItems;
@@ -158,22 +163,26 @@ export const getFieldConfigurationSchemesForProjects = async (
     startAt: number = 0,
     maxResults: number = 50
 ): Promise<ProjectsFieldConfigurationSchemeMappings> => {
-  let projectQueryArgs = '';
-  let nextSeparator = '';
-  for (const projectId of projectIds) {
-    projectQueryArgs += `${nextSeparator}projectId=${projectId}`;
-    nextSeparator = '&';
-  }
-  const response = await requestJira(`/rest/api/3/fieldconfigurationscheme/project?${projectQueryArgs}&startAt=${startAt}&maxResults=${maxResults}`, {
-    headers: {
-      'Accept': 'application/json'
+  if (mockGetFieldConfigurationSchemesForProjects) {
+    return await getMockFieldConfigurationSchemesForProjects(projectIds, startAt, maxResults);
+  } else {
+    let projectQueryArgs = '';
+    let nextSeparator = '';
+    for (const projectId of projectIds) {
+      projectQueryArgs += `${nextSeparator}projectId=${projectId}`;
+      nextSeparator = '&';
     }
-  });
- 
-  // console.log(`Response: ${response.status} ${response.statusText}`);
-  const outcome = await response.json();
-  console.log(`Project field configuration schemes: ${JSON.stringify(outcome, null, 2)}`);
-  return outcome;
+    const response = await requestJira(`/rest/api/3/fieldconfigurationscheme/project?${projectQueryArgs}&startAt=${startAt}&maxResults=${maxResults}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+   
+    // console.log(`Response: ${response.status} ${response.statusText}`);
+    const outcome = await response.json();
+    console.log(`Project field configuration schemes: ${JSON.stringify(outcome, null, 2)}`);
+    return outcome;  
+  }
 }
 
 export const getAllFieldConfigurationItems = async (fieldConfigurationId: string): Promise<FieldConfigurationItem[]> => {
@@ -197,16 +206,20 @@ export const getFieldConfigurationItems = async (
     fieldConfigurationId: string,
     startAt: number = 0,
     maxResults: number = 50): Promise<FieldConfigurationItemsResponse> => {
-  const response = await requestJira(`/rest/api/3/fieldconfiguration/${fieldConfigurationId}/fields?startAt=${startAt}&maxResults=${maxResults}`, {
-    headers: {
-      'Accept': 'application/json'
-    }
-  });
- 
-  // console.log(`Response: ${response.status} ${response.statusText}`);
-  const outcome = await response.json();
-  console.log(`Field configuration items: ${JSON.stringify(outcome, null, 2)}`);
-  return outcome;
+  if (mockGetFieldConfigurationItems) {
+    return await getMockFieldConfigurationItems(fieldConfigurationId, startAt, maxResults);
+  } else {
+      const response = await requestJira(`/rest/api/3/fieldconfiguration/${fieldConfigurationId}/fields?startAt=${startAt}&maxResults=${maxResults}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+  
+    // console.log(`Response: ${response.status} ${response.statusText}`);
+    const outcome = await response.json();
+    console.log(`Field configuration items: ${JSON.stringify(outcome, null, 2)}`);
+    return outcome;
+  }
 }
 
 

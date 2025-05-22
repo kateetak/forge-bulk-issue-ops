@@ -24,6 +24,7 @@ import { IssueMoveOutcomeResult } from './types/IssueMoveOutcomeResult';
 import JQLInputPanel from './widget/JQLInputPanel';
 import { getFieldConfigurationItemsForProjects, getIssueSearchInfo, getIssueSearchInfoByJql, getProjectSearchInfo } from './controller/jiraClient';
 import ProjectsSelect from './widget/ProjectsSelect';
+import { FieldConfigurationItem } from './types/FieldConfigurationItem';
 
 const showDebug = true;
 const implyAllIssueTypesWhenNoneAreSelected = true;
@@ -36,11 +37,19 @@ type DebugInfo = {
   issueTypes: IssueType[];
 }
 
-type MandatoryFieldsCompletionState = 'incomplete' | 'complete' | 'error';
+type MandatoryFieldsCompletionState = 'incomplete' | 'in-progress' | 'complete-error' | 'complete-success';
+type ValidationState = {
+  mandatoryFieldsCompletionState: MandatoryFieldsCompletionState;
+  mandatoryFieldsWithoutDefaults: FieldConfigurationItem[]
+}
+const nilValidationState: ValidationState = {
+  mandatoryFieldsCompletionState: 'incomplete',
+  mandatoryFieldsWithoutDefaults: []
+}
 
 type FilterMode = 'basic' | 'advanced';
 
-type MoveActivity = {
+type Activity = {
   taskId: string;
   description: string;
 }
@@ -69,12 +78,21 @@ const BulkMovePanel = () => {
   const [selectedIssueKeys, setSelectedIssueKeys] = useState<string[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
-  // const [currentIssueMoveTaskId, setCurrentIssueMoveTaskId] = useState<undefined | string>(undefined);
-  const [currentMoveActivity, setCurrentMoveActivity] = useState<undefined | MoveActivity>(undefined);
+  const [validationState, setValidationState] = useState<ValidationState>(nilValidationState);
+  const [currentValidationActivity, setCurrentValidationActivity] = useState<undefined | Activity>(undefined);
+  const [currentMoveActivity, setCurrentMoveActivity] = useState<undefined | Activity>(undefined);
   const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
   const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
   const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
+
+  const clearValidationState = () => {
+    setValidationState(nilValidationState);
+  }
+
+  const isValidationSatisfactory = () => {
+    return validationState.mandatoryFieldsCompletionState === 'complete-success';
+  }
 
   const retrieveAndSetDebugInfo = async (): Promise<void> => {
     const debugInfo: DebugInfo = {
@@ -181,6 +199,7 @@ const BulkMovePanel = () => {
     setAllIssuesSelected(allSelected);
     setIssueSearchInfo(newIssueSearchInfo);
     setIssueSearchInfoTime(Date.now());
+    clearValidationState();
   }
 
   const onBasicModeSearchIssues = async (projects: Project[], issueTypes: IssueType[], labels: string[]): Promise<void> => {
@@ -328,30 +347,39 @@ const BulkMovePanel = () => {
     }, 500);
   }
 
-  const checkMandatoryFieldsAreFilled = async (): Promise<MandatoryFieldsCompletionState> => {
+  const validateMandatoryFieldsAreFilled = async (): Promise<ValidationState> => {
     const projectIds: string[] = selectedFromProjects.map((project: Project) => {
       return project.id;
     })
-    setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Checking if mandatory fields are filled...'});
+    setCurrentValidationActivity({taskId: 'non-jira-activity', description: 'Checking if mandatory fields are filled...'});
     const fieldConfigurationItems = await getFieldConfigurationItemsForProjects(projectIds);
-    const mandatoryFieldConfigurationItems = fieldConfigurationItems.filter((fieldConfigurationItem: any) => {
-      return fieldConfigurationItem.required;
+    const mandatoryFieldConfigurationItems = fieldConfigurationItems.filter((fieldConfigurationItem: FieldConfigurationItem) => {
+      return fieldConfigurationItem.isRequired;
     });
-    const mandatoryFieldsCompletionState: MandatoryFieldsCompletionState =
-      mandatoryFieldConfigurationItems.length > 0 ? 'incomplete' : 'complete';
-    setCurrentMoveActivity(undefined);
-    return mandatoryFieldsCompletionState;
+    const validationState: ValidationState = {
+      mandatoryFieldsCompletionState: mandatoryFieldConfigurationItems.length > 0 ? 'complete-error' : 'complete-success',
+      mandatoryFieldsWithoutDefaults: mandatoryFieldConfigurationItems
+    }
+    return validationState;
+
+    // const mandatoryFieldsCompletionState: MandatoryFieldsCompletionState =
+    //   mandatoryFieldConfigurationItems.length > 0 ?'complete-' : 'complete';
+    // setCurrentValidationActivity(undefined);
+    // return mandatoryFieldsCompletionState;
+  }
+
+  const onValidateMove = async (): Promise<void> => {
+    // Step 1: Check for mandatory fields...
+    const validationState = await validateMandatoryFieldsAreFilled();
+    setValidationState(validationState);
+    if (validationState.mandatoryFieldsCompletionState === 'complete-error') {
+      setMainWarningMessage('This request can not be completed since there are mandatory fields.');
+      // return;
+    }
   }
 
   const onMoveIssues = async (): Promise<void> => {
-    // Step 1: Check for mandatory fields...
-    const mandatoryFieldsCompletionState = await checkMandatoryFieldsAreFilled();
-    if (mandatoryFieldsCompletionState === 'incomplete') {
-      setMainWarningMessage('This request can not be completed since there are mandatory fields.');
-      return;
-    }
-
-    // Step 2: Initiate the move request...
+    // Step 1: Initiate the move request...
     const destinationProjectId: string = selectedToProject.id;
     const issueKeys = selectedIssueKeys;
     setIssueMoveRequestOutcome(undefined);
@@ -365,11 +393,11 @@ const BulkMovePanel = () => {
     setCurrentMoveActivity(undefined);
     console.log(`BulkMovePanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
 
-    // Step 3: Start polling for the outcome...
+    // Step 2: Start polling for the outcome...
     setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for move outcome...'});
     pollPollMoveOutcome(initiateOutcome.taskId);
 
-    // Step 3: (now redundant since we switched to the polling approach) Wait for the outcome...
+    // Step 2: (now redundant since we switched to the polling approach) Wait for the outcome...
     // setIssueMoveRequestOutcome(initiateOutcome);
     // if (initiateOutcome.statusCode === 201 && initiateOutcome.taskId) {
     //   setCurrentIssueMoveTaskId(initiateOutcome.taskId);
@@ -540,13 +568,13 @@ const BulkMovePanel = () => {
     );
   }
 
-  const renderIssueMoveLoading = () => {
-    if (currentMoveActivity) {
+  const renderActivityIndicator = (activity: Activity) => {
+    if (activity) {
       // https://mui.com/material-ui/api/linear-progress/
       const progressPercent = issueMoveOutcome ? issueMoveOutcome.progress : 0;
       return (
         <div>
-          <Label htmlFor={''}>{currentMoveActivity.description}</Label>
+          <Label htmlFor={''}>{activity.description}</Label>
           <LinearProgress variant="determinate" value={progressPercent} color="secondary" />
         </div>
       );
@@ -630,7 +658,6 @@ const BulkMovePanel = () => {
       </div>
     );
     const renderedIssues = hasIssues ? issueSearchInfo.issues.map((issue: Issue) => {
-      // const issueIsInSelectedFromProject = selectedFromProject && issue.key.startsWith(`${selectedFromProject.key}-`);
       const issueIsInSelectedFromProject = true;
       return (
         <div 
@@ -652,7 +679,7 @@ const BulkMovePanel = () => {
           <div key={`issue-id-type-${issue.key}-${issue.fields.issuetype.id}`} className={`issue-summary-panel ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
             <Lozenge appearance="inprogress">{issue.fields.issuetype.name}</Lozenge>
           </div>
-          <div key={`issue-${issue.key}`} className={`issue-summary-panel ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
+          <div key={`issue-${issue.key}`} className={`issue-summary-panel clip-text-300 ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
             {issue.key}: {issue.fields.summary}
           </div>
         </div>
@@ -674,8 +701,46 @@ const BulkMovePanel = () => {
     );
   }
 
+  const renderValidationInformationPanel = () => {
+    if (validationState.mandatoryFieldsCompletionState === 'complete-error' && validationState.mandatoryFieldsWithoutDefaults.length > 0) {
+      const renderedMandatoryFieldsWithoutDefaults = validationState.mandatoryFieldsWithoutDefaults.map((fieldConfigurationItem: FieldConfigurationItem) => {
+        return (
+          <li key={`mandatory-field-${fieldConfigurationItem.id}`}>
+            {fieldConfigurationItem.description}
+          </li>
+        );
+      });
+      return (
+        <div>
+          <div className="warning-message" style={{marginTop: '10px'}}>
+            <h4>Mandatory fields need to be filled</h4>
+          </div>
+          <ul>
+            {renderedMandatoryFieldsWithoutDefaults}
+          </ul>
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  const renderStartValidationButton = () => {
+    const allowValidation = selectedToProject && selectedToProject.id && selectedIssueKeys.length > 0;
+    const buttonEnabled = !currentMoveActivity && allowValidation;
+    return (
+      <Button
+        appearance={buttonEnabled ? 'primary' : 'default'}
+        isDisabled={!buttonEnabled}
+        onClick={onValidateMove}
+      >
+        Validate request
+      </Button>
+    );
+  }
+
   const renderStartMoveButton = () => {
-    const allowMove = selectedToProject && selectedToProject.id && selectedIssueKeys.length > 0;
+    const allowMove = isValidationSatisfactory() && selectedToProject && selectedToProject.id && selectedIssueKeys.length > 0;
     const buttonEnabled = !currentMoveActivity && allowMove;
     return (
       <Button
@@ -701,16 +766,33 @@ const BulkMovePanel = () => {
     );
   }
 
-  const renderMoveActivityPanel = () => {
+  const renderValidatePanel = () => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
           <h3>Step 4</h3>
+          <h4>Validate</h4>
+          <FormSection>
+            {renderStartValidationButton()}
+          </FormSection>
+          {renderActivityIndicator(currentValidationActivity)}
+          {renderValidationInformationPanel()}
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
+  const renderMovePanel = () => {
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 5</h3>
           <h4>Move issues</h4>
           <FormSection>
             {renderStartMoveButton()}
           </FormSection>
-          {renderIssueMoveLoading()}
+          {renderActivityIndicator(currentMoveActivity)}
           {renderIssueMoveRequestOutcome()}
           {renderIssueMoveOutcome()}
           {renderFlexboxEqualWidthGrowPanel()}
@@ -801,7 +883,8 @@ const BulkMovePanel = () => {
         {renderFilterPanel()}
         {renderIssuesPanel()}
         {renderTargetPanel()}
-        {renderMoveActivityPanel()}
+        {renderValidatePanel()}
+        {renderMovePanel()}
       </div>
       {renderDebugPanel()}
     </div>
