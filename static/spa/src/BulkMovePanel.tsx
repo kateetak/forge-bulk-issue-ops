@@ -348,11 +348,12 @@ const BulkMovePanel = () => {
   }
 
   const validateMandatoryFieldsAreFilled = async (): Promise<ValidationState> => {
-    const projectIds: string[] = selectedFromProjects.map((project: Project) => {
-      return project.id;
-    })
+    // const projectIdsToCheck: string[] = selectedFromProjects.map((project: Project) => {
+    //   return project.id;
+    // })
+    const projectIdsToCheck: string[] = [selectedToProject.id];
     setCurrentValidationActivity({taskId: 'non-jira-activity', description: 'Checking if mandatory fields are filled...'});
-    const fieldConfigurationItems = await getFieldConfigurationItemsForProjects(projectIds);
+    const fieldConfigurationItems = await getFieldConfigurationItemsForProjects(projectIdsToCheck);
     const mandatoryFieldConfigurationItems = fieldConfigurationItems.filter((fieldConfigurationItem: FieldConfigurationItem) => {
       return fieldConfigurationItem.isRequired;
     });
@@ -361,11 +362,6 @@ const BulkMovePanel = () => {
       mandatoryFieldsWithoutDefaults: mandatoryFieldConfigurationItems
     }
     return validationState;
-
-    // const mandatoryFieldsCompletionState: MandatoryFieldsCompletionState =
-    //   mandatoryFieldConfigurationItems.length > 0 ?'complete-' : 'complete';
-    // setCurrentValidationActivity(undefined);
-    // return mandatoryFieldsCompletionState;
   }
 
   const onValidateMove = async (): Promise<void> => {
