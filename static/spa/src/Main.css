@@ -4,6 +4,10 @@ body {
   padding: 0px;
 }
 
+.clickable {
+  cursor: pointer;
+}
+
 div.warning-message {
   margin-left: auto;
   margin-right: auto;

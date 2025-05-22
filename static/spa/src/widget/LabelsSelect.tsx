@@ -9,7 +9,6 @@ export type LabelSelectProps = {
   allowMultiple: boolean;
   selectedLabel?: string;
   selectedLabels?: string[],
-  invoke: any;
   onLabelsSelect: (selectedLabels: string[]) => Promise<void>;
 }
 
@@ -21,7 +20,6 @@ const LabelSelect = (props: LabelSelectProps) => {
   const [labelInfoRetrievalTime, setLabelInfoRetrievalTime] = useState<number>(0);
 
   const refreshLabelInfo = async () => {
-    // const labelInfo = await props.invoke('getLabelsInfo', { example: 'my-invoke-variable' });
     const labelInfo = await getLabelsInfo();
     setLabelInfo(labelInfo);
     setLabelInfoRetrievalTime(Date.now());

@@ -6,7 +6,7 @@ class IssueTypesCache {
   cachedIssueTypes: IssueType[] = [];
 
   // TODO: Implement memoization
-  getissueTypes = async (invoke: any): Promise<IssueType[]> => {
+  getissueTypes = async (): Promise<IssueType[]> => {
     const cachKey = `issue-types`;
     if (this.cachedIssueTypes.length === 0) {
       // this.cachedIssueTypes = await invoke('getIssueTypes');

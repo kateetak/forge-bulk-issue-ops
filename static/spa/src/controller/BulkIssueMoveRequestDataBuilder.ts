@@ -1,4 +1,9 @@
-import { BulkIssueMoveRequestData, ProjectIssueTypClassification, TargetClassification, TargetMandatoryField } from "src/types/BulkIssueMoveRequestData";
+import {
+  BulkIssueMoveRequestData,
+  ProjectIssueTypClassification,
+  TargetClassification,
+  TargetMandatoryField
+} from "src/types/BulkIssueMoveRequestData";
 
 export class BulkIssueMoveRequestDataBuilder {
 
@@ -19,6 +24,31 @@ export class BulkIssueMoveRequestDataBuilder {
 
 }
 
+export class TargetMandatoryFieldBuilder {
+
+  targetMandatoryFields: TargetMandatoryField[] = [];
+
+  addField = (fieldName, fieldValue: any): TargetMandatoryFieldBuilder => {
+    let fields: any = undefined;
+    if (this.targetMandatoryFields.length === 0) {
+      fields = {};
+      const targetMandatoryField: TargetMandatoryField = {
+        fields: fields
+      }
+      this.targetMandatoryFields.push(targetMandatoryField);
+    } else {
+      fields = this.targetMandatoryFields[0].fields;
+    }
+    fields[fieldName] = fieldValue;
+    return this;
+  }
+
+  build = (): TargetMandatoryField[] => {
+    return this.targetMandatoryFields;
+  }
+
+}
+
 export class ProjectIssueTypeClassificationBuilder {
 
   classification: ProjectIssueTypClassification = {
@@ -26,7 +56,8 @@ export class ProjectIssueTypeClassificationBuilder {
     inferFieldDefaults: true,
     inferStatusDefaults: true,
     inferSubtaskTypeDefault: true,
-    issueIdsOrKeys: []
+    issueIdsOrKeys: [],
+    targetMandatoryFields: [],
   };
 
   addIssueIdOrKey = (issueIdOrKey: string): ProjectIssueTypeClassificationBuilder => {
@@ -61,6 +92,21 @@ export class ProjectIssueTypeClassificationBuilder {
 
   setTargetMandatoryFields = (targetMandatoryFields: TargetMandatoryField[]): ProjectIssueTypeClassificationBuilder => {
     this.classification.targetMandatoryFields = targetMandatoryFields;
+    return this;
+  }
+
+  addTargetMandatoryField = (fieldName, fieldValue: any): ProjectIssueTypeClassificationBuilder => {
+    let fields: any = undefined;
+    if (this.classification.targetMandatoryFields.length === 0) {
+      fields = {};
+      const targetMandatoryField: TargetMandatoryField = {
+        fields: fields
+      }
+      this.classification.targetMandatoryFields.push(targetMandatoryField);
+    } else {
+      fields = this.classification.targetMandatoryFields[0].fields;
+    }
+    fields[fieldName] = fieldValue;
     return this;
   }
 

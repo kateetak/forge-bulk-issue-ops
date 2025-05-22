@@ -13,13 +13,12 @@ const issueMovePollPeriodMillis = 2000;
 class IssueMoveController {
 
   initiateMove = async (
-    invoke: any,
     destinationProjectId: string,
     issueKeys: string[],
     issueSearchInfo: IssueSearchInfo
   ): Promise<IssueMoveRequestOutcome> => {
-    const allProjectsSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(invoke);
-    const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(invoke);
+    const allProjectsSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+    const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes();
     const destinationProject = allProjectsSearchInfo.values.find(project => project.id === destinationProjectId);
     if (destinationProject) {
       const bulkIssueMoveRequestDataBuilder = new BulkIssueMoveRequestDataBuilder();
@@ -62,7 +61,7 @@ class IssueMoveController {
     }
   }
 
-  pollMoveProgress = async (invoke: any, taskId: string): Promise<TaskOutcome> => {
+  pollMoveProgress = async (taskId: string): Promise<TaskOutcome> => {
     const params = {
       taskId: taskId,
     }
@@ -74,7 +73,7 @@ class IssueMoveController {
   awaitMoveCompletion = async (invoke: any, taskId: string): Promise<TaskOutcome> => {
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
-        const issueMoveOutcome = await this.pollMoveProgress(invoke, taskId);
+        const issueMoveOutcome = await this.pollMoveProgress(taskId);
         if (issueMoveOutcome) {
           // console.log(` * Found issueMoveOutcome for taskId ${taskId}`);
           resolve(issueMoveOutcome);

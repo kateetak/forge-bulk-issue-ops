@@ -10,7 +10,6 @@ export type IssueTypesSelectProps = {
   label: string;
   selectedIssueTypeIds: string[];
   selectableIssueTypes: IssueType[];
-  invoke: any;
   onIssueTypesSelect: (selectedIssueTypes: IssueType[]) => Promise<void>;
 }
 
@@ -20,7 +19,7 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
 
   const retrieveProjects = async () => {
-    const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo(props.invoke);
+    const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
     setAllProjects(projectSearchInfo.values);
   }
 

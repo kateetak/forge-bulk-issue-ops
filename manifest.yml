@@ -4,7 +4,16 @@ modules:
       resource: main
       resolver:
         function: my-resolver
-      title: Custom Bulk Move Issues
+      title: Bulk Issues Operations
+      pages:
+        - title: About Bulk Operations
+          route: /
+        - title: Bulk Move Issues
+          route: move
+        - title: Bulk Edit Issues
+          route: edit
+        - title: Bulk Import Issues
+          route: import
   function:
     - key: my-resolver
       handler: index.handler
