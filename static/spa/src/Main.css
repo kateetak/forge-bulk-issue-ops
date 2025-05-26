@@ -8,6 +8,11 @@ body {
   cursor: pointer;
 }
 
+.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .clip-text-300 {
   /* This is used to clip text to a maximum of 200 pixels */
   max-width: 300px !important;
@@ -42,10 +47,15 @@ div.bulk-move-main-panel > div {
   padding: 10px;
   flex-grow: 1;
   background-color: #fff;
+  overflow-y: auto;
 }
 
 div.bulk-move-main-panel > div > div {
-  max-height: 600px
+  max-height: 600px;
+}
+
+div.bulk-move-main-panel > div > div > div {
+  overflow-y: none;
 }
 
 div.flex-box-equal-width-grow-panel {

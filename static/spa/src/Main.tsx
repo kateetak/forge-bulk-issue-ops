@@ -5,21 +5,6 @@ import BulkMovePanel from "./panel/BulkMovePanel";
 import BulkEditPanel from "./panel/BulkEditPanel";
 import BulkImportPanel from "./panel/BulkImportPanel";
 
-function Link({ to, children }) {
-  const navigate = useNavigate();
-  return (
-    <a
-      href={to}
-      onClick={(event) => {
-        event.preventDefault();
-        navigate(to);
-      }}
-    >
-      {children}
-    </a>
-  );
-}
-
 export type HomeProps = {
   history: any;
 }
@@ -31,8 +16,6 @@ const Home = (props: HomeProps) => {
   const renderMainPanel = (path: string, title: string, description: string) => {
     return (
       <div className="padding-panel" onClick={() => {
-        // router.navigate(`${path}`);
-        // router.navigate({target: 'module', moduleKey: 'forge-custom-bulk-move-issues-page'});
         props.history.push(`/${path}`);
       }}>
         <div className="content-panel">
@@ -99,7 +82,6 @@ const Main = () => {
         >
           <Routes>
             <Route path="/" element={<Home history={history} />}></Route>
-            {/* <Route path="/" element={<Main />}></Route> */}
             <Route path="/move" element={<BulkMovePanel />}></Route>
             <Route path="/edit" element={<BulkEditPanel />}></Route>
             <Route path="/import" element={<BulkImportPanel />}></Route>

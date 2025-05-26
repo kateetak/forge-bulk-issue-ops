@@ -6,7 +6,7 @@ modules:
         function: my-resolver
       title: Bulk Issues Operations
       pages:
-        - title: About Bulk Operations
+        - title: About Bulk Issue Operations
           route: /
         - title: Bulk Move Issues
           route: move
@@ -14,8 +14,6 @@ modules:
           route: edit
         - title: Bulk Import Issues
           route: import
-        - title: Test
-          route: test
   function:
     - key: my-resolver
       handler: index.handler

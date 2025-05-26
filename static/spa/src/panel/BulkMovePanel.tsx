@@ -8,6 +8,7 @@ import Lozenge from '@atlaskit/lozenge';
 import IssueTypesSelect from '../widget/IssueTypesSelect';
 import { IssueType } from '../types/IssueType';
 import { IssueSearchInfo } from '../types/IssueSearchInfo';
+import { FlagOptions, invoke, showFlag } from '@forge/bridge';
 import { Issue } from '../types/Issue';
 import { LinearProgress } from '@mui/material';
 import { LoadingState } from '../types/LoadingState';
@@ -31,6 +32,7 @@ import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFie
 import { IssueSelectionPanel } from './IssueSelectionPanel';
 import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
+import { taskStatusPollPeriodMillis } from 'src/model/config';
 
 const showDebug = false;
 const implyAllIssueTypesWhenNoneAreSelected = true;
@@ -85,6 +87,7 @@ const BulkMovePanel = () => {
   const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
   const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
   const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
+  const [lastMoveCompletionTaskId, setLastMoveCompletionTaskId] = useState<string>('none');
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
 
   const clearFieldMappingsState = () => {
@@ -128,63 +131,9 @@ const BulkMovePanel = () => {
     }
   }, []);
 
-  // const computeToProjectInfo = async (selectedFromProjects: Project[], selectedIssueTypes: IssueType[]): Promise<ProjectSearchInfo> => {
-  //   // console.log(`BulkMovePanel: computeToProjectInfo:`);
-  //   if (selectedIssueTypes.length === 0) {
-  //     console.warn(`BulkMovePanel: computeToProjectInfo: return nilProjectSearchInfo() since no issue type is selected.`);
-  //     return nilProjectSearchInfo();
-  //   } else {
-  //     // console.log(`BulkMovePanel: computeToProjectInfo: selectedIssueTypes: ${JSON.stringify(selectedIssueTypes, null, 2)}`);
-  //     const subjectIssueType: IssueType = selectedIssueTypes.length ? selectedIssueTypes[0] : undefined;
-  //     // const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
-  //     const projectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
-  //     const projectSearchInfoMinusSelectedFromProject: ProjectSearchInfo = jiraUtil.removeProjectsFromSearchInfo(
-  //       selectedFromProjects, projectSearchInfo); 
-  //     const filteredProjects = await jiraUtil.determineProjectsWithIssueTypes(
-  //       subjectIssueType,
-  //       projectSearchInfoMinusSelectedFromProject.values,
-  //       [subjectIssueType]);
-  //     const filteredProjectSearchInfo: ProjectSearchInfo = {
-  //       maxResults: filteredProjects.length, // e.g. 4,
-  //       startAt: 0,
-  //       total: filteredProjects.length,
-  //       isLast: projectSearchInfo.isLast,
-  //       values: filteredProjects,
-  //     }
-  //     // console.log(`BulkMovePanel: computeToProjectInfo: computed filteredProjectSearchInfo: ${JSON.stringify(filteredProjectSearchInfo, null, 2)}`);
-  //     return filteredProjectSearchInfo;
-  //   }
-  // }
-
   const filterProjectsForToSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
-    // const allowableToProjects = await moveRuleEnforcer.computeToProjectInfo(selectedFromProjects, selectableIssueTypes);
     const allowableToProjects = await moveRuleEnforcer.filterTargetProjects(selectedIssues, projectsToFilter);
     return allowableToProjects;
-  }
-
-  const computeToProjectBasedOnJQlResults = async (issueSearchInfo: IssueSearchInfo): Promise<void> => {
-    const allProjectSearchInfo: ProjectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
-    // const projectsFromIssueSearchResults: Project[] = []
-    // for (const issue of issueSearchInfo.issues) {
-    //   const project: Project = allProjectSearchInfo.values.find((project: Project) => {
-    //     return issue.key.startsWith(`${project.key}-`);
-    //   })
-    //   projectsFromIssueSearchResults.push(project);
-    // }
-    // const uniqueProjects = Array.from(new Set(projectsFromIssueSearchResults));
-
-    // const allowedTargetProjects = moveRuleEnforcer.determineAllowedTargetProjectsForSelectedIssues(issueSearchInfo.issues);
-
-
-    // const allowedTargetProjects = await moveRuleEnforcer.filterTargetProjects(issueSearchInfo.issues, allProjectSearchInfo.values);
-
-    // // const newlySelectedProjects: Project[] = allowedTargetProjects.length === 0 ? [] : allowedTargetProjects;
-    // // setSelectedFromProjects(newlySelectedProjects);
-    // // setSelectedFromProjectsTime(Date.now());
-    // const toProjectSearchInfo = await computeToProjectInfo(newlySelectedProjects, selectedIssueTypes);
-    // setEligibleToProjectSearchInfo(toProjectSearchInfo);
-    // setEligibleToProjectSearchInfoTime(Date.now());
-    // await updateToProjectInfo(newlySelectedProjects, selectedIssueTypes);
   }
 
   const updateAllProjectInfo = async (): Promise<void> => {
@@ -194,27 +143,7 @@ const BulkMovePanel = () => {
     setLastDataLoadTime(Date.now());
   }
 
-  const updateToProjectInfo = async (selectedFromProjects: Project[], selectedIssueTypes: IssueType[]): Promise<void> => {
-    // const toProjectSearchInfo = await moveRuleEnforcer.computeToProjectInfo(selectedFromProjects, selectedIssueTypes);
-    // const toProjectSearchInfo = await moveRuleEnforcer.computeToProjectInfo(selectedIssues, selectedFromProjects);
-    // setEligibleToProjectSearchInfo(toProjectSearchInfo);
-    // setEligibleToProjectSearchInfoTime(Date.now());
-  }
-
-  // const issueSearchInfoToMap = (issueSearchInfo: ) => {
-
-  // }
-
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
-    // console.log(` * allSelected = ${allSelected}`);
-    // const allIssueKeys: string[] = [];
-    // if (allSelected) {
-    //   for (const issue of newIssueSearchInfo.issues) {
-    //     allIssueKeys.push(issue.key);
-    //   }  
-    // }
-    // // console.log(` * setting allIssueKeys to ${JSON.stringify(allIssueKeys)}`);
-    // setSelectedIssueKeys(allIssueKeys);
     setSelectedIssues(newIssueSearchInfo.issues);
     targetMandatoryFieldsProvider.setSelectedIssues(newIssueSearchInfo.issues);
 
@@ -226,6 +155,7 @@ const BulkMovePanel = () => {
   }
 
   const onBasicModeSearchIssues = async (projects: Project[], issueTypes: IssueType[], labels: string[]): Promise<void> => {
+    setIssueMoveOutcome(undefined);
     const noIssues = nilIssueSearchInfo();
     onIssuesLoaded(true, noIssues);
     if (projects.length === 0) {
@@ -238,10 +168,6 @@ const BulkMovePanel = () => {
           issueTypes: issueTypes,
           labels: labels
         }
-        // const params = {
-        //   issueSearchParameters: issueSearchParameters
-        // }
-        // const issueSearchInfo = await props.invoke('getIssueSearchInfo', params) as IssueSearchInfo;
         const issueSearchInfo = await jiraDataModel.getIssueSearchInfo(issueSearchParameters) as IssueSearchInfo;
         if (issueSearchInfo.errorMessages && issueSearchInfo.errorMessages.length) {
           const joinedErrors = issueSearchInfo.errorMessages.join( );
@@ -266,7 +192,6 @@ const BulkMovePanel = () => {
       const issueSearchInfo = await jiraDataModel.getIssueSearchInfoByJql(jql) as IssueSearchInfo;
       onIssuesLoaded(true, issueSearchInfo);
       setIssueLoadingState('idle');
-      computeToProjectBasedOnJQlResults(issueSearchInfo);
     }, 0);
   }
 
@@ -275,12 +200,14 @@ const BulkMovePanel = () => {
   }
 
   const onExecuteJQL = async (jql: string): Promise<void> => {
+    setIssueMoveOutcome(undefined);
     setEnteredJql(jql);
     await onAdvancedModeSearchIssues(jql);
   }
 
   const onFromProjectsSelect = async (selectedProjects: Project[]): Promise<void> => {
     // console.log(`selectedFromProject: `, selectedProject);
+    setIssueMoveOutcome(undefined);
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
     await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
@@ -290,13 +217,11 @@ const BulkMovePanel = () => {
     // setSelectableIssueTypes(allIssueTypes);
     const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
     setSelectableIssueTypes(selectableIssueTypes);
-
-
-    await updateToProjectInfo(selectedProjects, selectedIssueTypes);
   }
 
   const onToProjectSelect = async (selectedProject: undefined | Project): Promise<void> => {
     console.log(`selectedToProject: `, selectedProject);
+    setIssueMoveOutcome(undefined);
     setSelectedToProject(selectedProject);
     setSelectedToProjectTime(Date.now());
     updateFieldMappingsIfNeeded(selectedProject);
@@ -304,22 +229,18 @@ const BulkMovePanel = () => {
 
   const onIssueTypesSelect = async (selectedIssueTypes: IssueType[]): Promise<void> => {
     // console.log(`selectedIssueTypes: `, selectedIssueTypes);
+    setIssueMoveOutcome(undefined);
     if (selectedIssueTypes.length === 0) {
       if (implyAllIssueTypesWhenNoneAreSelected) {
-        // const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
         setSelectedIssueTypes(allIssueTypes);
-        // targetMandatoryFieldsProvider.setSelectedIssueTypes(allIssueTypes);
       } else {
         setSelectedIssueTypes(selectedIssueTypes);
-        // targetMandatoryFieldsProvider.setSelectedIssueTypes(selectedIssueTypes);
       }
     } else {
       setSelectedIssueTypes(selectedIssueTypes);
-      // targetMandatoryFieldsProvider.setSelectedIssueTypes(selectedIssueTypes);
     }
     setSelectedIssueTypesTime(Date.now());
     await onBasicModeSearchIssues(selectedFromProjects, selectedIssueTypes, selectedLabels);
-    await updateToProjectInfo(selectedFromProjects, selectedIssueTypes);
   }
 
   const onLabelsSelect = async (selectedLabels: string[]): Promise<void> => {
@@ -329,81 +250,29 @@ const BulkMovePanel = () => {
     await onBasicModeSearchIssues(selectedFromProjects, selectedIssueTypes, selectedLabels);
   }
 
-  // const onToggleAllIssuesSelection = (event: any) => {
-  //   console.log(`Toggle all issues event: `, event);
-  //   const allSelected = !allIssuesSelected;
-  //   onIssuesLoaded(allSelected, issueSearchInfo);
-  // }
-
-  const issueKeyToIssue = (issueKey: string, issueSearchInfo: IssueSearchInfo): undefined | Issue => {
-    for (const issue of issueSearchInfo.issues) {
-      if (issue.key === issueKey) {
-        return issue;
-      }
-    }
-    return undefined;
-  }
-
-  const issueKeysToIssues = (issueKeys: string[], issueSearchInfo: IssueSearchInfo): Issue[] => {
-    const issues: Issue[] = [];
-    // TODO: Not very efficient
-    for (const issueKey of issueKeys) {
-      const issue = issueKeyToIssue(issueKey, issueSearchInfo);
-      if (issue) {
-        issues.push(issue);
-      } else {
-        console.warn(`BulkMovePanel: issueKeysToIssues: Could not find issue with key ${issueKey} in the search info.`);
-      }
-    }
-    return issues;
-  }
-
-  // const onToggleIssueSelection = (issueToToggle: Issue) => {
-  //   // console.log(`Toggling the selection of issue ${issueToToggle.key} where initially selected features is ${selectedIssueKeys.join()}...`);
-  //   // const newSelectedIssueKeys: string[] = [];
-  //   // for (const issue of issueSearchInfo.issues) {
-  //   //   const existingSelectedIssueKey = selectedIssueKeys.find((selectedIssueKey: string) => {
-  //   //     return selectedIssueKey === issue.key;
-  //   //   });
-  //   //   const issueIsSelected = !!existingSelectedIssueKey;
-  //   //   if (issue.key === issueToToggle.key) {
-  //   //     if (issueIsSelected) {
-  //   //       // don't add
-  //   //     } else {
-  //   //       newSelectedIssueKeys.push(issue.key);
-  //   //     }
-  //   //   } else if (issueIsSelected){
-  //   //     newSelectedIssueKeys.push(issue.key);
-  //   //   }
-  //   // }
-  //   // // console.log(` * newSelectedIssueKeys = ${newSelectedIssueKeys.join()}.`);
-  //   // setSelectedIssueKeys(newSelectedIssueKeys);
-
-
-  //   const newSelectedIssues: Issue[] = [];
-  //   for (const issue of issueSearchInfo.issues) {
-  //     const existingSelectedIssueKey = selectedIssues.find((selectedIssue: Issue) => {
-  //       return selectedIssue.key === issue.key;
-  //     });
-  //     const issueIsSelected = !!existingSelectedIssueKey;
-  //     if (issue.key === issueToToggle.key) {
-  //       if (issueIsSelected) {
-  //         // don't add
-  //       } else {
-  //         newSelectedIssues.push(issue);
-  //       }
-  //     } else if (issueIsSelected){
-  //       newSelectedIssues.push(issue);
-  //     }
-  //   }
-  //   setSelectedIssues(newSelectedIssues);
-  // }
-
   const pollPollMoveOutcome = async (taskId: string): Promise<void> => {
     if (taskId) {
       const outcome: TaskOutcome = await issueMoveController.pollMoveProgress(taskId);
       setIssueMoveOutcome(outcome);
       if (issueMoveController.isDone(outcome.status)) {
+        if (taskId !== lastMoveCompletionTaskId) {
+          setLastMoveCompletionTaskId(taskId);
+          console.log(`BulkMovePanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
+          const options: FlagOptions = {
+            id: taskId,
+            type: outcome.status === 'COMPLETE' ? 'info' : 'error',
+            title: outcome.status === 'COMPLETE' ? 'Move completed' : `Move ended with status ${outcome.status}`,
+            description: outcome.status === 'COMPLETE' ? 'The issues have been moved successfully.' : 'There were problems moving the issues.',
+            isAutoDismiss: outcome.status === 'COMPLETE',
+            actions: outcome.status === 'COMPLETE' ? [] : [{
+              text: 'Got it',
+              onClick: async () => {
+                flag.close();
+              },
+            }]
+          }
+          const flag = showFlag(options);
+        }
         setCurrentMoveActivity(undefined);
       } else {
         asyncPollMoveOutcome(taskId);
@@ -418,7 +287,7 @@ const BulkMovePanel = () => {
   const asyncPollMoveOutcome = async (taskId: string): Promise<void> => {
     setTimeout(async () => {
       await pollPollMoveOutcome(taskId);
-    }, 500);
+    }, taskStatusPollPeriodMillis);
   }
 
   const buildFieldMappingsState = async (selectedToProject: Project): Promise<FieldMappingsState> => {
@@ -681,13 +550,18 @@ const BulkMovePanel = () => {
     );
   }
 
-  const renderActivityIndicator = (activity: Activity) => {
-    if (activity) {
+  const renderFieldMappingIndicator = () => {
+    return null;
+  }
+
+  const renderIssueMoveActivityIndicator = () => {
+    if (currentMoveActivity || issueMoveOutcome) {
+      const description = currentMoveActivity ? currentMoveActivity.description : issueMoveOutcome ? issueMoveOutcome.status : 'No activity';
       // https://mui.com/material-ui/api/linear-progress/
       const progressPercent = issueMoveOutcome ? issueMoveOutcome.progress : 0;
       return (
         <div>
-          <Label htmlFor={''}>{activity.description}</Label>
+          <Label htmlFor={''}>{description}</Label>
           <LinearProgress variant="determinate" value={progressPercent} color="secondary" />
         </div>
       );
@@ -827,7 +701,7 @@ const BulkMovePanel = () => {
           <h3>Step 4</h3>
           <h4>Map field values</h4>
           {renderStartFieldMappingButton()}
-          {renderActivityIndicator(currentValidationActivity)}
+          {renderFieldMappingIndicator()}
           <FieldMappingPanel
             key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}`}
             issues={selectedIssues}
@@ -851,7 +725,9 @@ const BulkMovePanel = () => {
           <FormSection>
             {renderStartMoveButton()}
           </FormSection>
-          {renderActivityIndicator(currentMoveActivity)}
+          <FormSection>
+            {renderIssueMoveActivityIndicator()}
+          </FormSection>
           {renderIssueMoveRequestOutcome()}
           {renderIssueMoveOutcome()}
           {renderFlexboxEqualWidthGrowPanel()}
@@ -937,6 +813,7 @@ const BulkMovePanel = () => {
 
   return (
     <div>
+      <h3>Bulk Move Issues</h3>
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
         {renderFilterPanel()}

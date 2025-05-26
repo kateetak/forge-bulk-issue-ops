@@ -148,36 +148,38 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   const renderFieldMappingsState = () => {
     let fieldCount = 0;
     const renderedTable = (
-      <table>
-        <thead>
-          <tr>
-            <th>Issue Type</th>
-            <th>Field</th>
-            <th>Options</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from(props.fieldMappingsState.projectFieldMappings.issueTypesToMappings.entries()).map(([issueTypeId, fieldOptionMappings]) => {
-            const issueType = issueTypeIdsToTypesBeingMapped.get(issueTypeId);
-            if (issueType) {
-              return Array.from(fieldOptionMappings.fieldIdsToFieldMetadata.entries()).map(([fieldId, options]) => {
-                fieldCount++;
-                return (
-                  <tr key={`mapping-${issueTypeId}-${fieldId}`}>
-                    <td>{issueType.name}</td>
-                    <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
-                    <td>
-                      {renderFieldValuesEntryWidget(fieldId, issueType, options)}
-                    </td>
-                  </tr>
-                );
-              });
-            } else {
-              return null;
-            }
-          })}
-        </tbody>
-      </table>
+      <div>
+        <table >
+          <thead>
+            <tr>
+              <th>Issue Type</th>
+              <th>Field</th>
+              <th>Options</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(props.fieldMappingsState.projectFieldMappings.issueTypesToMappings.entries()).map(([issueTypeId, fieldOptionMappings]) => {
+              const issueType = issueTypeIdsToTypesBeingMapped.get(issueTypeId);
+              if (issueType) {
+                return Array.from(fieldOptionMappings.fieldIdsToFieldMetadata.entries()).map(([fieldId, options]) => {
+                  fieldCount++;
+                  return (
+                    <tr key={`mapping-${issueTypeId}-${fieldId}`}>
+                      <td>{issueType.name}</td>
+                      <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
+                      <td>
+                        {renderFieldValuesEntryWidget(fieldId, issueType, options)}
+                      </td>
+                    </tr>
+                  );
+                });
+              } else {
+                return null;
+              }
+            })}
+          </tbody>
+        </table>
+      </div>
     );
     if (fieldCount > 0) {
       return renderedTable;
