@@ -1,10 +1,10 @@
-import { TaskOutcome, TaskStatus } from "src/types/TaskOutcome";
+import { TaskOutcome, TaskStatus } from "../types/TaskOutcome";
 import { BulkIssueMoveRequestDataBuilder, ProjectIssueTypeClassificationBuilder } from "../controller/BulkIssueMoveRequestDataBuilder";
-import { IssueMoveRequestOutcome } from "src/types/IssueMoveRequestOutcome";
+import { IssueMoveRequestOutcome } from "../types/IssueMoveRequestOutcome";
 // import projectSearchInfoCache from "../model/projectSearchInfoCache";
-import { IssueType } from "src/types/IssueType";
-import { IssueSearchInfo } from "src/types/IssueSearchInfo";
-import { Issue } from "src/types/Issue";
+import { IssueType } from "../types/IssueType";
+import { IssueSearchInfo } from "../types/IssueSearchInfo";
+import { Issue } from "../types/Issue";
 
 const issueMovePollPeriodMillis = 2000;
 

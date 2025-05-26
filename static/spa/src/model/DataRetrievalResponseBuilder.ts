@@ -1,4 +1,4 @@
-import { DataRetrievalResponse } from "src/types/DataRetrievalResponse";
+import { DataRetrievalResponse } from "../types/DataRetrievalResponse";
 
 export class DataRetrievalResponseBuilder<T> {
 

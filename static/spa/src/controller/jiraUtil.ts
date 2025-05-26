@@ -1,6 +1,6 @@
-import { IssueType } from "src/types/IssueType";
-import { Project } from "src/types/Project";
-import { ProjectSearchInfo } from "src/types/ProjectSearchInfo";
+import { IssueType } from "../types/IssueType";
+import { Project } from "../types/Project";
+import { ProjectSearchInfo } from "../types/ProjectSearchInfo";
 
 class JiraUtil {
 

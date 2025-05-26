@@ -3,7 +3,7 @@ import {
   ProjectIssueTypClassification,
   TargetClassification,
   TargetMandatoryField
-} from "src/types/BulkIssueMoveRequestData";
+} from "../types/BulkIssueMoveRequestData";
 
 export class BulkIssueMoveRequestDataBuilder {
 

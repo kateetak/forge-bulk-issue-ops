@@ -1,4 +1,4 @@
-import { IssueSearchInfo } from "src/types/IssueSearchInfo"
+import { IssueSearchInfo } from "../types/IssueSearchInfo"
 
 export const nilIssueSearchInfo = (): IssueSearchInfo => {
   return {

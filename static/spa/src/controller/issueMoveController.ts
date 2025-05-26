@@ -1,12 +1,12 @@
-import { TaskOutcome, TaskStatus } from "src/types/TaskOutcome";
+import { TaskOutcome, TaskStatus } from "../types/TaskOutcome";
 import { BulkIssueMoveRequestDataBuilder, ProjectIssueTypeClassificationBuilder } from "./BulkIssueMoveRequestDataBuilder";
-import { IssueMoveRequestOutcome, OutcomeError } from "src/types/IssueMoveRequestOutcome";
-import { IssueType } from "src/types/IssueType";
-import { IssueSearchInfo } from "src/types/IssueSearchInfo";
-import { Issue } from "src/types/Issue";
-import jiraDataModel from "src/model/jiraDataModel";
-import { TargetMandatoryFields } from "src/types/TargetMandatoryField";
-import { InvocationResult } from "src/types/InvocationResult";
+import { IssueMoveRequestOutcome, OutcomeError } from "../types/IssueMoveRequestOutcome";
+import { IssueType } from "../types/IssueType";
+import { IssueSearchInfo } from "../types/IssueSearchInfo";
+import { Issue } from "../types/Issue";
+import jiraDataModel from "../model/jiraDataModel";
+import { TargetMandatoryFields } from "../types/TargetMandatoryField";
+import { InvocationResult } from "../types/InvocationResult";
 
 const issueMovePollPeriodMillis = 2000;
 

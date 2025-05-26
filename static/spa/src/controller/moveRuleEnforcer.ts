@@ -1,4 +1,4 @@
-import { allowTheTargetProjectToMatchAnyIssueSourceProject } from "src/model/config";
+import { allowTheTargetProjectToMatchAnyIssueSourceProject } from "../model/config";
 import { Issue } from "../types/Issue";
 import { Project } from "../types/Project";
 

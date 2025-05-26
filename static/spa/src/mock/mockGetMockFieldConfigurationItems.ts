@@ -1,5 +1,5 @@
-import { FieldConfigurationItem } from "src/types/FieldConfigurationItem";
-import { PageResponse } from "src/types/PageResponse";
+import { FieldConfigurationItem } from "../types/FieldConfigurationItem";
+import { PageResponse } from "../types/PageResponse";
 
 export const getMockFieldConfigurationItems = async (
   fieldConfigurationId: string,

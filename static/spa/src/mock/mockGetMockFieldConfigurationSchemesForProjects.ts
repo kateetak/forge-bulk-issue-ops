@@ -1,6 +1,6 @@
-import { PageResponse } from "src/types/PageResponse";
-import { ProjectCustomFieldContextMappings } from "src/types/ProjectCustomFieldContextMappings";
-import { ProjectsFieldConfigurationSchemeMapping } from "src/types/ProjectsFieldConfigurationSchemeMapping";
+import { PageResponse } from "../types/PageResponse";
+import { ProjectCustomFieldContextMappings } from "../types/ProjectCustomFieldContextMappings";
+import { ProjectsFieldConfigurationSchemeMapping } from "../types/ProjectsFieldConfigurationSchemeMapping";
 
 export const getMockFieldConfigurationSchemesForProjects = async (
   projectIds: string[],

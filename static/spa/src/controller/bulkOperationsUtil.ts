@@ -1,13 +1,9 @@
-import { Field } from "../types/Field";
 import jiraDataModel from "../model/jiraDataModel";
-import { ProjectsFieldConfigurationSchemeMapping } from "../types/ProjectsFieldConfigurationSchemeMapping";
-import { ProjectCustomFieldContextMappings } from "src/types/ProjectCustomFieldContextMappings";
-import { DataRetrievalResponse } from "src/types/DataRetrievalResponse";
-import { CustomFieldContextOption } from "src/types/CustomFieldContextOption";
-import { DataRetrievalResponseBuilder } from "src/model/DataRetrievalResponseBuilder";
-import { Project } from "src/types/Project";
-import { CustomFieldOption } from "src/types/CustomFieldOption";
-import { IssueTypeFieldOptionMappings, ProjectFieldOptionMappings } from "src/types/ProjectFieldOptionMappings";
+import { DataRetrievalResponse } from "../types/DataRetrievalResponse";
+import { DataRetrievalResponseBuilder } from "../model/DataRetrievalResponseBuilder";
+import { Project } from "../types/Project";
+import { CustomFieldOption } from "../types/CustomFieldOption";
+import { IssueTypeFieldOptionMappings, ProjectFieldOptionMappings } from "../types/ProjectFieldOptionMappings";
 
 
 export const findProjectByKey = async (projectKey: string): Promise<DataRetrievalResponse<Project>> => {

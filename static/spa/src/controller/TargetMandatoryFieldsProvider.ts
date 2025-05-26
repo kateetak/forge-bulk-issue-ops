@@ -1,4 +1,4 @@
-import { Issue } from "src/types/Issue";
+import { Issue } from "../types/Issue";
 import { CustomFieldOption } from "../types/CustomFieldOption";
 import { IssueType } from "../types/IssueType";
 import { IssueTypeFieldOptionMappings, ProjectFieldOptionMappings } from "../types/ProjectFieldOptionMappings";

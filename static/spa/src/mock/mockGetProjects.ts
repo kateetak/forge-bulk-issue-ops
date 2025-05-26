@@ -1,4 +1,4 @@
-import { Project } from "src/types/Project";
+import { Project } from "../types/Project";
 import { ProjectSearchInfo } from "../types/ProjectSearchInfo"
 
 const buildMockProjects = (query: string, maxResults: number): Project[] => {

@@ -1,7 +1,7 @@
 
 // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get
 
-import { IssueType } from "src/types/IssueType"
+import { IssueType } from "../types/IssueType"
 
 export const getIssueTypes = async (projectId: string) => {
   const allIssueTypes: IssueType[] = [

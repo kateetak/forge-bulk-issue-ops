@@ -1,4 +1,4 @@
-import { TaskOutcome } from "src/types/TaskOutcome";
+import { TaskOutcome } from "../types/TaskOutcome";
 
 
 class MockMoveIssues {

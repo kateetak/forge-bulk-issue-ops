@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { FormSection } from "@atlaskit/form";
-import { LoadingState } from "src/types/LoadingState";
+import { LoadingState } from "../types/LoadingState";
 import { LinearProgress } from '@mui/material';
 import Lozenge from "@atlaskit/lozenge";
 import Toggle from "@atlaskit/toggle";
 import { Radio } from '@atlaskit/radio';
-import { IssueSearchInfo } from "src/types/IssueSearchInfo";
-import { Issue } from "src/types/Issue";
+import { IssueSearchInfo } from "../types/IssueSearchInfo";
+import { Issue } from "../types/Issue";
 import SuccessIcon from '@atlaskit/icon/core/success';
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 

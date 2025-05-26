@@ -1,5 +1,5 @@
-import { Issue } from "src/types/Issue";
-import { IssueSearchInfo } from "src/types/IssueSearchInfo"
+import { Issue } from "../types/Issue";
+import { IssueSearchInfo } from "../types/IssueSearchInfo"
 
 export const getIssueSearchInfo = async (projectId: string): Promise<IssueSearchInfo> => {
   const issueA = {
