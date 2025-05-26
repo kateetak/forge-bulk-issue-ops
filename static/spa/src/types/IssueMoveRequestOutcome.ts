@@ -1,10 +1,10 @@
 
-export type Error = {
+export type OutcomeError = {
   message: string;
 }
 
 export type IssueMoveRequestOutcome = {
   statusCode: number;
   taskId?: string;
-  errors?: Error[];
+  errors?: OutcomeError[];
 }

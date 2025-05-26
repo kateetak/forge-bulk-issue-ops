@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Button from '@atlaskit/button/new';
 import { FormSection, Label } from '@atlaskit/form';
-import Textfield from '@atlaskit/textfield';
+// import Textfield from '@atlaskit/textfield';
+import TextArea from '@atlaskit/textarea';
 
 export type JQLInputPanelProps = {
   label: string;
@@ -18,7 +19,6 @@ const JQLInputPanel = (props: JQLInputPanelProps) => {
     // console.log(`JQLInputPanel.onChange: `, selectedOption);
     const newJql = event.target.value;
     setEditedJql(newJql);
-    // await props.onJQLChange(newJql);
   }
 
   const onExecuteJql = async (): Promise<void> => {
@@ -31,9 +31,11 @@ const JQLInputPanel = (props: JQLInputPanelProps) => {
     <>
       <FormSection>
         <Label htmlFor="jql-textfield">{props.label}</Label>
-        <Textfield
+        <TextArea
           id="jql-textfield"
           name="jql"
+          resize="vertical"
+          minimumRows={3}
           placeholder={props.placeholder}
           onChange={onChange}
         />

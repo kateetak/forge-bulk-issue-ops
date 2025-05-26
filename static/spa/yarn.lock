@@ -584,6 +584,20 @@
     "@babel/runtime" "^7.0.0"
     "@compiled/react" "^0.18.3"
 
+"@atlaskit/radio@^8.1.0":
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/@atlaskit/radio/-/radio-8.1.0.tgz#6d82ab1dddc881864198dd929594577eaffd46ba"
+  integrity sha512-hz8G0HFHYIDhy4ru0jPJx0MveHNc93eqEj4QH++v+901qHdQ2KR0j8JYNvM7vptcMCtHrkmoNQx20P0YsaFJmw==
+  dependencies:
+    "@atlaskit/analytics-next" "^11.0.0"
+    "@atlaskit/css" "^0.10.0"
+    "@atlaskit/ds-lib" "^4.0.0"
+    "@atlaskit/platform-feature-flags" "^1.1.0"
+    "@atlaskit/theme" "^18.0.0"
+    "@atlaskit/tokens" "^4.8.0"
+    "@babel/runtime" "^7.0.0"
+    "@compiled/react" "^0.18.3"
+
 "@atlaskit/react-select@^2.4.0":
   version "2.4.8"
   resolved "https://registry.yarnpkg.com/@atlaskit/react-select/-/react-select-2.4.8.tgz#75f8dbee4b08554e356e1f8c7f8d62965dcd1f51"

@@ -1,9 +1,9 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { router, NavigationTarget, view } from '@forge/bridge';
 import { Router, Route, Routes, useNavigate } from "react-router";
-import BulkMovePanel from "./BulkMovePanel";
-import BulkEditPanel from "./BulkEditPanel";
-import BulkImportPanel from "./BulkImportPanel";
+import BulkMovePanel from "./panel/BulkMovePanel";
+import BulkEditPanel from "./panel/BulkEditPanel";
+import BulkImportPanel from "./panel/BulkImportPanel";
 
 function Link({ to, children }) {
   const navigate = useNavigate();

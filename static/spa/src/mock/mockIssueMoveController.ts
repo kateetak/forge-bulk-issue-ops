@@ -2,7 +2,6 @@ import { TaskOutcome, TaskStatus } from "src/types/TaskOutcome";
 import { BulkIssueMoveRequestDataBuilder, ProjectIssueTypeClassificationBuilder } from "../controller/BulkIssueMoveRequestDataBuilder";
 import { IssueMoveRequestOutcome } from "src/types/IssueMoveRequestOutcome";
 // import projectSearchInfoCache from "../model/projectSearchInfoCache";
-import issueTypesCache from "src/model/issueTypesCache";
 import { IssueType } from "src/types/IssueType";
 import { IssueSearchInfo } from "src/types/IssueSearchInfo";
 import { Issue } from "src/types/Issue";

@@ -4,36 +4,6 @@ import { ProjectSearchInfo } from "src/types/ProjectSearchInfo";
 
 class JiraUtil {
 
-  removeProjectsFromSearchInfo = (projectsToRemove: Project[], projectSearchInfo: ProjectSearchInfo): ProjectSearchInfo => {
-    const filteredProjects = projectSearchInfo.values.filter(project => {
-      const foundProject = projectsToRemove.find(projectToRemove => projectToRemove.id === project.id);
-      if (foundProject) { 
-        return false;
-      }
-      return true;
-    });
-    const filteredProjectSearchInfo: ProjectSearchInfo = {
-      maxResults: 0,
-      startAt: 0,
-      total: filteredProjects.length,
-      isLast: true,
-      values: filteredProjects
-    }
-    return filteredProjectSearchInfo;
-  }
-
-  removeProjectFromSearchInfo = (projectToRemove: Project, projectSearchInfo: ProjectSearchInfo): ProjectSearchInfo => {
-    const filteredProjects = projectSearchInfo.values.filter(project => project.id !== projectToRemove.id);
-    const filteredProjectSearchInfo: ProjectSearchInfo = {
-      maxResults: 0,
-      startAt: 0,
-      total: filteredProjects.length,
-      isLast: true,
-      values: filteredProjects
-    }
-    return filteredProjectSearchInfo;
-  }
-
   filterProjectsIssueTypes = (projects: Project[], allIssueTypes: IssueType[]): IssueType[] => {
     const filteredIssueTypes = new Set<IssueType>();
     // const isTeamManagedProject = project.simplified;
@@ -87,10 +57,10 @@ class JiraUtil {
   }
 
   determineProjectsWithIssueTypes = async (subjectIssueType: IssueType, projects: Project[], issueTypes: IssueType[]): Promise<Project[]> => {
-    console.log(`determineProjectsWithIssueTypes:`);
-    console.log(` * subjectIssueType: ${JSON.stringify(subjectIssueType, null, 2)}`);
-    console.log(` * projects: ${JSON.stringify(projects, null, 2)}`);
-    console.log(` * issueTypes: ${JSON.stringify(issueTypes, null, 2)}`);
+    // console.log(`determineProjectsWithIssueTypes:`);
+    // console.log(` * subjectIssueType: ${JSON.stringify(subjectIssueType, null, 2)}`);
+    // console.log(` * projects: ${JSON.stringify(projects, null, 2)}`);
+    // console.log(` * issueTypes: ${JSON.stringify(issueTypes, null, 2)}`);
     const filteredProjects: Project[] = [];
     for (const project of projects) {
       if (this.isIssueTypeInProject(subjectIssueType, project, issueTypes, projects)) {

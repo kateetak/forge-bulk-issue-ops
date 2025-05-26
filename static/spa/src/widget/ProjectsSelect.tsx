@@ -3,7 +3,11 @@ import { Label } from '@atlaskit/form';
 import Select from '@atlaskit/select';
 import { Option } from '../types/Option'
 import { Project } from 'src/types/Project';
-import { getProjectSearchInfo } from 'src/controller/jiraClient';
+import jiraDataModel from 'src/model/jiraDataModel';
+
+/*
+  Select docs: https://atlassian.design/components/select/examples
+*/
 
 export type ProjectsSelectProps = {
   label: string;
@@ -51,10 +55,10 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
   }
 
   const promiseOptions = async (inputValue: string): Promise<Option[]> => {
-    console.log(`ProjectsSearhSelect: In promiseOptions(${inputValue})`);
+    // console.log(`ProjectsSearhSelect: In promiseOptions(${inputValue})`);
     setLoadingOption(true);
     try {
-      let retrevedProjectsInfo = await getProjectSearchInfo(inputValue);
+      let retrevedProjectsInfo = await jiraDataModel.pageOfProjectSearchInfo(inputValue);
       let retrevedProjects = retrevedProjectsInfo.values;
       if (props.filterProjects) {
         retrevedProjects = await props.filterProjects(retrevedProjects);

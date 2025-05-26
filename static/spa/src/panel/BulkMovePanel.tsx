@@ -1,0 +1,952 @@
+import React, { useEffect, useState } from 'react';
+import Button from '@atlaskit/button/new';
+import LabelSelect from '../widget/LabelsSelect';
+import { Project } from '../types/Project';
+import { FormSection, Label } from '@atlaskit/form';
+import Toggle from '@atlaskit/toggle';
+import Lozenge from '@atlaskit/lozenge';
+import IssueTypesSelect from '../widget/IssueTypesSelect';
+import { IssueType } from '../types/IssueType';
+import { IssueSearchInfo } from '../types/IssueSearchInfo';
+import { Issue } from '../types/Issue';
+import { LinearProgress } from '@mui/material';
+import { LoadingState } from '../types/LoadingState';
+import { ProjectSearchInfo } from '../types/ProjectSearchInfo';
+import { nilProjectSearchInfo } from '../model/nilProjectSearchInfo';
+import { nilIssueSearchInfo } from '../model/nilIssueSearchInfo';
+import { TaskOutcome } from '../types/TaskOutcome';
+import issueMoveController from '../controller/issueMoveController';
+import { IssueSearchParameters } from '../types/IssueSearchParameters';
+import { IssueMoveRequestOutcome } from '../types/IssueMoveRequestOutcome';
+import jiraUtil from '../controller/jiraUtil';
+import { IssueMoveOutcomeResult } from '../types/IssueMoveOutcomeResult';
+import JQLInputPanel from '../widget/JQLInputPanel';
+import ProjectsSelect from '../widget/ProjectsSelect';
+import jiraDataModel from '../model/jiraDataModel';
+import { DataRetrievalResponse } from '../types/DataRetrievalResponse';
+import { buildFieldOptionsForProject } from '../controller/bulkOperationsUtil';
+import { IssueTypeFieldOptionMappings, ProjectFieldOptionMappings } from '../types/ProjectFieldOptionMappings';
+import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
+import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
+import { IssueSelectionPanel } from './IssueSelectionPanel';
+import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
+import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
+
+const showDebug = false;
+const implyAllIssueTypesWhenNoneAreSelected = true;
+const autoShowFieldMappings = true;
+
+export type BulkMovePanelProps = {
+}
+
+type DebugInfo = {
+  projects: Project[];
+  issueTypes: IssueType[];
+}
+
+type FilterMode = 'basic' | 'advanced';
+
+type Activity = {
+  taskId: string;
+  description: string;
+}
+
+const BulkMovePanel = () => {
+
+  const [mainWarningMessage, setMainWarningMessage] = useState<string>('');
+  const [lastDataLoadTime, setLastDataLoadTime] = useState<number>(0);
+  const [filterMode, setFilterMode] = useState<FilterMode>('basic');
+  const [enteredJql, setEnteredJql] = useState<string>('');
+  const [allProjectSearchInfo, setAllProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
+  const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
+  const [allIssueTypes, setAllIssueTypes] = useState<IssueType[]>([]);
+  const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
+  // const [eligibleToProjectSearchInfo, setEligibleToProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
+  // const [eligibleToProjectSearchInfoTime, setEligibleToProjectSearchInfoTime] = useState<number>(0);
+  const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
+  const [selectedFromProjects, setSelectedFromProjects] = useState<Project[]>([]);
+  const [selectedFromProjectsTime, setSelectedFromProjectsTime] = useState<number>(0);
+  const [selectedToProject, setSelectedToProject] = useState<undefined | Project>(undefined);
+  const [selectedToProjectTime, setSelectedToProjectTime] = useState<number>(0);
+  const [selectedIssueTypes, setSelectedIssueTypes] = useState<IssueType[]>([]);
+  const [selectedIssueTypesTime, setSelectedIssueTypesTime] = useState<number>(0);
+  const [issueSearchInfo, setIssueSearchInfo] = useState<IssueSearchInfo>(nilIssueSearchInfo);
+  const [issueSearchInfoTime, setIssueSearchInfoTime] = useState<number>(0);
+  // const [allIssuesSelected, setAllIssuesSelected] = useState<boolean>(true);
+  const [selectedIssues, setSelectedIssues] = useState<Issue[]>([]);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
+  const [fieldMappingsState, setFieldMappingsState] = useState<FieldMappingsState>(nilFieldMappingsState);
+  const [targetMandatoryFieldsProvider, setTargetMandatoryFieldsProvider] = useState<TargetMandatoryFieldsProvider>(new TargetMandatoryFieldsProvider());
+  const [targetMandatoryFieldsProviderUpdateTime, setTargetMandatoryFieldsProviderUpdateTime] = useState<number>(0);
+  const [allDefaultValuesProvided, setAllDefaultValuesProvided] = useState<boolean>(false);
+  const [currentValidationActivity, setCurrentValidationActivity] = useState<undefined | Activity>(undefined);
+  const [currentMoveActivity, setCurrentMoveActivity] = useState<undefined | Activity>(undefined);
+  const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
+  const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
+  const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
+
+  const clearFieldMappingsState = () => {
+    setFieldMappingsState(nilFieldMappingsState);
+    targetMandatoryFieldsProvider.setProjectFieldOptionMappings(nilFieldMappingsState.projectFieldOptionMappings);
+    setTargetMandatoryFieldsProviderUpdateTime(Date.now());
+  }
+
+  const isFieldMappingsComplete = () => {
+    const allFieldValuesSet = targetMandatoryFieldsProvider.areAllFieldValuesSet();
+    return fieldMappingsState.dataRetrieved && allFieldValuesSet;
+  }
+
+  const retrieveAndSetDebugInfo = async (): Promise<void> => {
+    const debugInfo: DebugInfo = {
+      // projects: (await projectSearchInfoCache.getProjectSearchInfo()).values,
+      projects: (await jiraDataModel.pageOfProjectSearchInfo()).values,
+      issueTypes: await jiraDataModel.getissueTypes()
+    }
+    setDebugInfo(debugInfo);
+  }
+
+  const initialiseSelectedIssueTypes = async (): Promise<void> => {
+    const allIssueTypes: IssueType[] = await jiraDataModel.getissueTypes();
+    setAllIssueTypes(allIssueTypes);
+    setAllIssueTypesTime(Date.now());
+    setLastDataLoadTime(Date.now());
+    if (selectedIssueTypesTime === 0) {
+      setSelectedIssueTypes(allIssueTypes);
+      // targetMandatoryFieldsProvider.setSelectedIssueTypes(allIssueTypes);
+    } else {
+      // Don't override if there's already a selection
+    }
+  }
+
+  useEffect(() => {
+    updateAllProjectInfo();
+    initialiseSelectedIssueTypes();
+    if (showDebug) {
+      retrieveAndSetDebugInfo();
+    }
+  }, []);
+
+  // const computeToProjectInfo = async (selectedFromProjects: Project[], selectedIssueTypes: IssueType[]): Promise<ProjectSearchInfo> => {
+  //   // console.log(`BulkMovePanel: computeToProjectInfo:`);
+  //   if (selectedIssueTypes.length === 0) {
+  //     console.warn(`BulkMovePanel: computeToProjectInfo: return nilProjectSearchInfo() since no issue type is selected.`);
+  //     return nilProjectSearchInfo();
+  //   } else {
+  //     // console.log(`BulkMovePanel: computeToProjectInfo: selectedIssueTypes: ${JSON.stringify(selectedIssueTypes, null, 2)}`);
+  //     const subjectIssueType: IssueType = selectedIssueTypes.length ? selectedIssueTypes[0] : undefined;
+  //     // const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
+  //     const projectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
+  //     const projectSearchInfoMinusSelectedFromProject: ProjectSearchInfo = jiraUtil.removeProjectsFromSearchInfo(
+  //       selectedFromProjects, projectSearchInfo); 
+  //     const filteredProjects = await jiraUtil.determineProjectsWithIssueTypes(
+  //       subjectIssueType,
+  //       projectSearchInfoMinusSelectedFromProject.values,
+  //       [subjectIssueType]);
+  //     const filteredProjectSearchInfo: ProjectSearchInfo = {
+  //       maxResults: filteredProjects.length, // e.g. 4,
+  //       startAt: 0,
+  //       total: filteredProjects.length,
+  //       isLast: projectSearchInfo.isLast,
+  //       values: filteredProjects,
+  //     }
+  //     // console.log(`BulkMovePanel: computeToProjectInfo: computed filteredProjectSearchInfo: ${JSON.stringify(filteredProjectSearchInfo, null, 2)}`);
+  //     return filteredProjectSearchInfo;
+  //   }
+  // }
+
+  const filterProjectsForToSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
+    // const allowableToProjects = await moveRuleEnforcer.computeToProjectInfo(selectedFromProjects, selectableIssueTypes);
+    const allowableToProjects = await moveRuleEnforcer.filterTargetProjects(selectedIssues, projectsToFilter);
+    return allowableToProjects;
+  }
+
+  const computeToProjectBasedOnJQlResults = async (issueSearchInfo: IssueSearchInfo): Promise<void> => {
+    const allProjectSearchInfo: ProjectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
+    // const projectsFromIssueSearchResults: Project[] = []
+    // for (const issue of issueSearchInfo.issues) {
+    //   const project: Project = allProjectSearchInfo.values.find((project: Project) => {
+    //     return issue.key.startsWith(`${project.key}-`);
+    //   })
+    //   projectsFromIssueSearchResults.push(project);
+    // }
+    // const uniqueProjects = Array.from(new Set(projectsFromIssueSearchResults));
+
+    // const allowedTargetProjects = moveRuleEnforcer.determineAllowedTargetProjectsForSelectedIssues(issueSearchInfo.issues);
+
+
+    // const allowedTargetProjects = await moveRuleEnforcer.filterTargetProjects(issueSearchInfo.issues, allProjectSearchInfo.values);
+
+    // // const newlySelectedProjects: Project[] = allowedTargetProjects.length === 0 ? [] : allowedTargetProjects;
+    // // setSelectedFromProjects(newlySelectedProjects);
+    // // setSelectedFromProjectsTime(Date.now());
+    // const toProjectSearchInfo = await computeToProjectInfo(newlySelectedProjects, selectedIssueTypes);
+    // setEligibleToProjectSearchInfo(toProjectSearchInfo);
+    // setEligibleToProjectSearchInfoTime(Date.now());
+    // await updateToProjectInfo(newlySelectedProjects, selectedIssueTypes);
+  }
+
+  const updateAllProjectInfo = async (): Promise<void> => {
+    const allProjectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
+    setAllProjectSearchInfo(allProjectSearchInfo);
+    setAllProjectSearchInfoTime(Date.now());
+    setLastDataLoadTime(Date.now());
+  }
+
+  const updateToProjectInfo = async (selectedFromProjects: Project[], selectedIssueTypes: IssueType[]): Promise<void> => {
+    // const toProjectSearchInfo = await moveRuleEnforcer.computeToProjectInfo(selectedFromProjects, selectedIssueTypes);
+    // const toProjectSearchInfo = await moveRuleEnforcer.computeToProjectInfo(selectedIssues, selectedFromProjects);
+    // setEligibleToProjectSearchInfo(toProjectSearchInfo);
+    // setEligibleToProjectSearchInfoTime(Date.now());
+  }
+
+  // const issueSearchInfoToMap = (issueSearchInfo: ) => {
+
+  // }
+
+  const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
+    // console.log(` * allSelected = ${allSelected}`);
+    // const allIssueKeys: string[] = [];
+    // if (allSelected) {
+    //   for (const issue of newIssueSearchInfo.issues) {
+    //     allIssueKeys.push(issue.key);
+    //   }  
+    // }
+    // // console.log(` * setting allIssueKeys to ${JSON.stringify(allIssueKeys)}`);
+    // setSelectedIssueKeys(allIssueKeys);
+    setSelectedIssues(newIssueSearchInfo.issues);
+    targetMandatoryFieldsProvider.setSelectedIssues(newIssueSearchInfo.issues);
+
+    // setAllIssuesSelected(allSelected);
+    setIssueSearchInfo(newIssueSearchInfo);
+    setIssueSearchInfoTime(Date.now());
+    setLastDataLoadTime(Date.now());
+    clearFieldMappingsState();
+  }
+
+  const onBasicModeSearchIssues = async (projects: Project[], issueTypes: IssueType[], labels: string[]): Promise<void> => {
+    const noIssues = nilIssueSearchInfo();
+    onIssuesLoaded(true, noIssues);
+    if (projects.length === 0) {
+      onIssuesLoaded(true, nilIssueSearchInfo());
+    } else {
+      setIssueLoadingState('busy');
+      setTimeout(async () => {
+        const issueSearchParameters: IssueSearchParameters = {
+          projects: projects,
+          issueTypes: issueTypes,
+          labels: labels
+        }
+        // const params = {
+        //   issueSearchParameters: issueSearchParameters
+        // }
+        // const issueSearchInfo = await props.invoke('getIssueSearchInfo', params) as IssueSearchInfo;
+        const issueSearchInfo = await jiraDataModel.getIssueSearchInfo(issueSearchParameters) as IssueSearchInfo;
+        if (issueSearchInfo.errorMessages && issueSearchInfo.errorMessages.length) {
+          const joinedErrors = issueSearchInfo.errorMessages.join( );
+          setMainWarningMessage(joinedErrors);
+        } else {
+          onIssuesLoaded(true, issueSearchInfo);
+        }
+        setIssueLoadingState('idle');
+      }, 0);
+    }
+  }
+
+  const onAdvancedModeSearchIssues = async (jql: string): Promise<void> => {
+    const noIssues = nilIssueSearchInfo();
+    onIssuesLoaded(true, noIssues);
+    setIssueLoadingState('busy');
+    setTimeout(async () => {
+      const params = {
+        jql: jql
+      }
+      // const issueSearchInfo = await props.invoke('getIssueSearchInfo', params);
+      const issueSearchInfo = await jiraDataModel.getIssueSearchInfoByJql(jql) as IssueSearchInfo;
+      onIssuesLoaded(true, issueSearchInfo);
+      setIssueLoadingState('idle');
+      computeToProjectBasedOnJQlResults(issueSearchInfo);
+    }, 0);
+  }
+
+  const onJQLChange = async (jql: string): Promise<void> => {
+    setEnteredJql(jql);
+  }
+
+  const onExecuteJQL = async (jql: string): Promise<void> => {
+    setEnteredJql(jql);
+    await onAdvancedModeSearchIssues(jql);
+  }
+
+  const onFromProjectsSelect = async (selectedProjects: Project[]): Promise<void> => {
+    // console.log(`selectedFromProject: `, selectedProject);
+    setSelectedFromProjects(selectedProjects);
+    setSelectedFromProjectsTime(Date.now());
+    await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
+    // const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
+    // const selectableIssueTypes = jiraUtil.filterProjectIssueTypes(selectedProjects, allIssueTypes);
+
+    // setSelectableIssueTypes(allIssueTypes);
+    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
+    setSelectableIssueTypes(selectableIssueTypes);
+
+
+    await updateToProjectInfo(selectedProjects, selectedIssueTypes);
+  }
+
+  const onToProjectSelect = async (selectedProject: undefined | Project): Promise<void> => {
+    console.log(`selectedToProject: `, selectedProject);
+    setSelectedToProject(selectedProject);
+    setSelectedToProjectTime(Date.now());
+    updateFieldMappingsIfNeeded(selectedProject);
+  }
+
+  const onIssueTypesSelect = async (selectedIssueTypes: IssueType[]): Promise<void> => {
+    // console.log(`selectedIssueTypes: `, selectedIssueTypes);
+    if (selectedIssueTypes.length === 0) {
+      if (implyAllIssueTypesWhenNoneAreSelected) {
+        // const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
+        setSelectedIssueTypes(allIssueTypes);
+        // targetMandatoryFieldsProvider.setSelectedIssueTypes(allIssueTypes);
+      } else {
+        setSelectedIssueTypes(selectedIssueTypes);
+        // targetMandatoryFieldsProvider.setSelectedIssueTypes(selectedIssueTypes);
+      }
+    } else {
+      setSelectedIssueTypes(selectedIssueTypes);
+      // targetMandatoryFieldsProvider.setSelectedIssueTypes(selectedIssueTypes);
+    }
+    setSelectedIssueTypesTime(Date.now());
+    await onBasicModeSearchIssues(selectedFromProjects, selectedIssueTypes, selectedLabels);
+    await updateToProjectInfo(selectedFromProjects, selectedIssueTypes);
+  }
+
+  const onLabelsSelect = async (selectedLabels: string[]): Promise<void> => {
+    console.log(`selectedLabels: `, selectedLabels);
+    setSelectedLabels(selectedLabels);
+    setSelectedLabelsTime(Date.now());
+    await onBasicModeSearchIssues(selectedFromProjects, selectedIssueTypes, selectedLabels);
+  }
+
+  // const onToggleAllIssuesSelection = (event: any) => {
+  //   console.log(`Toggle all issues event: `, event);
+  //   const allSelected = !allIssuesSelected;
+  //   onIssuesLoaded(allSelected, issueSearchInfo);
+  // }
+
+  const issueKeyToIssue = (issueKey: string, issueSearchInfo: IssueSearchInfo): undefined | Issue => {
+    for (const issue of issueSearchInfo.issues) {
+      if (issue.key === issueKey) {
+        return issue;
+      }
+    }
+    return undefined;
+  }
+
+  const issueKeysToIssues = (issueKeys: string[], issueSearchInfo: IssueSearchInfo): Issue[] => {
+    const issues: Issue[] = [];
+    // TODO: Not very efficient
+    for (const issueKey of issueKeys) {
+      const issue = issueKeyToIssue(issueKey, issueSearchInfo);
+      if (issue) {
+        issues.push(issue);
+      } else {
+        console.warn(`BulkMovePanel: issueKeysToIssues: Could not find issue with key ${issueKey} in the search info.`);
+      }
+    }
+    return issues;
+  }
+
+  // const onToggleIssueSelection = (issueToToggle: Issue) => {
+  //   // console.log(`Toggling the selection of issue ${issueToToggle.key} where initially selected features is ${selectedIssueKeys.join()}...`);
+  //   // const newSelectedIssueKeys: string[] = [];
+  //   // for (const issue of issueSearchInfo.issues) {
+  //   //   const existingSelectedIssueKey = selectedIssueKeys.find((selectedIssueKey: string) => {
+  //   //     return selectedIssueKey === issue.key;
+  //   //   });
+  //   //   const issueIsSelected = !!existingSelectedIssueKey;
+  //   //   if (issue.key === issueToToggle.key) {
+  //   //     if (issueIsSelected) {
+  //   //       // don't add
+  //   //     } else {
+  //   //       newSelectedIssueKeys.push(issue.key);
+  //   //     }
+  //   //   } else if (issueIsSelected){
+  //   //     newSelectedIssueKeys.push(issue.key);
+  //   //   }
+  //   // }
+  //   // // console.log(` * newSelectedIssueKeys = ${newSelectedIssueKeys.join()}.`);
+  //   // setSelectedIssueKeys(newSelectedIssueKeys);
+
+
+  //   const newSelectedIssues: Issue[] = [];
+  //   for (const issue of issueSearchInfo.issues) {
+  //     const existingSelectedIssueKey = selectedIssues.find((selectedIssue: Issue) => {
+  //       return selectedIssue.key === issue.key;
+  //     });
+  //     const issueIsSelected = !!existingSelectedIssueKey;
+  //     if (issue.key === issueToToggle.key) {
+  //       if (issueIsSelected) {
+  //         // don't add
+  //       } else {
+  //         newSelectedIssues.push(issue);
+  //       }
+  //     } else if (issueIsSelected){
+  //       newSelectedIssues.push(issue);
+  //     }
+  //   }
+  //   setSelectedIssues(newSelectedIssues);
+  // }
+
+  const pollPollMoveOutcome = async (taskId: string): Promise<void> => {
+    if (taskId) {
+      const outcome: TaskOutcome = await issueMoveController.pollMoveProgress(taskId);
+      setIssueMoveOutcome(outcome);
+      if (issueMoveController.isDone(outcome.status)) {
+        setCurrentMoveActivity(undefined);
+      } else {
+        asyncPollMoveOutcome(taskId);
+      }
+    } else {
+      setMainWarningMessage(`No taskId provided for polling move outcome.`);
+      console.warn(`BulkMovePanel: pollPollMoveOutcome: No taskId provided, cannot poll for move outcome.`);
+      setCurrentMoveActivity(undefined);
+    }
+  }
+
+  const asyncPollMoveOutcome = async (taskId: string): Promise<void> => {
+    setTimeout(async () => {
+      await pollPollMoveOutcome(taskId);
+    }, 500);
+  }
+
+  const buildFieldMappingsState = async (selectedToProject: Project): Promise<FieldMappingsState> => {
+    setCurrentValidationActivity({taskId: 'non-jira-activity', description: 'Checking for mandatory fields...'});
+
+    const fieldIdsToOptions: DataRetrievalResponse<ProjectFieldOptionMappings> = await buildFieldOptionsForProject(
+      selectedToProject.id
+    );
+    if (fieldIdsToOptions.errorMessage) {
+      console.warn(`BulkMovePanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${fieldIdsToOptions.errorMessage}`);
+      setCurrentValidationActivity(undefined);
+      return nilFieldMappingsState;
+    } else if (fieldIdsToOptions.data) {
+      const fieldMappingsState: FieldMappingsState = {
+        dataRetrieved: true,
+        projectFieldOptionMappings: fieldIdsToOptions.data
+      }
+      setCurrentValidationActivity(undefined);
+      return fieldMappingsState;
+    } else {
+      throw new Error(`BulkMovePanel: validateMandatoryFieldsAreFilled: No data retrieved for field options.`);
+    }
+
+    // // const projectIdsToCheck: string[] = [selectedToProject.id];
+    // const fieldConfigurationItems = await jiraDataModel.getFieldConfigurationItemsForProjects(projectIdsToCheck);
+    // const mandatoryFieldConfigurationItems = fieldConfigurationItems.filter((fieldConfigurationItem: FieldConfigurationItem) => {
+    //   return fieldConfigurationItem.isRequired;
+    // });
+    // const validationState: ValidationState = {
+    //   mandatoryFieldsCompletionState: mandatoryFieldConfigurationItems.length > 0 ? 'complete-error' : 'complete-success',
+    //   mandatoryFieldsWithoutDefaults: mandatoryFieldConfigurationItems
+    // }
+    // return validationState;
+  }
+
+  const onInitiateFieldValueMapping = async (selectedToProject: Project): Promise<void> => {
+    const fieldMappingsState = await buildFieldMappingsState(selectedToProject);
+    setFieldMappingsState(fieldMappingsState);
+    targetMandatoryFieldsProvider.setProjectFieldOptionMappings(fieldMappingsState.projectFieldOptionMappings);
+    setTargetMandatoryFieldsProviderUpdateTime(Date.now());
+  }
+
+  const updateFieldMappingsIfNeeded = async (selectedToProject: undefined | Project): Promise<void> => {
+    if (autoShowFieldMappings) {
+      if (selectedToProject) {
+        await onInitiateFieldValueMapping(selectedToProject);
+      } else {
+        setFieldMappingsState(nilFieldMappingsState)
+      }
+    }
+  }
+
+  const onAllDefaultValuesProvided = (allDefaultsProvided: boolean) => {
+    setAllDefaultValuesProvided(allDefaultsProvided);
+  }
+
+  const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveRequestOutcome): string => {
+    if (taskOutcome.errors && taskOutcome.errors.length) {
+      // const combinedErrorMessages = initiateOutcome.errors.join(', ');
+      let combinedErrorMessages = '';
+      for (const error of taskOutcome.errors) {
+        const separator = combinedErrorMessages.length > 0 ? ', ' : '';
+        combinedErrorMessages += `${separator}${error.message}`;
+      }
+      return combinedErrorMessages;
+    } else {
+      return '';
+    }
+  }
+
+  const onMoveIssues = async (): Promise<void> => {
+    // Step 1: Initiate the move request...
+    const destinationProjectId: string = selectedToProject.id;
+    setIssueMoveRequestOutcome(undefined);
+    setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating move request...'});
+    const issueTypeIdsToTargetMandatoryFields = targetMandatoryFieldsProvider.buildIssueTypeIdsToTargetMandatoryFields();
+    const initiateOutcome: IssueMoveRequestOutcome = await issueMoveController.initiateMove(
+      destinationProjectId,
+      selectedIssues,
+      issueSearchInfo,
+      issueTypeIdsToTargetMandatoryFields
+    );
+    setCurrentMoveActivity(undefined);
+    console.log(`BulkMovePanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
+    const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
+    if (taskOutcomeErrorMessage) {
+      const fullErrorMessage = `Failed to initiate move request: ${taskOutcomeErrorMessage}`;
+      setMainWarningMessage(fullErrorMessage);
+      console.warn(fullErrorMessage);
+      setIssueMoveRequestOutcome(undefined);
+      setCurrentMoveActivity(undefined);
+    } else {
+      // Step 2: Start polling for the outcome...
+      setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for move outcome...'});
+      pollPollMoveOutcome(initiateOutcome.taskId);
+
+      // Step 2: (now redundant since we switched to the polling approach) Wait for the outcome...
+      // setIssueMoveRequestOutcome(initiateOutcome);
+      // if (initiateOutcome.statusCode === 201 && initiateOutcome.taskId) {
+      //   setCurrentIssueMoveTaskId(initiateOutcome.taskId);
+      //   setIssueMoveOutcome(undefined);
+      //   const issueMoveOutcome = await issueMoveController.awaitMoveCompletion(props.invoke, initiateOutcome.taskId);
+      //   setIssueMoveOutcome(issueMoveOutcome);
+      //   setCurrentIssueMoveTaskId(undefined);  
+      // }
+    }
+  }
+
+  const renderJQLInputPanel = () => {
+    return (
+      <FormSection>
+       <JQLInputPanel
+          label="JQL"
+          placeholder="JQL query"
+          onJQLChange={onJQLChange}
+          onExecute={onExecuteJQL} />
+      </FormSection>
+    )
+  }
+
+  const renderFromProjectSelect = () => {
+    return (
+      <FormSection>
+        <ProjectsSelect 
+          key={`from-project=${allProjectSearchInfoTime}`}
+          label="From projects"
+          isMulti={true}
+          // selectableProjects={allProjectSearchInfo.values}
+          selectedProjects={selectedFromProjects}
+          onProjectsSelect={onFromProjectsSelect}
+        />
+      </FormSection>
+    );
+  }
+
+  const renderToProjectSelect = () => {
+    // const issueTypesSelected = selectedIssueTypes.length > 0 && selectedIssueTypes.length < allIssueTypes.length && selectedIssues.length > 0;
+    // const allowSelection = selectedFromProjects.length && issueTypesSelected;
+    const allowSelection = selectedIssues.length > 0;
+    return (
+      <FormSection>
+        <ProjectsSelect 
+          // key={`to-project-${selectedFromProjectsTime}-${eligibleToProjectSearchInfoTime}`}
+          label="To project"
+          isMulti={false}
+          isDisabled={!allowSelection}
+          selectedProjects={[selectedToProject]}
+          filterProjects={filterProjectsForToSelection}
+          onProjectsSelect={async (selected: Project[]): Promise<void> => {
+            // console.log(`Selected to projects: ${JSON.stringify(selected, null, 2)}`);
+            const selectedToProject: undefined | Project = selected.length > 0 ? selected[0] : undefined;
+            onToProjectSelect(selectedToProject);
+          }}
+        />
+      </FormSection>
+    );
+  }
+
+  const renderIssueTypesSelect = () => {
+    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
+
+    const issueTypesAlreadySelected = selectedIssueTypes.length !== allIssueTypes.length;
+    // console.log(`BulkMovePanel: renderIssueTypesSelect: issueTypesAlreadySelected: ${issueTypesAlreadySelected}`);
+    const candidateIssueTypes: IssueType[] = issueTypesAlreadySelected ?
+      selectedIssueTypes :
+      [];
+    // console.log(`BulkMovePanel: renderIssueTypesSelect: candidateIssueTypes: ${JSON.stringify(candidateIssueTypes, null, 2)}`);
+    const selectedIssueTypeIds = candidateIssueTypes.length ? candidateIssueTypes.map(issueType => issueType.id) : [];
+    // console.log(`BulkMovePanel: renderIssueTypesSelect: selectedIssueTypeIds: ${JSON.stringify(selectedIssueTypeIds, null, 2)}`);
+    return (
+      <FormSection>
+        <IssueTypesSelect 
+          key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
+          label="Issue types"
+          selectedIssueTypeIds={selectedIssueTypeIds}
+          selectableIssueTypes={selectableIssueTypes}
+          onIssueTypesSelect={onIssueTypesSelect}
+        />
+      </FormSection>
+    );
+  }
+
+  const renderLabelsSelect = () => {
+    return (
+      <FormSection>
+        <LabelSelect 
+          label="Labels"
+          allowMultiple={true}
+          selectedLabels={selectedLabels}
+          onLabelsSelect={onLabelsSelect}
+        />
+      </FormSection>
+    );
+  }
+
+  const renderFlexboxEqualWidthGrowPanel = () => {
+    return (
+      <div className="flex-box-equal-width-grow-panel"></div>
+    );
+  }
+
+  const renderFilterModeSelect = () => {
+    return (
+      <FormSection>
+        <div className="filter-model-panel">
+          <div>
+            <Label htmlFor="filter-mode-select">Advanced</Label>
+            <Toggle
+              id={`toggle-filter-mode-advanced`}
+              isChecked={filterMode === 'advanced'}
+              onChange={(event: any) => {
+                setFilterMode(filterMode === 'basic' ? 'advanced' : 'basic');
+              }}
+            />
+          </div>
+        </div>
+      </FormSection>
+    );
+  }
+
+  const renderBasicFieldInputs = () => {
+    if (filterMode === 'advanced') {
+      return null;
+    } else {
+      return (
+        <>
+          {renderFromProjectSelect()}
+          {selectedFromProjects.length ? renderIssueTypesSelect() : null}
+          {renderLabelsSelect()}
+        </>
+      );  
+    }
+  }
+
+  const renderAdvancedFieldInputs = () => {
+    if (filterMode === 'advanced') {
+      return (
+        <>
+          {renderJQLInputPanel()}
+        </>
+      );
+    } else {
+      return null;      
+    }
+  }
+
+  const renderFilterPanel = () => {
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 1</h3>
+          <h4>Select issue filter options</h4>
+          {renderFilterModeSelect()}
+          {renderBasicFieldInputs()}
+          {renderAdvancedFieldInputs()}
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
+  const renderActivityIndicator = (activity: Activity) => {
+    if (activity) {
+      // https://mui.com/material-ui/api/linear-progress/
+      const progressPercent = issueMoveOutcome ? issueMoveOutcome.progress : 0;
+      return (
+        <div>
+          <Label htmlFor={''}>{activity.description}</Label>
+          <LinearProgress variant="determinate" value={progressPercent} color="secondary" />
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  const renderIssueMoveRequestOutcome = () => {
+    if (issueMoveRequestOutcome) {
+      const renderedErrors = issueMoveRequestOutcome.errors ? issueMoveRequestOutcome.errors.map((error: Error, index: number) => {
+        return (
+          <div key={`issue-move-request-error-${index}`} className="error-message">
+            {error.message}
+          </div>
+        );
+      }) : null;
+      return (
+        <div>
+          {renderedErrors}
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  const renderIssueMoveOutcome = () => {
+    if (issueMoveOutcome) {
+      const moveResult: IssueMoveOutcomeResult | undefined = issueMoveOutcome.result;
+      const movedCount = moveResult ? moveResult.successfulIssues.length : -1;
+      const failedCount = moveResult ? moveResult.totalIssueCount - movedCount : -1;
+      const renderedIssuesMovedResult = issueMoveOutcome.result ? <span># issues moved: <Lozenge appearance="success">{movedCount}</Lozenge></span> : null;
+      const renderedIssuesNotMovedResult = issueMoveOutcome.result ? <span># issues not moved: <Lozenge appearance="removed">{failedCount}</Lozenge></span> : null;
+      const renderedOutcomeDebugJson = showDebug ? <pre>{JSON.stringify(issueMoveOutcome, null, 2)}</pre> : null;
+      const progressPercent = issueMoveOutcome.progress ?? 0;
+      const renderedProgress = <div>Progress: {progressPercent}%</div>;
+      return (
+        <div key={`issue-move-outcome-${allDefaultValuesProvided}`} style={{margin: '20px 0px'}}>
+          <Label htmlFor="none">Issues moved to the {selectedToProject?.name} ({selectedToProject?.key}) project</Label>
+          <ul>
+            <li>Status: <TaskStatusLozenge status={issueMoveOutcome.status} /></li>
+            <li>{renderedIssuesMovedResult}</li>
+            <li>{renderedIssuesNotMovedResult}</li>
+            <li>{renderedProgress}</li>
+          </ul>
+          {renderedOutcomeDebugJson}
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  const renderIssuesPanel = () => {
+    const hasIssues = issueSearchInfo.issues.length > 0;
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+        <h3>Step 2</h3>
+          <h4>Confirm issues to move</h4>
+          <IssueSelectionPanel
+            loadingState={issueLoadingState}
+            issueSearchInfo={issueSearchInfo}
+            selectedIssues={selectedIssues}
+            onIssueSelectionChange={async (selectedIssues: Issue[]): Promise<void> => {
+              setSelectedIssues(selectedIssues);
+              targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues);
+            }}
+          />
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
+  const renderStartFieldValueMappingsButton = () => {
+    const allowValidation = selectedToProject && selectedToProject.id && selectedIssues.length > 0;
+    const buttonEnabled = !currentMoveActivity && allowValidation;
+    return (
+      <Button
+        appearance={fieldMappingsState.dataRetrieved ? 'default' : 'primary'}
+        isDisabled={!buttonEnabled}
+        onClick={() => {
+          onInitiateFieldValueMapping(selectedToProject);
+        }}
+      >
+        Start field value mapping
+      </Button>
+    );
+  }
+
+  const renderStartMoveButton = () => {
+    const allowMove = isFieldMappingsComplete() && selectedToProject && selectedToProject.id && selectedIssues.length > 0;
+    const buttonEnabled = !currentMoveActivity && allowMove;
+    return (
+      <Button
+        key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}`}
+        appearance={buttonEnabled ? 'primary' : 'default'}
+        isDisabled={!buttonEnabled}
+        onClick={onMoveIssues}
+      >
+        Move issues
+      </Button>
+    );
+  }
+
+  const renderTargetPanel = () => {
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 3</h3>
+          <h4>Select target project</h4>
+          {renderToProjectSelect()}
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
+  const renderStartFieldMappingButton = () => {
+    if (autoShowFieldMappings) {
+      return null;
+    } else {
+      return (
+        <FormSection>
+          {renderStartFieldValueMappingsButton()}
+        </FormSection>
+      );
+    }
+  }
+
+  const renderFieldValueMappingsPanel = () => {
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 4</h3>
+          <h4>Map field values</h4>
+          {renderStartFieldMappingButton()}
+          {renderActivityIndicator(currentValidationActivity)}
+          <FieldMappingPanel
+            key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}`}
+            issues={selectedIssues}
+            fieldMappingsState={fieldMappingsState}
+            targetMandatoryFieldsProvider={targetMandatoryFieldsProvider}
+            showDebug={showDebug}
+            onAllDefaultValuesProvided={onAllDefaultValuesProvided}
+          />
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
+  const renderMovePanel = () => {
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step 5</h3>
+          <h4>Move issues</h4>
+          <FormSection>
+            {renderStartMoveButton()}
+          </FormSection>
+          {renderActivityIndicator(currentMoveActivity)}
+          {renderIssueMoveRequestOutcome()}
+          {renderIssueMoveOutcome()}
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
+  const renderDebugPanel = () => {
+    const projectsToIssueTypes: {} = {};
+    if (debugInfo.projects && debugInfo.projects.length) {
+      for (const project of debugInfo.projects) {
+        const issueTypes = jiraUtil.filterProjectIssueTypes(project, debugInfo.issueTypes);
+        for (const issueType of issueTypes) {
+          const issueTypeRepresentation = `${issueType.name} (${issueType.id})`;
+          if (projectsToIssueTypes[project.name]) {
+            projectsToIssueTypes[project.name].push(issueTypeRepresentation);
+          } else {
+            projectsToIssueTypes[project.name] = [issueTypeRepresentation];
+          }
+        }
+      }
+    }
+    const renderedProjectsTossueTypes = Object.keys(projectsToIssueTypes).map((projectName: string) => {
+      return (
+        <li key={projectName}>
+          <strong>{projectName}</strong>: {projectsToIssueTypes[projectName].join(', ')}
+        </li>
+      );
+    });
+
+    const renderedSelectedIssueTypes = selectedIssueTypes.map((issueType: IssueType) => {
+      return (
+        <li key={issueType.id}>
+          <strong>{issueType.name}</strong> ({issueType.id})
+        </li>
+      );
+    });
+    
+    if (showDebug) {
+      return (
+        <div className="debug-panel">
+          <h3>Debug</h3>
+
+          <h4>Projects to issue types</h4>
+          <ul>
+            {renderedProjectsTossueTypes}
+          </ul>
+
+          <h4>Selected issue types</h4>
+          <ul>
+            {renderedSelectedIssueTypes}
+          </ul>
+
+          <h4>Projects</h4>
+          <pre>
+            {JSON.stringify(debugInfo.projects, null, 2)}
+          </pre>
+
+          <h4>Issue types</h4>
+          <pre>
+            {JSON.stringify(debugInfo.issueTypes, null, 2)}
+          </pre>
+
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  const rendermainWarningMessage = () => {
+    if (mainWarningMessage) {
+      return (
+        <div className="warning-message">
+          {mainWarningMessage}
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  return (
+    <div>
+      {rendermainWarningMessage()}
+      <div className="bulk-move-main-panel">
+        {renderFilterPanel()}
+        {renderIssuesPanel()}
+        {renderTargetPanel()}
+        {renderFieldValueMappingsPanel()}
+        {renderMovePanel()}
+      </div>
+      {renderDebugPanel()}
+    </div>
+  );
+}
+
+export default BulkMovePanel;

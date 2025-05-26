@@ -34,6 +34,7 @@ div.bulk-move-main-panel {
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
+  align-items: stretch;
 }
 
 div.bulk-move-main-panel > div {
@@ -41,6 +42,10 @@ div.bulk-move-main-panel > div {
   padding: 10px;
   flex-grow: 1;
   background-color: #fff;
+}
+
+div.bulk-move-main-panel > div > div {
+  max-height: 600px
 }
 
 div.flex-box-equal-width-grow-panel {
@@ -58,6 +63,7 @@ div.filter-panel {
 }
 
 div.padding-panel {
+  padding: 10px;
   margin: 0px 5px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -104,4 +110,38 @@ div.issue-selection-panel {
 
 .debug-panel {
   margin-top: 30px
+}
+
+div.faked-toggle {
+  display: inline-block;
+  width: 44px;
+  height: 28px;
+}
+
+div.faked-toggle > div {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 5px;
+  width: 30px;
+  height: 18px;
+  border-radius: 9px;
+  position: relative;
+  color: #fff;
+}
+
+div.checked-faked-toggle > div {
+  color: #fff;
+  background-color: #00875A;
+}
+
+div.unchecked-faked-toggle > div {
+  background-color: #6B778C;
+}
+
+div.checked-faked-toggle > div > div.toggle-container {
+  margin-left: 1px;
+}
+
+div.unchecked-faked-toggle > div > div.toggle-container {
+  margin-left: 13px;
 }

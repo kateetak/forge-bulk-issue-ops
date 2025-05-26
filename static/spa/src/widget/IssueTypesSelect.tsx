@@ -3,9 +3,12 @@ import { Label } from '@atlaskit/form';
 import { CheckboxSelect } from '@atlaskit/select';
 import { Option } from '../types/Option'
 import { IssueType } from '../types/IssueType';
-// import projectSearchInfoCache from '../model/projectSearchInfoCache';
 import { Project } from '../types/Project';
-import { getProjectSearchInfo } from '../controller/jiraClient';
+import jiraDataModel from 'src/model/jiraDataModel';
+
+/*
+  Select docs: https://atlassian.design/components/select/examples
+*/
 
 export type IssueTypesSelectProps = {
   label: string;
@@ -21,7 +24,7 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
 
   const retrieveProjects = async () => {
     // const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
-    const projectSearchInfo = await getProjectSearchInfo();
+    const projectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
     setAllProjects(projectSearchInfo.values);
   }
 

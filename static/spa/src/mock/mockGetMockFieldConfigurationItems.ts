@@ -1,12 +1,11 @@
-import { start } from "repl";
 import { FieldConfigurationItem } from "src/types/FieldConfigurationItem";
-import { FieldConfigurationItemsResponse } from "src/types/FieldConfigurationItemsResponse";
+import { PageResponse } from "src/types/PageResponse";
 
 export const getMockFieldConfigurationItems = async (
   fieldConfigurationId: string,
   startAt: number = 0,
   maxResults: number = 50
-): Promise<FieldConfigurationItemsResponse> => {
+): Promise<PageResponse<FieldConfigurationItem>> => {
   const items: FieldConfigurationItem[] = [];
 
 
@@ -27,7 +26,7 @@ export const getMockFieldConfigurationItems = async (
     items.push(item);
   }
 
-  const response: FieldConfigurationItemsResponse = {
+  const response: PageResponse<FieldConfigurationItem> = {
     isLast: returnWholePage,
     maxResults: itemsToCreate,
     startAt: startAt,

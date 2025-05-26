@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Label } from '@atlaskit/form';
 import { Option } from '../types/Option'
 import { RadioSelect, CheckboxSelect } from '@atlaskit/select';
-import { getLabelsInfo } from 'src/controller/jiraClient';
+import jiraDataModel from 'src/model/jiraDataModel';
+
+/*
+  Select docs: https://atlassian.design/components/select/examples
+*/
 
 export type LabelSelectProps = {
   label: string;
@@ -20,7 +24,7 @@ const LabelSelect = (props: LabelSelectProps) => {
   const [labelInfoRetrievalTime, setLabelInfoRetrievalTime] = useState<number>(0);
 
   const refreshLabelInfo = async () => {
-    const labelInfo = await getLabelsInfo();
+    const labelInfo = await jiraDataModel.getLabelsInfo();
     setLabelInfo(labelInfo);
     setLabelInfoRetrievalTime(Date.now());
   }

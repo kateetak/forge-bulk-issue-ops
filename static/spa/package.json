@@ -12,6 +12,7 @@
     "@atlaskit/icon": "^25.5.0",
     "@atlaskit/lozenge": "^12.2.3",
     "@atlaskit/progress-bar": "4.0.4",
+    "@atlaskit/radio": "^8.1.0",
     "@atlaskit/section-message": "^6.4.11",
     "@atlaskit/select": "^20.4.1",
     "@atlaskit/spinner": "^18.0.3",

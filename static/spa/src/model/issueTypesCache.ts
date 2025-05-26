@@ -1,25 +1,25 @@
-import { fetchIssueTypese } from "src/controller/jiraClient";
-import { IssueType } from "../types/IssueType";
+// import { IssueType } from "../types/IssueType";
 
-class IssueTypesCache {
+// class IssueTypesCache {
 
-  cachedIssueTypes: IssueType[] = [];
+//   // cachedIssueTypes: IssueType[] = [];
 
-  // TODO: Implement memoization
-  getissueTypes = async (): Promise<IssueType[]> => {
-    const cachKey = `issue-types`;
-    if (this.cachedIssueTypes.length === 0) {
-      // this.cachedIssueTypes = await invoke('getIssueTypes');
-      this.cachedIssueTypes = await fetchIssueTypese();
-    }
-    return this.cachedIssueTypes;
-  }
+//   // TODO: Implement memoization
+//   getissueTypes = async (): Promise<IssueType[]> => {
+//     const cachKey = `issue-types`;
+//     if (this.cachedIssueTypes.length === 0) {
+//       // this.cachedIssueTypes = await invoke('getIssueTypes');
+//       this.cachedIssueTypes = await fetchIssueTypese();
+//     }
+//     return this.cachedIssueTypes;
+//   }
 
-}
+// }
 
-const issueTypesCache = new IssueTypesCache();
-export default issueTypesCache;
-function getIssueTypese(): IssueType[] | PromiseLike<IssueType[]> {
-  throw new Error("Function not implemented.");
-}
+// const issueTypesCache = new IssueTypesCache();
+// export default issueTypesCache;
+
+// function getIssueTypese(): IssueType[] | PromiseLike<IssueType[]> {
+//   throw new Error("Function not implemented.");
+// }
 
