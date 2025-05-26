@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CustomFieldOption } from "../types/CustomFieldOption";
-import { IssueTypeFieldOptionMappings, ProjectFieldOptionMappings } from "../types/ProjectFieldOptionMappings";
+import { IssueTypeFieldMappings, ProjectFieldMappings } from "../types/ProjectFieldMappings";
 import { Issue } from "../types/Issue";
 import { IssueType } from '../types/IssueType';
 import { Field } from 'src/types/Field';
@@ -8,15 +8,21 @@ import jiraDataModel from 'src/model/jiraDataModel';
 import FieldValuesSelect from 'src/widget/FieldValuesSelect';
 import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
 import SuccessIcon from '@atlaskit/icon/core/success';
+import { FieldMetadata } from 'src/types/FieldMetadata';
+import { Project } from 'src/types/Project';
+import Textfield from '@atlaskit/textfield';
+import { DefaultFieldValue } from 'src/types/DefaultFieldValue';
 
 export type FieldMappingsState = {
   dataRetrieved: boolean;
-  projectFieldOptionMappings: ProjectFieldOptionMappings;
+  project: undefined | Project;
+  projectFieldMappings: ProjectFieldMappings;
 }
 export const nilFieldMappingsState: FieldMappingsState = {
   dataRetrieved: false,
-  projectFieldOptionMappings: {
-    issueTypesToMappings: new Map<string, IssueTypeFieldOptionMappings>()
+  project: undefined,
+  projectFieldMappings: {
+    issueTypesToMappings: new Map<string, IssueTypeFieldMappings>()
   }
 }
 
@@ -64,12 +70,79 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     loadFieldInfo();
   }, []);
 
-  const onSelectDefaultFieldValue = (issueType: IssueType, fieldId: string, fieldOption: CustomFieldOption): void => {
-    props.targetMandatoryFieldsProvider.onSelectDefaultValue(issueType, fieldId, fieldOption);
+  const onSelectDefaultFieldValue = (issueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, defaultValue: DefaultFieldValue): void => {
+    props.targetMandatoryFieldsProvider.onSelectDefaultValue(issueType, fieldId, fieldMetadata, defaultValue);
     const allDefaultValuesProvided = props.targetMandatoryFieldsProvider.areAllFieldValuesSet();
-    console.log(`onSelectDefaultFieldValue: ${issueType.name} - ${fieldId} - ${fieldOption.name} - All Defaults Provided: ${allDefaultValuesProvided}`);
     setAllDefaultsProvided(allDefaultValuesProvided);
     props.onAllDefaultValuesProvided(allDefaultValuesProvided);
+  }
+
+  const renderFieldValuesSelect = (fieldId: string, issueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+    const selectableCustomFieldOptions: CustomFieldOption[] = [];
+      for (const allowedValue of fieldMetadata.allowedValues) {
+        if (allowedValue.value) {
+          const customFieldOption: CustomFieldOption = {
+            id: allowedValue.id,
+            name: allowedValue.value,
+          };
+          selectableCustomFieldOptions.push(customFieldOption);
+        } else {
+          console.log(`getFieldOptionsForProject: Skipping allowed value without a value: ${JSON.stringify(allowedValue)}`);
+        }
+      }
+    return (
+      <FieldValuesSelect
+        label={undefined}
+        selectableCustomFieldOptions={selectableCustomFieldOptions}
+        onSelect={async (selectedCustomFieldOption: CustomFieldOption): Promise<void> => {
+          const defaultValue: DefaultFieldValue = {
+            retain: false,
+            type: "raw",
+            value: [selectedCustomFieldOption.id]
+          };
+          onSelectDefaultFieldValue(issueType, fieldId, fieldMetadata, defaultValue);
+        }}
+      />
+    );
+  }
+
+  const renderNumberFieldEntryWidget = (fieldId: string, issueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+    return (
+      <Textfield
+        id={`number--for-${fieldId}`}
+        name={fieldId}
+        type="number"
+        onChange={(event) => {
+          const fieldValue = parseInt(event.currentTarget.value);
+          const defaultValue: DefaultFieldValue = {
+            retain: false,
+            type: "raw",
+            value: [fieldValue]
+          };
+          onSelectDefaultFieldValue(issueType, fieldId, fieldMetadata, defaultValue);
+        }}
+      />
+    );
+  }
+
+  const renderFieldValuesEntryWidget = (fieldId: string, issueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+    if (fieldMetadata.schema.type === 'option' || fieldMetadata.schema.type === 'options') {
+      if (fieldMetadata.allowedValues) {
+        return renderFieldValuesSelect(fieldId, issueType, fieldMetadata);
+      } else {
+        <div>
+          <p><span style={{color:'#ff0000'}}>No options available for this field (type = {fieldMetadata.schema.type}).</span></p>
+        </div>
+      }
+    } else if (fieldMetadata.schema.type === 'number') {
+      return renderNumberFieldEntryWidget(fieldId, issueType, fieldMetadata);
+    } else {
+      return (
+        <div>
+          <p><span style={{color:'#ff0000'}}>Unexpected field type: {fieldMetadata.schema.type}.</span></p>
+        </div>
+      );
+    }
   }
 
   const renderFieldMappingsState = () => {
@@ -84,23 +157,17 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
           </tr>
         </thead>
         <tbody>
-          {Array.from(props.fieldMappingsState.projectFieldOptionMappings.issueTypesToMappings.entries()).map(([issueTypeId, fieldOptionMappings]) => {
+          {Array.from(props.fieldMappingsState.projectFieldMappings.issueTypesToMappings.entries()).map(([issueTypeId, fieldOptionMappings]) => {
             const issueType = issueTypeIdsToTypesBeingMapped.get(issueTypeId);
             if (issueType) {
-              return Array.from(fieldOptionMappings.fieldIdsToOptions.entries()).map(([fieldId, options]) => {
+              return Array.from(fieldOptionMappings.fieldIdsToFieldMetadata.entries()).map(([fieldId, options]) => {
                 fieldCount++;
                 return (
                   <tr key={`mapping-${issueTypeId}-${fieldId}`}>
-                    <td>{issueType.name} ({issueTypeId})</td>
+                    <td>{issueType.name}</td>
                     <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
                     <td>
-                      <FieldValuesSelect
-                        label={undefined}
-                        selectableCustomFieldOptions={options}
-                        onSelect={async (selectedCustomFieldOption: CustomFieldOption): Promise<void> => {
-                          onSelectDefaultFieldValue(issueType, fieldId, selectedCustomFieldOption);
-                        }}
-                      />
+                      {renderFieldValuesEntryWidget(fieldId, issueType, options)}
                     </td>
                   </tr>
                 );

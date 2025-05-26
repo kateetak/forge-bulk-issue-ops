@@ -24,8 +24,8 @@ import JQLInputPanel from '../widget/JQLInputPanel';
 import ProjectsSelect from '../widget/ProjectsSelect';
 import jiraDataModel from '../model/jiraDataModel';
 import { DataRetrievalResponse } from '../types/DataRetrievalResponse';
-import { buildFieldOptionsForProject } from '../controller/bulkOperationsUtil';
-import { IssueTypeFieldOptionMappings, ProjectFieldOptionMappings } from '../types/ProjectFieldOptionMappings';
+import { buildFieldMappingsForProject } from '../controller/bulkOperationsUtil';
+import { IssueTypeFieldMappings, ProjectFieldMappings } from '../types/ProjectFieldMappings';
 import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
 import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
 import { IssueSelectionPanel } from './IssueSelectionPanel';
@@ -89,7 +89,7 @@ const BulkMovePanel = () => {
 
   const clearFieldMappingsState = () => {
     setFieldMappingsState(nilFieldMappingsState);
-    targetMandatoryFieldsProvider.setProjectFieldOptionMappings(nilFieldMappingsState.projectFieldOptionMappings);
+    targetMandatoryFieldsProvider.setProjectFieldMappings(nilFieldMappingsState.projectFieldMappings);
     setTargetMandatoryFieldsProviderUpdateTime(Date.now());
   }
 
@@ -424,17 +424,18 @@ const BulkMovePanel = () => {
   const buildFieldMappingsState = async (selectedToProject: Project): Promise<FieldMappingsState> => {
     setCurrentValidationActivity({taskId: 'non-jira-activity', description: 'Checking for mandatory fields...'});
 
-    const fieldIdsToOptions: DataRetrievalResponse<ProjectFieldOptionMappings> = await buildFieldOptionsForProject(
+    const projectFieldMappings: DataRetrievalResponse<ProjectFieldMappings> = await buildFieldMappingsForProject(
       selectedToProject.id
     );
-    if (fieldIdsToOptions.errorMessage) {
-      console.warn(`BulkMovePanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${fieldIdsToOptions.errorMessage}`);
+    if (projectFieldMappings.errorMessage) {
+      console.warn(`BulkMovePanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${projectFieldMappings.errorMessage}`);
       setCurrentValidationActivity(undefined);
       return nilFieldMappingsState;
-    } else if (fieldIdsToOptions.data) {
+    } else if (projectFieldMappings.data) {
       const fieldMappingsState: FieldMappingsState = {
         dataRetrieved: true,
-        projectFieldOptionMappings: fieldIdsToOptions.data
+        project: selectedToProject,
+        projectFieldMappings: projectFieldMappings.data
       }
       setCurrentValidationActivity(undefined);
       return fieldMappingsState;
@@ -457,7 +458,7 @@ const BulkMovePanel = () => {
   const onInitiateFieldValueMapping = async (selectedToProject: Project): Promise<void> => {
     const fieldMappingsState = await buildFieldMappingsState(selectedToProject);
     setFieldMappingsState(fieldMappingsState);
-    targetMandatoryFieldsProvider.setProjectFieldOptionMappings(fieldMappingsState.projectFieldOptionMappings);
+    targetMandatoryFieldsProvider.setProjectFieldMappings(fieldMappingsState.projectFieldMappings);
     setTargetMandatoryFieldsProviderUpdateTime(Date.now());
   }
 
