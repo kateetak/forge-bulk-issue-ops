@@ -63,8 +63,6 @@ const BulkMovePanel = () => {
   const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
   const [allIssueTypes, setAllIssueTypes] = useState<IssueType[]>([]);
   const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
-  // const [eligibleToProjectSearchInfo, setEligibleToProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
-  // const [eligibleToProjectSearchInfoTime, setEligibleToProjectSearchInfoTime] = useState<number>(0);
   const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
   const [selectedFromProjects, setSelectedFromProjects] = useState<Project[]>([]);
   const [selectedFromProjectsTime, setSelectedFromProjectsTime] = useState<number>(0);
@@ -74,7 +72,6 @@ const BulkMovePanel = () => {
   const [selectedIssueTypesTime, setSelectedIssueTypesTime] = useState<number>(0);
   const [issueSearchInfo, setIssueSearchInfo] = useState<IssueSearchInfo>(nilIssueSearchInfo);
   const [issueSearchInfoTime, setIssueSearchInfoTime] = useState<number>(0);
-  // const [allIssuesSelected, setAllIssuesSelected] = useState<boolean>(true);
   const [selectedIssues, setSelectedIssues] = useState<Issue[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
@@ -103,7 +100,6 @@ const BulkMovePanel = () => {
 
   const retrieveAndSetDebugInfo = async (): Promise<void> => {
     const debugInfo: DebugInfo = {
-      // projects: (await projectSearchInfoCache.getProjectSearchInfo()).values,
       projects: (await jiraDataModel.pageOfProjectSearchInfo()).values,
       issueTypes: await jiraDataModel.getissueTypes()
     }
@@ -117,7 +113,6 @@ const BulkMovePanel = () => {
     setLastDataLoadTime(Date.now());
     if (selectedIssueTypesTime === 0) {
       setSelectedIssueTypes(allIssueTypes);
-      // targetMandatoryFieldsProvider.setSelectedIssueTypes(allIssueTypes);
     } else {
       // Don't override if there's already a selection
     }
@@ -146,8 +141,6 @@ const BulkMovePanel = () => {
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
     setSelectedIssues(newIssueSearchInfo.issues);
     targetMandatoryFieldsProvider.setSelectedIssues(newIssueSearchInfo.issues);
-
-    // setAllIssuesSelected(allSelected);
     setIssueSearchInfo(newIssueSearchInfo);
     setIssueSearchInfoTime(Date.now());
     setLastDataLoadTime(Date.now());
@@ -185,10 +178,6 @@ const BulkMovePanel = () => {
     onIssuesLoaded(true, noIssues);
     setIssueLoadingState('busy');
     setTimeout(async () => {
-      const params = {
-        jql: jql
-      }
-      // const issueSearchInfo = await props.invoke('getIssueSearchInfo', params);
       const issueSearchInfo = await jiraDataModel.getIssueSearchInfoByJql(jql) as IssueSearchInfo;
       onIssuesLoaded(true, issueSearchInfo);
       setIssueLoadingState('idle');
@@ -206,21 +195,17 @@ const BulkMovePanel = () => {
   }
 
   const onFromProjectsSelect = async (selectedProjects: Project[]): Promise<void> => {
-    // console.log(`selectedFromProject: `, selectedProject);
+    // console.log(`onFromProjectsSelect.selectedProjects: ${JSON.stringify(selectedProjects, null, 2)}`);
     setIssueMoveOutcome(undefined);
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
     await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
-    // const allIssueTypes: IssueType[] = await issueTypesCache.getissueTypes(props.invoke);
-    // const selectableIssueTypes = jiraUtil.filterProjectIssueTypes(selectedProjects, allIssueTypes);
-
-    // setSelectableIssueTypes(allIssueTypes);
     const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
     setSelectableIssueTypes(selectableIssueTypes);
   }
 
   const onToProjectSelect = async (selectedProject: undefined | Project): Promise<void> => {
-    console.log(`selectedToProject: `, selectedProject);
+    // console.log(`selectedToProject: `, selectedProject);
     setIssueMoveOutcome(undefined);
     setSelectedToProject(selectedProject);
     setSelectedToProjectTime(Date.now());
@@ -257,7 +242,7 @@ const BulkMovePanel = () => {
       if (issueMoveController.isDone(outcome.status)) {
         if (taskId !== lastMoveCompletionTaskId) {
           setLastMoveCompletionTaskId(taskId);
-          console.log(`BulkMovePanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
+          // console.log(`BulkMovePanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
           const options: FlagOptions = {
             id: taskId,
             type: outcome.status === 'COMPLETE' ? 'info' : 'error',
@@ -311,17 +296,6 @@ const BulkMovePanel = () => {
     } else {
       throw new Error(`BulkMovePanel: validateMandatoryFieldsAreFilled: No data retrieved for field options.`);
     }
-
-    // // const projectIdsToCheck: string[] = [selectedToProject.id];
-    // const fieldConfigurationItems = await jiraDataModel.getFieldConfigurationItemsForProjects(projectIdsToCheck);
-    // const mandatoryFieldConfigurationItems = fieldConfigurationItems.filter((fieldConfigurationItem: FieldConfigurationItem) => {
-    //   return fieldConfigurationItem.isRequired;
-    // });
-    // const validationState: ValidationState = {
-    //   mandatoryFieldsCompletionState: mandatoryFieldConfigurationItems.length > 0 ? 'complete-error' : 'complete-success',
-    //   mandatoryFieldsWithoutDefaults: mandatoryFieldConfigurationItems
-    // }
-    // return validationState;
   }
 
   const onInitiateFieldValueMapping = async (selectedToProject: Project): Promise<void> => {
@@ -347,7 +321,6 @@ const BulkMovePanel = () => {
 
   const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveRequestOutcome): string => {
     if (taskOutcome.errors && taskOutcome.errors.length) {
-      // const combinedErrorMessages = initiateOutcome.errors.join(', ');
       let combinedErrorMessages = '';
       for (const error of taskOutcome.errors) {
         const separator = combinedErrorMessages.length > 0 ? ', ' : '';
@@ -403,6 +376,7 @@ const BulkMovePanel = () => {
        <JQLInputPanel
           label="JQL"
           placeholder="JQL query"
+          initialJql={enteredJql}
           onJQLChange={onJQLChange}
           onExecute={onExecuteJQL} />
       </FormSection>
@@ -425,13 +399,11 @@ const BulkMovePanel = () => {
   }
 
   const renderToProjectSelect = () => {
-    // const issueTypesSelected = selectedIssueTypes.length > 0 && selectedIssueTypes.length < allIssueTypes.length && selectedIssues.length > 0;
-    // const allowSelection = selectedFromProjects.length && issueTypesSelected;
     const allowSelection = selectedIssues.length > 0;
     return (
       <FormSection>
         <ProjectsSelect 
-          // key={`to-project-${selectedFromProjectsTime}-${eligibleToProjectSearchInfoTime}`}
+          key={`to-project`}
           label="To project"
           isMulti={false}
           isDisabled={!allowSelection}

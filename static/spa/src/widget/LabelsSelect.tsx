@@ -38,8 +38,6 @@ const LabelSelect = (props: LabelSelectProps) => {
     value: label,
   }));
 
-  // console.log(`Label options = ${JSON.stringify(options, null, 2)}`);
-
   const onSingleSelectChange = async (selectedOption: undefined | Option): Promise<void> => {
     // console.log(`LabelSelect.onChange: `, selectedOption);
     if (selectedOption) {

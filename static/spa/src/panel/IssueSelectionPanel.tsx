@@ -22,7 +22,6 @@ type GlobalSelectionMode = 'All' | 'Some' | 'None';
 export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const [globalSelectionMode, setGlobalSelectionMode] = useState<GlobalSelectionMode>('All');
-  // const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
 
   const onToggleIssueSelection = (issueToToggle: Issue) => {
     if (globalSelectionMode === 'Some') {
