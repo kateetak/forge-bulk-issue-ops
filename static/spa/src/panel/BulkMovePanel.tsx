@@ -29,7 +29,7 @@ import { buildFieldMappingsForProject } from '../controller/bulkOperationsUtil';
 import { IssueTypeFieldMappings, ProjectFieldMappings } from '../types/ProjectFieldMappings';
 import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
 import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
-import { IssueSelectionPanel } from './IssueSelectionPanel';
+import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
 import { taskStatusPollPeriodMillis } from 'src/model/config';
@@ -125,6 +125,11 @@ const BulkMovePanel = () => {
       retrieveAndSetDebugInfo();
     }
   }, []);
+
+  const filterProjectsForFromSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
+    const allowableToProjects = await moveRuleEnforcer.filterSourceProjects(projectsToFilter);
+    return allowableToProjects;
+  }
 
   const filterProjectsForToSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
     const allowableToProjects = await moveRuleEnforcer.filterTargetProjects(selectedIssues, projectsToFilter);
@@ -390,8 +395,8 @@ const BulkMovePanel = () => {
           key={`from-project=${allProjectSearchInfoTime}`}
           label="From projects"
           isMulti={true}
-          // selectableProjects={allProjectSearchInfo.values}
           selectedProjects={selectedFromProjects}
+          filterProjects={filterProjectsForFromSelection}
           onProjectsSelect={onFromProjectsSelect}
         />
       </FormSection>

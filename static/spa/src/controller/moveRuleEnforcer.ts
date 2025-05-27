@@ -4,8 +4,29 @@ import { Project } from "../types/Project";
 
 class MoveRuleEnforcer {
 
+  private excludedProjectKeys = new Set<string>()
+    // Just examples, you can add more project keys to exclude.
+    .add('FIXED')
+    .add('DUMMY');
+
   /**
-   * This function will be invoked when the user selects a target project to moving issues to. The users starts
+   * This function is invoked when the user selects a source project to move issues from. The users starts
+   * typing the name or key of the source project which results in a Jira API call to retrieve a set of matching
+   * projects which is then passed to this function for filtering.
+   * @param selectedSourceProjects 
+   * @returns 
+   */
+  filterSourceProjects = async (
+    selectedSourceProjects: Project[],
+  ): Promise<Project[]> => {
+    const filteredProjects = selectedSourceProjects.filter((project: Project) => {
+      return !this.excludedProjectKeys.has(project.key);
+    });
+    return filteredProjects;
+  }
+
+  /**
+   * This function is invoked when the user selects a target project to moving issues to. The users starts
    * typing the name or key of the target project which results in a Jira API call to retrieve a set of matching
    * projects which is then passed to this function for filtering.
    * @param selectedIssuesToMove 

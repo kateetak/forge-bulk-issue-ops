@@ -47,7 +47,7 @@ div.bulk-move-main-panel > div {
   padding: 10px;
   flex-grow: 1;
   background-color: #fff;
-  overflow-y: auto;
+  overflow-y: scroll;
 }
 
 div.bulk-move-main-panel > div > div {

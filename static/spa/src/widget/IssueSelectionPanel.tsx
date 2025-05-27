@@ -9,6 +9,7 @@ import { IssueSearchInfo } from "../types/IssueSearchInfo";
 import { Issue } from "../types/Issue";
 import SuccessIcon from '@atlaskit/icon/core/success';
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
+import placeholderImage from './issue-filter-placeholder.png';
 
 export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
@@ -159,6 +160,18 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     );
   }
 
-  return renderIssuesPanel();
+  const renderPlaceholder = () => {
+    return (
+      <div style={{ textAlign: 'left', margin: '40px 0px', opacity: 0.5 }}>
+        <img src={placeholderImage} width="220px" alt="placeholder" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {props.issueSearchInfo.issues.length === 0 ? renderPlaceholder() : renderIssuesPanel()}
+    </>
+  );
 
 }

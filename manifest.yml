@@ -34,7 +34,7 @@ permissions:
   external:
     fetch:
       backend:
-        - '*.public.atlastunnel.com'
+        - "*.public.atlastunnel.com"
     scripts:
       - cdn.jsdelivr.net
     styles:
