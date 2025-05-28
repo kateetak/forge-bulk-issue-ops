@@ -34,6 +34,7 @@ import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
 import { taskStatusPollPeriodMillis } from 'src/model/config';
 import { BulkOpsMode } from 'src/types/BulkOpsMode';
+import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 
 const showDebug = false;
 const implyAllIssueTypesWhenNoneAreSelected = true;
@@ -62,8 +63,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   const [lastDataLoadTime, setLastDataLoadTime] = useState<number>(0);
   const [filterMode, setFilterMode] = useState<FilterMode>('basic');
   const [enteredJql, setEnteredJql] = useState<string>('');
-  const [allProjectSearchInfo, setAllProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
-  const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
+  // const [allProjectSearchInfo, setAllProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
+  // const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
   const [allIssueTypes, setAllIssueTypes] = useState<IssueType[]>([]);
   const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
   const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
@@ -126,7 +127,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   useEffect(() => {
-    updateAllProjectInfo();
+    // updateAllProjectInfo();
     initialiseSelectedIssueTypes();
     if (showDebug) {
       retrieveAndSetDebugInfo();
@@ -143,12 +144,12 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return allowableToProjects;
   }
 
-  const updateAllProjectInfo = async (): Promise<void> => {
-    const allProjectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
-    setAllProjectSearchInfo(allProjectSearchInfo);
-    setAllProjectSearchInfoTime(Date.now());
-    setLastDataLoadTime(Date.now());
-  }
+  // const updateAllProjectInfo = async (): Promise<void> => {
+  //   const allProjectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
+  //   setAllProjectSearchInfo(allProjectSearchInfo);
+  //   setAllProjectSearchInfoTime(Date.now());
+  //   setLastDataLoadTime(Date.now());
+  // }
 
   const onClearMainWarningMessage = () => {
     setMainWarningMessage('');
@@ -156,7 +157,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
     setSelectedIssues(newIssueSearchInfo.issues);
-    targetMandatoryFieldsProvider.setSelectedIssues(newIssueSearchInfo.issues);
+    targetMandatoryFieldsProvider.setSelectedIssues(newIssueSearchInfo.issues, allIssueTypes);
     setIssueSearchInfo(newIssueSearchInfo);
     setIssueSearchInfoTime(Date.now());
     setLastDataLoadTime(Date.now());
@@ -165,7 +166,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const onIssueSelectionChange = async (selectedIssues: Issue[]): Promise<void> => {
     setSelectedIssues(selectedIssues);
-    targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues);
+    targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
     updateFieldMappingsIfNeeded(selectedToProject);
   }
 
@@ -363,12 +364,12 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     const destinationProjectId: string = selectedToProject.id;
     setIssueMoveRequestOutcome(undefined);
     setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating move request...'});
-    const issueTypeIdsToTargetMandatoryFields = targetMandatoryFieldsProvider.buildIssueTypeIdsToTargetMandatoryFields();
+    const targetIssueTypeIdsToTargetMandatoryFields = targetMandatoryFieldsProvider.buildIssueTypeIdsToTargetMandatoryFields();
     const initiateOutcome: IssueMoveRequestOutcome = await issueMoveController.initiateMove(
       destinationProjectId,
       selectedIssues,
       issueSearchInfo,
-      issueTypeIdsToTargetMandatoryFields
+      targetIssueTypeIdsToTargetMandatoryFields
     );
     setCurrentMoveActivity(undefined);
     console.log(`BulkMovePanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
@@ -413,7 +414,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return (
       <FormSection>
         <ProjectsSelect 
-          key={`from-project=${allProjectSearchInfoTime}`}
+          // key={`from-project=${allProjectSearchInfoTime}`}
           label="From projects"
           isMulti={true}
           selectedProjects={selectedFromProjects}
@@ -691,6 +692,31 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     }
   }
 
+  const renderIssueTypeMappingPanel = (stepNumber: number) => {
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <h3>Step {stepNumber}</h3>
+          <h4>Issue Type Mapping</h4>
+          {renderStartFieldMappingButton()}
+          {renderFieldMappingIndicator()}
+          <IssueTypeMappingPanel
+            key={`issue-type-mapping-panel-${lastDataLoadTime}-${selectedIssues.length}`}
+            selectedIssues={selectedIssues}
+            targetProject={selectedToProject}
+            // bulkOpsMode={bulkOpsMode}
+            // issues={selectedIssues}
+            // fieldMappingsState={fieldMappingsState}
+            // targetMandatoryFieldsProvider={targetMandatoryFieldsProvider}
+            // showDebug={showDebug}
+            // onAllDefaultValuesProvided={onAllDefaultValuesProvided}
+          />
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
   const renderFieldValueMappingsPanel = (stepNumber: number) => {
     return (
       <div className="padding-panel">
@@ -829,6 +855,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         {renderFilterPanel(lastStepNumber++)}
         {renderIssuesPanel(lastStepNumber++)}
         {bulkOpsMode === 'Move' ? renderTargetProjectPanel(lastStepNumber++) : null}
+        {renderIssueTypeMappingPanel(lastStepNumber++)}
         {renderFieldValueMappingsPanel(lastStepNumber++)}
         {renderMoveOrEditPanel(lastStepNumber++)}
       </div>

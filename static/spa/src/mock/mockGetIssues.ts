@@ -2,7 +2,7 @@ import { Issue } from "../types/Issue";
 import { IssueSearchInfo } from "../types/IssueSearchInfo"
 
 export const getIssueSearchInfo = async (projectId: string): Promise<IssueSearchInfo> => {
-  const issueA = {
+  const issueA: Issue = {
     id: '',
     key: 'FEAT-1',
     fields: {
@@ -36,6 +36,16 @@ export const getIssueSearchInfo = async (projectId: string): Promise<IssueSearch
           name: ``,
           colorName: ``,
         }
+      },
+      project: {
+        id: projectId,
+        key: 'FEAT',
+        name: "",
+        projectTypeKey: "",
+        simplified: false,
+        style: "",
+        isPrivate: false,
+        properties: undefined
       },
       // assignee: {
 

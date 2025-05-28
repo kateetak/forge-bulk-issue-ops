@@ -4,7 +4,7 @@ import { IssueMoveRequestOutcome } from './types/IssueMoveRequestOutcome';
 import { getBasicAuthHeader, getBulkOpsAppGroupId, getSiteDomain } from './userManagementConfig';
 
 // This is set to false since the app user can't be authorized to add/remove users to/from groups.
-const manageUserGroupsUsingAppUserAccount = true
+const manageUserGroupsUsingAppUserAccount = false
 
 export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestData: any): Promise<InvocationResult<IssueMoveRequestOutcome>> => {
   const bulkOpsAppGroupId = getBulkOpsAppGroupId();

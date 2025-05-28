@@ -28,7 +28,7 @@ export class TargetMandatoryFieldBuilder {
 
   targetMandatoryFields: TargetMandatoryField[] = [];
 
-  addField = (fieldName, fieldValue: any): TargetMandatoryFieldBuilder => {
+  addField = (fieldName: string, fieldValue: any): TargetMandatoryFieldBuilder => {
     let fields: any = undefined;
     if (this.targetMandatoryFields.length === 0) {
       fields = {};
@@ -111,7 +111,31 @@ export class ProjectIssueTypeClassificationBuilder {
   }
 
   build = (): ProjectIssueTypClassification => {
-    return this.classification;
+    const clonedClassification = JSON.parse(JSON.stringify(this.classification)); // Deep clone to avoid mutation
+    if (clonedClassification.targetMandatoryFields) {
+     if (clonedClassification.targetMandatoryFields.length === 0) {
+        clonedClassification.inferFieldDefaults = true; // No target mandatory fields are set so infer field defaults
+        delete clonedClassification.targetMandatoryFields; // Remove targetMandatoryFields since it is empty
+      } else {
+        console.warn(` * ProjectIssueTypeClassificationBuilder: changing inferFieldDefaults to false since targetMandatoryFields are set...`);
+        clonedClassification.inferFieldDefaults = false;
+      }
+    } else {
+      clonedClassification.inferFieldDefaults = true; // No target mandatory fields are set so infer field defaults
+    }
+
+
+    // Test
+    // "customfield_10091": {
+    //   "retain": true,
+    //   "type": "raw",
+    //   "value": [
+    //     "10020"
+    //   ]
+    // },
+
+
+    return clonedClassification;
   }
   
 }

@@ -22,6 +22,7 @@ import { FieldConfigurationScheme } from '../types/FieldConfigurationScheme';
 import { EditIssueMetadata } from 'src/types/EditIssueMetadata';
 import { CreateIssueMetadata, ProjectCreateIssueMetadata } from '../types/CreateIssueMetadata';
 import { InvocationResult } from 'src/types/InvocationResult';
+import { ProjectWithIssueTypes } from 'src/types/ProjectWithIssueTypes';
 
 class JiraDataModel {
 
@@ -88,7 +89,7 @@ class JiraDataModel {
     // Note that the following limits the amount of fields to be returned for performance reasons, but
     // also could result in certain fields in the Issue type not being populated if these fields do 
     // not cover them all.
-    const fields = 'summary,description,issuetype';
+    const fields = 'summary,description,issuetype,project';
     const expand = 'renderedFields';
     // console.log(` * jql=${jql}`);
     const paramsString = `jql=${encodeURIComponent(jql)}&maxResults=${maxResults}&fields=${fields}&expand=${expand}`;
@@ -144,11 +145,9 @@ class JiraDataModel {
       // console.log(`Response: ${response.status} ${response.statusText}`);
       const createIssueMetadata = await response.json() as CreateIssueMetadata;
       if (createIssueMetadata.projects && createIssueMetadata.projects.length === 1) {
-        // const CreateIssueMetadata = createIssueMetadata as CreateIssueMetadata;
-
         const projectCreateIssueMetadata = createIssueMetadata.projects[0];
         this.projectIdsToProjectCreateIssueMetadata.set(projectId, projectCreateIssueMetadata);
-        // console.log(`Project createIssueMetadata: ${JSON.stringify(projects, null, 2)}`);
+        // console.log(`Project createIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
         return projectCreateIssueMetadata;
       } else {
         throw new Error(`Expected exactly one project in create issue metadata for projectId ${projectId}: ${JSON.stringify(createIssueMetadata)}`, );
@@ -207,6 +206,17 @@ class JiraDataModel {
       // console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
       return projects;
     }
+  }
+
+  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get
+  getProjectById = async (projectIdOrKey: string): Promise<InvocationResult<ProjectWithIssueTypes>> => {
+    const response = await requestJira(`/rest/api/3/project/${projectIdOrKey}?expand=issueTypes`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const invocationResult = await this.readResponse<ProjectWithIssueTypes>(response);
+    return invocationResult;
   }
   
   initiateBulkIssuesMove = async (

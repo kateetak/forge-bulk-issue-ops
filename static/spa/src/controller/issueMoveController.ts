@@ -7,6 +7,7 @@ import { Issue } from "../types/Issue";
 import jiraDataModel from "../model/jiraDataModel";
 import { TargetMandatoryFields } from "../types/TargetMandatoryField";
 import { InvocationResult } from "../types/InvocationResult";
+import bulkIssueTypeMapping from "../model/bulkIssueTypeMapping";
 
 const issueMovePollPeriodMillis = 2000;
 
@@ -16,23 +17,10 @@ class IssueMoveController {
     destinationProjectId: string,
     issues: Issue[],
     issueSearchInfo: IssueSearchInfo,
-    issueTypeIdsToTargetMandatoryFields: Map<string, TargetMandatoryFields>
+    targetIssueTypeIdsToTargetMandatoryFields: Map<string, TargetMandatoryFields>
   ): Promise<IssueMoveRequestOutcome> => {
 
-    // const r2d2TargetMandatoryFields: TargetMandatoryFields = 
-    // {
-    //   fields: {
-    //     customfield_10091: {
-    //       retain: true,
-    //       type: "raw",
-    //       value: ['10021']
-    //     }
-    //   }
-    // };
-
-    // const issueTypeIdsToTargetMandatoryFields = new Map<string, TargetMandatoryFields>();
-
-
+    // const targetIssueTypeIdsToTargetMandatoryFields = new Map<string, TargetMandatoryFields>();
 
     const allProjectsSearchInfo = await jiraDataModel.pageOfProjectSearchInfo('');
     const allIssueTypes: IssueType[] = await jiraDataModel.getissueTypes();
@@ -43,25 +31,120 @@ class IssueMoveController {
 
 
       // Step 1: Arrange issues into arrays by issue type
-      const issueTypeIdsToIssueTypes = new Map<string, IssueType>();
-      const issueTypeIdsToIssues = new Map<string, Issue[]>();
-      for (const issue of issues) {
-        issueTypeIdsToIssueTypes.set(issue.fields.issuetype.id, issue.fields.issuetype);
-        const issuesOfType = issueTypeIdsToIssues.get(issue.fields.issuetype.id);
-        if (issuesOfType) {
-          issuesOfType.push(issue);
-        } else {
-          issueTypeIdsToIssues.set(issue.fields.issuetype.id, [issue]);
-        }
-      }
+      // const issueTypeIdsToSourceIssueTypes = new Map<string, IssueType>();
+      // const issueTypeIdsToIssues = new Map<string, Issue[]>();
+      // for (const issue of issues) {
+      //   issueTypeIdsToSourceIssueTypes.set(issue.fields.issuetype.id, issue.fields.issuetype);
+      //   const issuesOfType = issueTypeIdsToIssues.get(issue.fields.issuetype.id);
+      //   if (issuesOfType) {
+      //     issuesOfType.push(issue);
+      //   } else {
+      //     issueTypeIdsToIssues.set(issue.fields.issuetype.id, [issue]);
+      //   }
+      // }
 
       // Step 2: Iterate over issue types so that all issues of the same type are dealt with together since this
       //         is how the bulk move API payload needs to be formatted.
-      const issueTypes: IssueType[] = Array.from(issueTypeIdsToIssueTypes.values());
-      for (const issueType of issueTypes) {
-        const issuesOfType = issueTypeIdsToIssues.get(issueType.id);
+      // const sourceIssueTypes: IssueType[] = Array.from(issueTypeIdsToSourceIssueTypes.values());
+      // for (const sourceIssueType of sourceIssueTypes) {
+      //   const issuesOfType = issueTypeIdsToSourceIssueTypes.get(sourceIssueType.id);
+      //   if (issuesOfType) {
+      //     // const projectIssueTypeKey = `${destinationProject.id}-${sourceIssueType.id}`;
+      //     const sourceProjectId = issue.fields.project.id;
+      //     const targetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIssueType.id);
+      //     if (targetIssueTypeId) {
+      //       const projectIssueTypeKey = `${destinationProject.id}-${sourceIssueType.id}`;
+      //       const projectIssueTypeClassificationBuilder = new ProjectIssueTypeClassificationBuilder()
+      //         .setInferClassificationDefaults(true)
+      //         .setInferFieldDefaults(true)
+      //         .setInferStatusDefaults(true)
+      //         .setInferSubtaskTypeDefault(true)
+      //         .setTargetClassification([])
+      //         .setTargetMandatoryFields([]);
+      //       for (const issueOfType of issuesOfType) {
+      //         projectIssueTypeClassificationBuilder.addIssueIdOrKey(issueOfType.id);
+      //       }
+      //       const targetMandatoryFields: TargetMandatoryFields = issueTypeIdsToTargetMandatoryFields.get(sourceIssueType.id);
+      //       const targetMandatoryFieldsCount = targetMandatoryFields ? Object.keys(targetMandatoryFields.fields).length : 0;
+      //       if (targetMandatoryFieldsCount > 0) {
+      //         projectIssueTypeClassificationBuilder
+      //           .setInferFieldDefaults(false)
+      //           // .setTargetMandatoryFields([r2d2TargetMandatoryFields]);
+      //           .setTargetMandatoryFields([targetMandatoryFields]);
+      //       }
+      //       projectIssueTypeKeysToBuilders.set(projectIssueTypeKey, projectIssueTypeClassificationBuilder);
+      //         bulkIssueMoveRequestDataBuilder.addMapping(
+      //           destinationProject.id,
+      //           sourceIssueType.id,
+      //           projectIssueTypeClassificationBuilder.build()
+      //       );
+      //     } else {
+      //       throw new Error(`Internal error: a target issue type was not found for projectId ${sourceProjectId} and source issueTypeId ${sourceIssueType.id}`);
+      //     }
+      //   } else {
+      //     throw new Error(`Internal error: no issues found for issue type ${sourceIssueType.id}`);
+      //   }
+      // }
+
+      // Step 1: Arrange issues into arrays by target issue type
+      const sourceIssueTypeIdsToTargetIssueTypes = new Map<string, IssueType>();
+      // const sourceIssueTypeIdsToSourceIssues = new Map<string, Issue[]>();
+      const targetIssueTypeIdsToSourceIssues = new Map<string, Issue[]>();
+      for (const issue of issues) {
+
+        const sourceProjectId = issue.fields.project.id;
+        const sourceIssueTypeId = issue.fields.issuetype.id;
+        const targetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
+        if (targetIssueTypeId) {
+          const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssueTypeId);
+          sourceIssueTypeIdsToTargetIssueTypes.set(sourceIssueTypeId, targetIssueType);
+
+          const targetMandatoryFields = targetIssueTypeIdsToTargetMandatoryFields.get(targetIssueTypeId);
+          if (targetMandatoryFields) {
+            targetIssueTypeIdsToTargetMandatoryFields.set(targetIssueTypeId, targetMandatoryFields);
+          } else {
+            throw new Error(`Internal error: no target mandatory fields found for source issue type ${sourceIssueTypeId}`);
+          }
+
+
+          // const issuesOfType = sourceIssueTypeIdsToSourceIssues.get(sourceIssueTypeId);
+          // if (issuesOfType) {
+          //   issuesOfType.push(issue);
+          // } else {
+          //   sourceIssueTypeIdsToSourceIssues.set(sourceIssueTypeId, [issue]);
+          // }
+
+          // const issuesOfType = targetIssueTypeIdsToSourceIssues.get(sourceIssueTypeId);
+          const issuesOfType = targetIssueTypeIdsToSourceIssues.get(targetIssueTypeId);
+          if (issuesOfType) {
+            issuesOfType.push(issue);
+          } else {
+            targetIssueTypeIdsToSourceIssues.set(targetIssueTypeId, [issue]);
+          }
+        } else {
+          throw new Error(`Internal error: a target issue type was not found for projectId ${sourceProjectId} and source issueTypeId ${sourceIssueTypeId}`);
+        }
+      }
+
+      // sourceIssueTypeIdsToTargetMandatoryFields.forEach((targetMandatoryFields, sourceIssueTypeId) => {
+      //   const targetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(
+      //     sourceProjectId,
+      //     sourceIssueTypeId
+      //   );
+      //   if (targetIssueTypeId) {
+      //     targetIssueTypeIdsToTargetMandatoryFields.set(targetIssueTypeId, targetMandatoryFields);
+      //   } else {
+      //     throw new Error(`Internal error: a target issue type was not found for source issueTypeId ${sourceIssueTypeId}`);
+      //   }
+      // }
+
+      // Step 2: Iterate over issue types so that all issues of the same type are dealt with together since this
+      //         is how the bulk move API payload needs to be formatted.
+      const targetIssueTypes: IssueType[] = Array.from(sourceIssueTypeIdsToTargetIssueTypes.values());
+      for (const targetIssueType of targetIssueTypes) {
+        const issuesOfType = targetIssueTypeIdsToSourceIssues.get(targetIssueType.id);
         if (issuesOfType) {
-          const projectIssueTypeKey = `${destinationProject.id}-${issueType.id}`;
+          const projectIssueTypeKey = `${destinationProject.id}-${targetIssueType.id}`;
           const projectIssueTypeClassificationBuilder = new ProjectIssueTypeClassificationBuilder()
             .setInferClassificationDefaults(true)
             .setInferFieldDefaults(true)
@@ -72,22 +155,24 @@ class IssueMoveController {
           for (const issueOfType of issuesOfType) {
             projectIssueTypeClassificationBuilder.addIssueIdOrKey(issueOfType.id);
           }
-          const targetMandatoryFields: TargetMandatoryFields = issueTypeIdsToTargetMandatoryFields.get(issueType.id);
+          // const targetMandatoryFields: TargetMandatoryFields = sourceIssueTypeIdsToTargetMandatoryFields.get(
+          //   targetIssueType.id);
+          const targetMandatoryFields: TargetMandatoryFields = targetIssueTypeIdsToTargetMandatoryFields.get(
+            targetIssueType.id);
           const targetMandatoryFieldsCount = targetMandatoryFields ? Object.keys(targetMandatoryFields.fields).length : 0;
           if (targetMandatoryFieldsCount > 0) {
             projectIssueTypeClassificationBuilder
               .setInferFieldDefaults(false)
-              // .setTargetMandatoryFields([r2d2TargetMandatoryFields]);
               .setTargetMandatoryFields([targetMandatoryFields]);
           }
           projectIssueTypeKeysToBuilders.set(projectIssueTypeKey, projectIssueTypeClassificationBuilder);
             bulkIssueMoveRequestDataBuilder.addMapping(
               destinationProject.id,
-              issueType.id,
+              targetIssueType.id,
               projectIssueTypeClassificationBuilder.build()
-            );
+          );
         } else {
-          throw new Error(`Internal error: no issues found for issue type ${issueType.id}`);
+          throw new Error(`Internal error: no issues found for issue type ${targetIssueType.id}`);
         }
       }
 

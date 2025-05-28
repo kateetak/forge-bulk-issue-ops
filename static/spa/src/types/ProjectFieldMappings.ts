@@ -5,5 +5,5 @@ export type IssueTypeFieldMappings = {
 }
 
 export type ProjectFieldMappings = {
-  issueTypesToMappings: Map<string, IssueTypeFieldMappings>;
+  targetIssueTypesToMappings: Map<string, IssueTypeFieldMappings>;
 }

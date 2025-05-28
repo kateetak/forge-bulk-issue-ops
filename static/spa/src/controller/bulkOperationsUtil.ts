@@ -20,48 +20,50 @@ export const buildFieldMappingsForProject = async (
   onlyIncludeRequiredFields: boolean = true
 ): Promise<DataRetrievalResponse<ProjectFieldMappings>> => {
   const projectFieldMappings: ProjectFieldMappings = {
-    issueTypesToMappings: new Map<string, IssueTypeFieldMappings>()
+    targetIssueTypesToMappings: new Map<string, IssueTypeFieldMappings>()
   }
   const projectCreateIssueMetadata = await jiraDataModel.getCreateIssueMetadataForProject(targetProjectId);
+  console.log(`buildFieldMappingsForProject: projectCreateIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
   // const projectId = projectCreateIssueMetadata.id;
-  for (const issueType of projectCreateIssueMetadata.issuetypes) {
+  console.log(`Found ${projectCreateIssueMetadata.issuetypes.length} issue types for project ${targetProjectId}`);
+  for (const targetIssueType of projectCreateIssueMetadata.issuetypes) {
+    console.log(` * buildFieldMappingsForProject: Processing issue type: ${targetIssueType.name} (${targetIssueType.id})`);
     const fieldIdsToFieldMappingInfos = new Map<string, FieldMappingInfo>();
     const issueTypeFieldMappings: IssueTypeFieldMappings = {
       fieldIdsToFieldMappingInfos: fieldIdsToFieldMappingInfos
     };
-    projectFieldMappings.issueTypesToMappings.set(issueType.id, issueTypeFieldMappings);
+    projectFieldMappings.targetIssueTypesToMappings.set(targetIssueType.id, issueTypeFieldMappings);
+    console.log(` * buildFieldMappingsForProject: targetIssueTypesToMappings.set: ${targetIssueType.id} (${targetIssueType.name})`);
 
-    for (const fieldId in issueType.fields) {
-      const field = issueType.fields[fieldId];
+    for (const fieldId in targetIssueType.fields) {
+      const field = targetIssueType.fields[fieldId];
       const includeField = !onlyIncludeRequiredFields || field.required;
       if (includeField) {
         const isCustomField = field.schema && field.schema.customId;
         if (isCustomField) {
-          console.log(`getFieldOptionsForProject: Found custom field: ${fieldId}`);
+          console.log(`buildFieldMappingsForProject: Found custom field: ${fieldId} (required = ${field.required}, schema type = ${field.schema.type})`);
 
           if (fieldId === "customfield_10091") {
-            console.log(` ***** getFieldOptionsForProject: Found R2D2 Team field (customfield_10091)`);
-
+            console.log(` ***** buildFieldMappingsForProject: Found R2D2 Team field (customfield_10091)`);
           }
 
-          if (fieldId === "customfield_10124") {
-            console.log(` ***** getFieldOptionsForProject: Found My Number field (customfield_10124)`);
-          }
+          // if (fieldId === "customfield_10124") {
+          //   console.log(` ***** buildFieldMappingsForProject: Found My Number field (customfield_10124)`);
+          // }
 
           const fieldMappingInfo: FieldMappingInfo = {
             fieldId: fieldId,
             fieldMetadata: field,
-            // sourceProject: ddd
           }
           
           issueTypeFieldMappings.fieldIdsToFieldMappingInfos.set(fieldId, fieldMappingInfo);
 
 
         } else {
-          // console.log(`getFieldOptionsForProject: Skipping non-custom field: ${fieldName}`);
+          // console.log(`buildFieldMappingsForProject: Skipping non-custom field: ${fieldName}`);
         }
       } else {
-        // console.log(`getFieldOptionsForProject: Skipping optional field: ${fieldName}`);
+        // console.log(`buildFieldMappingsForProject: Skipping optional field: ${fieldName}`);
       }
     }
   }
