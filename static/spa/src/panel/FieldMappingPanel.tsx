@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Toggle from '@atlaskit/toggle';
 import { CustomFieldOption } from "../types/CustomFieldOption";
 import { IssueTypeFieldMappings, ProjectFieldMappings } from "../types/ProjectFieldMappings";
 import { Issue } from "../types/Issue";
@@ -12,6 +13,7 @@ import { FieldMetadata } from 'src/types/FieldMetadata';
 import { Project } from 'src/types/Project';
 import Textfield from '@atlaskit/textfield';
 import { DefaultFieldValue } from 'src/types/DefaultFieldValue';
+import { FieldMappingInfo } from 'src/types/FieldMappingInfo';
 
 export type FieldMappingsState = {
   dataRetrieved: boolean;
@@ -77,6 +79,10 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     props.onAllDefaultValuesProvided(allDefaultValuesProvided);
   }
 
+  const onRetainFieldValueSelection = (issueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, retainFieldValue: boolean): void => {
+    props.targetMandatoryFieldsProvider.onSelectRetainFieldValue(issueType, fieldId, fieldMetadata, retainFieldValue);
+  }
+
   const renderFieldValuesSelect = (fieldId: string, issueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
     const selectableCustomFieldOptions: CustomFieldOption[] = [];
       for (const allowedValue of fieldMetadata.allowedValues) {
@@ -125,7 +131,8 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     );
   }
 
-  const renderFieldValuesEntryWidget = (fieldId: string, issueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+  const renderFieldValuesEntryWidget = (fieldId: string, issueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
+    const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
     if (fieldMetadata.schema.type === 'option' || fieldMetadata.schema.type === 'options') {
       if (fieldMetadata.allowedValues) {
         return renderFieldValuesSelect(fieldId, issueType, fieldMetadata);
@@ -145,6 +152,20 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     }
   }
 
+  const renderRetainFieldValueWidget = (fieldId: string, issueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
+    const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
+    const isChecked = props.targetMandatoryFieldsProvider.getRetainFieldValue(issueType.id, fieldId);
+    return (
+      <Toggle
+        id={`toggle-filter-mode-advanced`}
+        defaultChecked={isChecked}
+        onChange={(event: any) => {
+          onRetainFieldValueSelection(issueType, fieldId, fieldMetadata, event.currentTarget.checked);
+        }}
+      />
+    )
+  }
+
   const renderFieldMappingsState = () => {
     let fieldCount = 0;
     const renderedTable = (
@@ -152,23 +173,27 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
         <table >
           <thead>
             <tr>
-              <th>Issue Type</th>
-              <th>Field</th>
-              <th>Options</th>
+              <th className="no-break">Issue Type</th>
+              <th className="no-break">Field</th>
+              <th className="no-break">Options</th>
+              <th className="no-break">Retain</th>
             </tr>
           </thead>
           <tbody>
             {Array.from(props.fieldMappingsState.projectFieldMappings.issueTypesToMappings.entries()).map(([issueTypeId, fieldOptionMappings]) => {
               const issueType = issueTypeIdsToTypesBeingMapped.get(issueTypeId);
               if (issueType) {
-                return Array.from(fieldOptionMappings.fieldIdsToFieldMetadata.entries()).map(([fieldId, options]) => {
+                return Array.from(fieldOptionMappings.fieldIdsToFieldMappingInfos.entries()).map(([fieldId, fieldMappingInfo]) => {
                   fieldCount++;
                   return (
                     <tr key={`mapping-${issueTypeId}-${fieldId}`}>
                       <td>{issueType.name}</td>
                       <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
                       <td>
-                        {renderFieldValuesEntryWidget(fieldId, issueType, options)}
+                        {renderFieldValuesEntryWidget(fieldId, issueType, fieldMappingInfo)}
+                      </td>
+                      <td>
+                        {renderRetainFieldValueWidget(fieldId, issueType, fieldMappingInfo)}
                       </td>
                     </tr>
                   );

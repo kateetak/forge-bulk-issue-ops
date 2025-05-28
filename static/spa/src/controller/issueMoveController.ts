@@ -91,59 +91,9 @@ class IssueMoveController {
         }
       }
 
-      // for (const issue of issues) {
-      //   const issueType = allIssueTypes.find(issueType => issueType.id === issue.fields.issuetype.id);
-      //   if (issueType) {
-      //     const projectIssueTypeKey = `${destinationProject.id}-${issueType.id}`;
-      //     let projectIssueTypeClassificationBuilder: undefined | ProjectIssueTypeClassificationBuilder = projectIssueTypeKeysToBuilders.get(projectIssueTypeKey);
-      //     if (!projectIssueTypeClassificationBuilder) {
-      //       projectIssueTypeClassificationBuilder = new ProjectIssueTypeClassificationBuilder()
-      //         .setInferClassificationDefaults(true)
-      //         .setInferFieldDefaults(true)
-      //         .setInferStatusDefaults(true)
-      //         .setInferSubtaskTypeDefault(true)
-      //         .setTargetClassification([])
-      //         .setTargetMandatoryFields([]);
-
-
-      //       projectIssueTypeKeysToBuilders.set(projectIssueTypeKey, projectIssueTypeClassificationBuilder);
-      //       bulkIssueMoveRequestDataBuilder.addMapping(
-      //         destinationProject.id,
-      //         issueType.id,
-      //         projectIssueTypeClassificationBuilder.build()
-      //       );
-              
-
-      //         // .setInferFieldDefaults(false)
-      //         // .setTargetMandatoryFields([r2d2TargetMandatoryFields])
-
-
-      //       const targetMandatoryFieldsCount = targetMandatoryFields ? Object.keys(targetMandatoryFields.fields).length : 0;
-      //       if (targetMandatoryFieldsCount > 0) {
-      //         projectIssueTypeClassificationBuilder = projectIssueTypeClassificationBuilder
-      //           .setInferFieldDefaults(false)
-      //           .setTargetMandatoryFields([r2d2TargetMandatoryFields]);
-      //       }
-
-
-      //       projectIssueTypeKeysToBuilders.set(projectIssueTypeKey, projectIssueTypeClassificationBuilder);
-      //       bulkIssueMoveRequestDataBuilder.addMapping(
-      //         destinationProject.id,
-      //         issueType.id,
-      //         projectIssueTypeClassificationBuilder.build()
-      //       );
-      //     }
-      //     projectIssueTypeClassificationBuilder.addIssueIdOrKey(issue.id);
-      //   }
-      // }
-
-
       // Step 3: Build the bulk issue move request data
       const bulkIssueMoveRequestData = bulkIssueMoveRequestDataBuilder.build();
       console.log(` * bulkIssueMoveRequestData: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
-      // const params = {
-      //   bulkIssueMoveRequestData: bulkIssueMoveRequestData,
-      // };
 
       // Step 4: Initiate the bulk issue move request
       const invocationResult: InvocationResult<IssueMoveRequestOutcome> = await jiraDataModel.initiateBulkIssuesMove(bulkIssueMoveRequestData);
@@ -167,26 +117,10 @@ class IssueMoveController {
         }
         return requestOutcome;
       }
-
-      // const requestOutcome: IssueMoveRequestOutcome = await jiraDataModel.initiateBulkIssuesMove(bulkIssueMoveRequestData);
-      // if (requestOutcome.taskId) {
-      //   console.log(` * Initiated issue move with taskId: ${requestOutcome.taskId}`);
-      // } else {
-      //   console.error(` * Failed to initiate issue move: ${JSON.stringify(requestOutcome, null, 2)}`);
-      // }
-      // return requestOutcome;
     } else {
       throw new Error(`Destination project ${destinationProjectId} not found`);
     }
   }
-
-  // getIssueTypesOfIssues = (issues: Issue[]): Set<IssueType> => {
-  //   const issueTypeIdsToTypes = new Map<string, IssueType>();
-  //   for (const issue of issues) {
-  //     issueTypeIdsToTypes.set(issue.fields.issuetype.id, issue.fields.issuetype);
-  //   }
-  //   return issueTypeIdsToTypes.size > 0 ? new Set(issueTypeIdsToTypes.values()) : new Set<IssueType>();
-  // }
 
   pollMoveProgress = async (taskId: string): Promise<TaskOutcome> => {
     const params = {

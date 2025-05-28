@@ -1,8 +1,9 @@
 import { requestJira } from '@forge/bridge';
+import { invoke } from '@forge/bridge';
 import { getMockFieldConfigurationItems } from '../mock/mockGetMockFieldConfigurationItems';
 import { getMockFieldConfigurationSchemesForProjects } from '../mock/mockGetMockFieldConfigurationSchemesForProjects';
 import { getMockProjectSearchInfo } from '../mock/mockGetProjects';
-import { mockGetFieldConfigurationItems, mockGetFieldConfigurationSchemesForProjects, mockGetProjects } from './config';
+import { invokeBulkOpsApisAsTheAppUser, mockGetFieldConfigurationItems, mockGetFieldConfigurationSchemesForProjects, mockGetProjects } from './config';
 import { BulkIssueMoveRequestData } from "../types/BulkIssueMoveRequestData";
 import { CustomFieldsContextItem } from '../types/CustomFieldsContextItem';
 import { Field } from '../types/Field';
@@ -19,7 +20,7 @@ import { CustomFieldContextOption } from '../types/CustomFieldContextOption';
 import { Project } from '../types/Project';
 import { FieldConfigurationScheme } from '../types/FieldConfigurationScheme';
 import { EditIssueMetadata } from 'src/types/EditIssueMetadata';
-import { CreateIssueMetadata, ProjectCreateIssueMetadata } from 'src/types/CreateIssueMetadata';
+import { CreateIssueMetadata, ProjectCreateIssueMetadata } from '../types/CreateIssueMetadata';
 import { InvocationResult } from 'src/types/InvocationResult';
 
 class JiraDataModel {
@@ -129,6 +130,7 @@ class JiraDataModel {
     return labels;
   }
 
+  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
   getCreateIssueMetadataForProject = async (projectId: string): Promise<ProjectCreateIssueMetadata> => {
     const cachedCreateIssueMetadata = this.projectIdsToProjectCreateIssueMetadata.get(projectId);
     if (cachedCreateIssueMetadata) {
@@ -207,24 +209,25 @@ class JiraDataModel {
     }
   }
   
-  initiateBulkIssuesMove = async (bulkIssueMoveRequestData: BulkIssueMoveRequestData): Promise<InvocationResult<IssueMoveRequestOutcome>> => {  
-    const response = await requestJira(`/rest/api/3/bulk/issues/move`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(bulkIssueMoveRequestData)
-    });
-    const invocationResult: InvocationResult<IssueMoveRequestOutcome> = await this.readResponse<IssueMoveRequestOutcome>(response);
+  initiateBulkIssuesMove = async (
+    bulkIssueMoveRequestData: BulkIssueMoveRequestData
+  ): Promise<InvocationResult<IssueMoveRequestOutcome>> => {
+    let invocationResult: InvocationResult<IssueMoveRequestOutcome>;
+    if (invokeBulkOpsApisAsTheAppUser) {
+      invocationResult = await invoke('initiateBulkMove', { bulkIssueMoveRequestData });
+    } else {
+      const response = await requestJira(`/rest/api/3/bulk/issues/move`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bulkIssueMoveRequestData)
+      });
+      invocationResult = await this.readResponse<IssueMoveRequestOutcome>(response);
+    }
     console.log(`Bulk issue move invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
     return invocationResult;
-
-
-    // const outcomeData = await response.json();
-    // const outcome: IssueMoveRequestOutcome = Object.assign({statusCode: response.status}, outcomeData);
-    // console.log(`Bulk issue move request outcome: ${JSON.stringify(outcome, null, 2)}`);
-    // return outcome;
   }
 
   readResponse = async <T>(response: any): Promise<InvocationResult<T>> => {

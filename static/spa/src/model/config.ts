@@ -1,4 +1,6 @@
 
+export const invokeBulkOpsApisAsTheAppUser = true;
+
 export const allowTheTargetProjectToMatchAnyIssueSourceProject = false;
 
 export const taskStatusPollPeriodMillis = 1000;

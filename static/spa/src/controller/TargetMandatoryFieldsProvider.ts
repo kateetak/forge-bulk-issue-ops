@@ -6,10 +6,17 @@ import { TargetMandatoryFields, FieldValue } from "../types/TargetMandatoryField
 import { FieldMetadata } from "src/types/FieldMetadata";
 import { DefaultFieldValue } from "src/types/DefaultFieldValue";
 
+type FieldSettings = {
+  defaultFieldValue?: DefaultFieldValue;
+  retainFieldValue: boolean;
+}
+
+const defaultRetainValueSetting = true;
+
 export class TargetMandatoryFieldsProvider {
 
   private projectFieldMappings: undefined | ProjectFieldMappings;
-  private issueTypeIdsToFieldIdsToDefaultFieldOptions = new Map<string, Map<string, DefaultFieldValue>>();
+  private issueTypeIdsToFieldIdsToFieldSettings = new Map<string, Map<string, FieldSettings>>();
   private selectedIssueTypeIdsToTypes = new Map<string, IssueType>();
   private selectedIssueTypes: IssueType[] = [];
 
@@ -28,9 +35,19 @@ export class TargetMandatoryFieldsProvider {
     this.projectFieldMappings = projectFieldMappings;
   }
 
+  getFieldSettings = (issueTypeId: string, fieldId: string): FieldSettings | undefined => {
+    const fieldIdsToDefaultFieldSettings = this.issueTypeIdsToFieldIdsToFieldSettings.get(issueTypeId);
+    return fieldIdsToDefaultFieldSettings?.get(fieldId);
+  }
+
   getSelectedDefaultFieldValue = (issueTypeId: string, fieldId: string): DefaultFieldValue | undefined => {
-    const fieldIdsToDefaultFieldValues = this.issueTypeIdsToFieldIdsToDefaultFieldOptions.get(issueTypeId);
-    return fieldIdsToDefaultFieldValues?.get(fieldId);
+    const fieldSettings = this.getFieldSettings(issueTypeId, fieldId);
+    return fieldSettings?.defaultFieldValue;
+  }
+
+  getRetainFieldValue = (issueTypeId: string, fieldId: string): boolean => {
+    const fieldSettings = this.getFieldSettings(issueTypeId, fieldId);
+    return fieldSettings ? fieldSettings.retainFieldValue : defaultRetainValueSetting;
   }
 
   isIssueTypeSelected = (issueTypeId: string): boolean => {
@@ -45,7 +62,7 @@ export class TargetMandatoryFieldsProvider {
     for (const selectedIssueType of this.selectedIssueTypes) {
       const issueTypeFieldMappings = this.projectFieldMappings.issueTypesToMappings.get(selectedIssueType.id);
       if (issueTypeFieldMappings) {
-        const fieldIds = Array.from(issueTypeFieldMappings.fieldIdsToFieldMetadata.keys());
+        const fieldIds = Array.from(issueTypeFieldMappings.fieldIdsToFieldMappingInfos.keys());
         for (const fieldId of fieldIds) {
           const defaultValue = this.getSelectedDefaultFieldValue(selectedIssueType.id, fieldId);
           if (!defaultValue) {
@@ -61,12 +78,35 @@ export class TargetMandatoryFieldsProvider {
   }
 
   onSelectDefaultValue = (issueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, defaultValue: DefaultFieldValue): void => {
-    let fieldIdsToDefaultFieldValues = this.issueTypeIdsToFieldIdsToDefaultFieldOptions.get(issueType.id);
-    if (!fieldIdsToDefaultFieldValues) {
-      fieldIdsToDefaultFieldValues = new Map<string, DefaultFieldValue>();
-      this.issueTypeIdsToFieldIdsToDefaultFieldOptions.set(issueType.id, fieldIdsToDefaultFieldValues);
+    let fieldIdsToDefaultFieldSettings = this.issueTypeIdsToFieldIdsToFieldSettings.get(issueType.id);
+    if (!fieldIdsToDefaultFieldSettings) {
+      fieldIdsToDefaultFieldSettings = new Map<string, FieldSettings>();
+      this.issueTypeIdsToFieldIdsToFieldSettings.set(issueType.id, fieldIdsToDefaultFieldSettings);
     }
-    fieldIdsToDefaultFieldValues.set(fieldId, defaultValue);
+    let fieldSettings = fieldIdsToDefaultFieldSettings.get(fieldId);
+    if (!fieldSettings) {
+      fieldSettings = {
+        retainFieldValue: defaultRetainValueSetting,
+      };
+      fieldIdsToDefaultFieldSettings.set(fieldId, fieldSettings);
+    }
+    fieldSettings.defaultFieldValue = defaultValue;
+  }
+
+  onSelectRetainFieldValue = (issueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, retainFieldValue: boolean): void => {
+    let fieldIdsToDefaultFieldSettings = this.issueTypeIdsToFieldIdsToFieldSettings.get(issueType.id);
+    if (!fieldIdsToDefaultFieldSettings) {
+      fieldIdsToDefaultFieldSettings = new Map<string, FieldSettings>();
+      this.issueTypeIdsToFieldIdsToFieldSettings.set(issueType.id, fieldIdsToDefaultFieldSettings);
+    }
+    let fieldSettings = fieldIdsToDefaultFieldSettings.get(fieldId);
+    if (!fieldSettings) {
+      fieldSettings = {
+        retainFieldValue: defaultRetainValueSetting,
+      };
+      fieldIdsToDefaultFieldSettings.set(fieldId, fieldSettings);
+    }
+    fieldSettings.retainFieldValue = retainFieldValue;
   }
 
   buildIssueTypeIdsToTargetMandatoryFields = (): Map<string, TargetMandatoryFields> => {
@@ -79,10 +119,14 @@ export class TargetMandatoryFieldsProvider {
     const issueTypeIdsToTargetMandatoryFields = new Map<string, TargetMandatoryFields>();
     this.projectFieldMappings.issueTypesToMappings.forEach((issueTypeFieldMappings, issueTypeId) => {
       const fields: { [key: string]: FieldValue } = {};
-      issueTypeFieldMappings.fieldIdsToFieldMetadata.forEach((fieldMetadata, fieldId) => {
+      issueTypeFieldMappings.fieldIdsToFieldMappingInfos.forEach((fieldMappingInfo, fieldId) => {
+        const retainValue = this.getRetainFieldValue(issueTypeId, fieldId);
         const defaultValue = this.getSelectedDefaultFieldValue(issueTypeId, fieldId);
         if (defaultValue) {
-          fields[fieldId] = defaultValue;
+          // Clone to avoid tampering within the original option...
+          const clonedDefaultValue: FieldValue = Object.assign({}, defaultValue);
+          clonedDefaultValue.retain = retainValue;
+          fields[fieldId] = clonedDefaultValue;
         }
       });
       issueTypeIdsToTargetMandatoryFields.set(issueTypeId, { fields });

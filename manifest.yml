@@ -35,6 +35,7 @@ permissions:
     fetch:
       backend:
         - "*.public.atlastunnel.com"
+        - "*.atlassian.net"
     scripts:
       - cdn.jsdelivr.net
     styles:
