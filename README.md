@@ -1,19 +1,12 @@
 # Forge Bulk Issue Ops
 
-# Known issues
+# Introduction
 
-* The move functionality does not allow the target issue type and status to be specified. It is assumed the target issue type and status exists in the target project and will therefore remain unchanged.
-* Using deprecated API https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
-
-This project contains a Forge app written in JavaScript that displays `Hello World!` in a Jira global page.
-
-See [developer.atlassian.com/platform/forge/](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
-
-## Requirements
-
-See [Set up Forge](https://developer.atlassian.com/platform/forge/set-up-forge/) for instructions to get set up.
+This is a [Forge](https://developer.atlassian.com/platform/forge) app that provides alternate experiences to Jira's built-in functionality to bulk move and edit issues.
 
 ## Setup
+
+See [Set up Forge](https://developer.atlassian.com/platform/forge/set-up-forge/) for instructions to get set up.
 
 ### Setup step 1: Installing the app
 
@@ -68,7 +61,6 @@ Jira provides a global permission, called "Make bulk changes", to enable/disable
 * Visit "Global permissions" within the "Security" section.
 * In the "Grant Permission" section, select "Grant: Make bulk changes: and "Group: bulk-ops-app". 
 
-
 Once this is done, you should see the "bulk-ops-app" appear alongside the "Make bulk changes" global permission. When testing the app, it is recommended for this to be the only permission, but in a production environment, you will likely also want to allow administrators to have bulk change permissions.
 
 ![Make bulk changes configuration](./make-bulk-changes-global-permission.png)
@@ -79,6 +71,11 @@ Once this is done, you should see the "bulk-ops-app" appear alongside the "Make 
 In order for the app to be able to make bulk changes as the user requeting the changes, the app needs to add the requesting user into the "bulk-ops-app" group before the request is submitted and then remove the user from the group afterwards. To configure these environment variables, see the commands in the comments above the various operations in [src/userManagementConfig.ts](./src/userManagementConfig.ts). 
 
 
+### Stepup step 4: Optionally prevent regular users from using Jira's built-in bulk operations
+
+This optional step involves reviewing and tuning the access to Jira's built-in bulk operations. Visit the Jira administration global permissions section, and review the permissions corresponding to "Make bulk changes".
+
+
 ### Development Loop
 - Run all forge commands from the `[app-root-directory]`.
 - After making changes to the frontend, run `npm run start` from the `[app-root-directory]/static/spa` directory.
@@ -86,4 +83,9 @@ In order for the app to be able to make bulk changes as the user requeting the c
 - Use the `forge install` command when you want to install the app on a new site.
 - Once the app is installed on a site, the site picks up the new app changes you deploy without needing to rerun the install command.
 
+
+# Known issues
+
+* The move functionality does not allow the target issue type and status to be specified. It is assumed the target issue type and status exists in the target project and will therefore remain unchanged.
+* Using deprecated API https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
 
