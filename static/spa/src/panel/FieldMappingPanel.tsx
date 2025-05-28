@@ -14,6 +14,7 @@ import { Project } from 'src/types/Project';
 import Textfield from '@atlaskit/textfield';
 import { DefaultFieldValue } from 'src/types/DefaultFieldValue';
 import { FieldMappingInfo } from 'src/types/FieldMappingInfo';
+import { BulkOpsMode } from 'src/types/BulkOpsMode';
 
 export type FieldMappingsState = {
   dataRetrieved: boolean;
@@ -29,6 +30,7 @@ export const nilFieldMappingsState: FieldMappingsState = {
 }
 
 export type FieldMappingPanelProps = {
+  bulkOpsMode: BulkOpsMode;
   issues: Issue[];
   fieldMappingsState: FieldMappingsState;
   targetMandatoryFieldsProvider: TargetMandatoryFieldsProvider;

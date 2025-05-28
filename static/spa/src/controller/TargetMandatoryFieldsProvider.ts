@@ -70,7 +70,8 @@ export class TargetMandatoryFieldsProvider {
           }
         }
       } else {
-        return false;
+        // ???
+        // return false;
       }
     }
 

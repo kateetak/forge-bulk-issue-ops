@@ -33,12 +33,14 @@ import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
 import { taskStatusPollPeriodMillis } from 'src/model/config';
+import { BulkOpsMode } from 'src/types/BulkOpsMode';
 
 const showDebug = false;
 const implyAllIssueTypesWhenNoneAreSelected = true;
 const autoShowFieldMappings = true;
 
 export type BulkMovePanelProps = {
+  bulkOpsMode: BulkOpsMode;
 }
 
 type DebugInfo = {
@@ -53,8 +55,9 @@ type Activity = {
   description: string;
 }
 
-const BulkMovePanel = () => {
+const BulkMovePanel = (props: BulkMovePanelProps) => {
 
+  const [bulkOpsMode, setBulkOpsMode] = useState<BulkOpsMode>(props.bulkOpsMode);
   const [mainWarningMessage, setMainWarningMessage] = useState<string>('');
   const [lastDataLoadTime, setLastDataLoadTime] = useState<number>(0);
   const [filterMode, setFilterMode] = useState<FilterMode>('basic');
@@ -86,6 +89,10 @@ const BulkMovePanel = () => {
   const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
   const [lastMoveCompletionTaskId, setLastMoveCompletionTaskId] = useState<string>('none');
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
+
+  useEffect(() => {
+    setBulkOpsMode(props.bulkOpsMode);
+  }, [props.bulkOpsMode])
 
   const clearFieldMappingsState = () => {
     setFieldMappingsState(nilFieldMappingsState);
@@ -526,11 +533,11 @@ const BulkMovePanel = () => {
     }
   }
 
-  const renderFilterPanel = () => {
+  const renderFilterPanel = (stepNumber: number) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step 1</h3>
+          <h3>Step {stepNumber}</h3>
           <h4>Select issue filter options</h4>
           {renderFilterModeSelect()}
           {renderBasicFieldInputs()}
@@ -607,13 +614,13 @@ const BulkMovePanel = () => {
     }
   }
 
-  const renderIssuesPanel = () => {
+  const renderIssuesPanel = (stepNumber: number) => {
     const hasIssues = issueSearchInfo.issues.length > 0;
     return (
       <div className="padding-panel">
         <div className="content-panel">
-        <h3>Step 2</h3>
-          <h4>Confirm issues to move</h4>
+          <h3>Step {stepNumber}</h3>
+          <h4>Confirm issues to {bulkOpsMode.toLowerCase()}</h4>
           <IssueSelectionPanel
             loadingState={issueLoadingState}
             issueSearchInfo={issueSearchInfo}
@@ -644,7 +651,7 @@ const BulkMovePanel = () => {
     );
   }
 
-  const renderStartMoveButton = () => {
+  const renderStartOrEditMoveButton = () => {
     const allowMove = isFieldMappingsComplete() && selectedToProject && selectedToProject.id && selectedIssues.length > 0;
     const buttonEnabled = !currentMoveActivity && allowMove;
     return (
@@ -654,16 +661,16 @@ const BulkMovePanel = () => {
         isDisabled={!buttonEnabled}
         onClick={onMoveIssues}
       >
-        Move issues
+        {bulkOpsMode} issues
       </Button>
     );
   }
 
-  const renderTargetPanel = () => {
+  const renderTargetProjectPanel = (stepNumber: number) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step 3</h3>
+          <h3>Step {stepNumber}</h3>
           <h4>Select target project</h4>
           {renderToProjectSelect()}
           {renderFlexboxEqualWidthGrowPanel()}
@@ -684,16 +691,17 @@ const BulkMovePanel = () => {
     }
   }
 
-  const renderFieldValueMappingsPanel = () => {
+  const renderFieldValueMappingsPanel = (stepNumber: number) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step 4</h3>
+          <h3>Step {stepNumber}</h3>
           <h4>Map field values</h4>
           {renderStartFieldMappingButton()}
           {renderFieldMappingIndicator()}
           <FieldMappingPanel
             key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}`}
+            bulkOpsMode={bulkOpsMode}
             issues={selectedIssues}
             fieldMappingsState={fieldMappingsState}
             targetMandatoryFieldsProvider={targetMandatoryFieldsProvider}
@@ -706,14 +714,14 @@ const BulkMovePanel = () => {
     );
   }
 
-  const renderMovePanel = () => {
+  const renderMoveOrEditPanel = (stepNumber: number) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step 5</h3>
-          <h4>Move issues</h4>
+          <h3>Step {stepNumber}</h3>
+          <h4>{bulkOpsMode} issues</h4>
           <FormSection>
-            {renderStartMoveButton()}
+            {renderStartOrEditMoveButton()}
           </FormSection>
           <FormSection>
             {renderIssueMoveActivityIndicator()}
@@ -812,16 +820,17 @@ const BulkMovePanel = () => {
     }
   }
 
+  let lastStepNumber = 1;
   return (
     <div>
-      <h3>Bulk Move Issues</h3>
+      <h3>Bulk {bulkOpsMode} Issues</h3>
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
-        {renderFilterPanel()}
-        {renderIssuesPanel()}
-        {renderTargetPanel()}
-        {renderFieldValueMappingsPanel()}
-        {renderMovePanel()}
+        {renderFilterPanel(lastStepNumber++)}
+        {renderIssuesPanel(lastStepNumber++)}
+        {bulkOpsMode === 'Move' ? renderTargetProjectPanel(lastStepNumber++) : null}
+        {renderFieldValueMappingsPanel(lastStepNumber++)}
+        {renderMoveOrEditPanel(lastStepNumber++)}
       </div>
       {renderDebugPanel()}
     </div>
