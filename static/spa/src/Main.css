@@ -55,7 +55,8 @@ div.bulk-move-main-panel > div {
 }
 
 div.bulk-move-main-panel > div > div {
-  max-height: 600px;
+  /* max-height: 600px; */
+  height: fit-content;
 }
 
 div.bulk-move-main-panel > div > div > div {
@@ -158,4 +159,12 @@ div.checked-faked-toggle > div > div.toggle-container {
 
 div.unchecked-faked-toggle > div > div.toggle-container {
   margin-left: 13px;
+}
+
+div.fake-button {
+  float: right;
+  width: 50px;
+  padding: 0px;
+  cursor: pointer;
+  border-radius: 4px;
 }

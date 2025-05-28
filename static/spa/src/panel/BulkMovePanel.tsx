@@ -79,7 +79,7 @@ const BulkMovePanel = () => {
   const [targetMandatoryFieldsProvider, setTargetMandatoryFieldsProvider] = useState<TargetMandatoryFieldsProvider>(new TargetMandatoryFieldsProvider());
   const [targetMandatoryFieldsProviderUpdateTime, setTargetMandatoryFieldsProviderUpdateTime] = useState<number>(0);
   const [allDefaultValuesProvided, setAllDefaultValuesProvided] = useState<boolean>(false);
-  const [currentValidationActivity, setCurrentValidationActivity] = useState<undefined | Activity>(undefined);
+  const [currentFieldMappingActivity, setCurrentFieldMappingActivity] = useState<undefined | Activity>(undefined);
   const [currentMoveActivity, setCurrentMoveActivity] = useState<undefined | Activity>(undefined);
   const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
   const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
@@ -143,6 +143,10 @@ const BulkMovePanel = () => {
     setLastDataLoadTime(Date.now());
   }
 
+  const onClearMainWarningMessage = () => {
+    setMainWarningMessage('');
+  }
+
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
     setSelectedIssues(newIssueSearchInfo.issues);
     targetMandatoryFieldsProvider.setSelectedIssues(newIssueSearchInfo.issues);
@@ -150,6 +154,12 @@ const BulkMovePanel = () => {
     setIssueSearchInfoTime(Date.now());
     setLastDataLoadTime(Date.now());
     clearFieldMappingsState();
+  }
+
+  const onIssueSelectionChange = async (selectedIssues: Issue[]): Promise<void> => {
+    setSelectedIssues(selectedIssues);
+    targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues);
+    updateFieldMappingsIfNeeded(selectedToProject);
   }
 
   const onBasicModeSearchIssues = async (projects: Project[], issueTypes: IssueType[], labels: string[]): Promise<void> => {
@@ -280,26 +290,30 @@ const BulkMovePanel = () => {
     }, taskStatusPollPeriodMillis);
   }
 
-  const buildFieldMappingsState = async (selectedToProject: Project): Promise<FieldMappingsState> => {
-    setCurrentValidationActivity({taskId: 'non-jira-activity', description: 'Checking for mandatory fields...'});
-
-    const projectFieldMappings: DataRetrievalResponse<ProjectFieldMappings> = await buildFieldMappingsForProject(
-      selectedToProject.id
-    );
-    if (projectFieldMappings.errorMessage) {
-      console.warn(`BulkMovePanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${projectFieldMappings.errorMessage}`);
-      setCurrentValidationActivity(undefined);
-      return nilFieldMappingsState;
-    } else if (projectFieldMappings.data) {
-      const fieldMappingsState: FieldMappingsState = {
-        dataRetrieved: true,
-        project: selectedToProject,
-        projectFieldMappings: projectFieldMappings.data
+  const buildFieldMappingsState = async (selectedToProject: undefined | Project): Promise<FieldMappingsState> => {
+    if (!selectedToProject) {
+      return nilFieldMappingsState; 
+    }
+    setCurrentFieldMappingActivity({taskId: 'non-jira-activity', description: 'Checking for mandatory fields...'});
+    try {
+      const projectFieldMappings: DataRetrievalResponse<ProjectFieldMappings> = await buildFieldMappingsForProject(
+        selectedToProject.id
+      );
+      if (projectFieldMappings.errorMessage) {
+        console.warn(`BulkMovePanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${projectFieldMappings.errorMessage}`);
+        return nilFieldMappingsState;
+      } else if (projectFieldMappings.data) {
+        const fieldMappingsState: FieldMappingsState = {
+          dataRetrieved: true,
+          project: selectedToProject,
+          projectFieldMappings: projectFieldMappings.data
+        }
+        return fieldMappingsState;
+      } else {
+        throw new Error(`BulkMovePanel: validateMandatoryFieldsAreFilled: No data retrieved for field options.`);
       }
-      setCurrentValidationActivity(undefined);
-      return fieldMappingsState;
-    } else {
-      throw new Error(`BulkMovePanel: validateMandatoryFieldsAreFilled: No data retrieved for field options.`);
+    } finally {
+      setCurrentFieldMappingActivity(undefined);
     }
   }
 
@@ -605,8 +619,7 @@ const BulkMovePanel = () => {
             issueSearchInfo={issueSearchInfo}
             selectedIssues={selectedIssues}
             onIssueSelectionChange={async (selectedIssues: Issue[]): Promise<void> => {
-              setSelectedIssues(selectedIssues);
-              targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues);
+              await onIssueSelectionChange(selectedIssues);
             }}
           />
           {renderFlexboxEqualWidthGrowPanel()}
@@ -780,7 +793,18 @@ const BulkMovePanel = () => {
     if (mainWarningMessage) {
       return (
         <div className="warning-message">
-          {mainWarningMessage}
+          <div
+            className="fake-button"
+            style={{border: '1px solid #ccc'}}
+            onClick={() => {
+              onClearMainWarningMessage();
+            }}
+            >
+            Clear
+          </div>
+          <div>
+            {mainWarningMessage}              
+          </div>
         </div>
       );
     } else {
