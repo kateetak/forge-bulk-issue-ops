@@ -163,9 +163,6 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
   const renderPlaceholder = () => {
     return (
       <div style={{ margin: '20px 0px' }}>
-        <p style={{ marginBottom: '20px', textAlign: 'center'}}>
-          Waiting on issues to be identified.
-        </p>
         <div style={{ opacity: 0.5 }}>
           <img src={placeholderImage} width="220px" alt="placeholder" />
         </div>

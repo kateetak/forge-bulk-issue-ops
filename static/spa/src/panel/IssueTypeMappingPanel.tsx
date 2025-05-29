@@ -7,6 +7,7 @@ import { Option } from '../types/Option'
 import jiraDataModel from 'src/model/jiraDataModel';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 import { formatIssueType, formatProject } from 'src/controller/formatters';
+import { renderWaitingMessage } from 'src/widget/renderWaitingMessage';
 
 const showDebug = false;
 
@@ -18,6 +19,7 @@ type RowData = {
 export type IssueTypeMappingPanelProps = {
   selectedIssues: Issue[];
   targetProject: undefined | Project;
+  onIssueTypeMappingChange: () => Promise<void>;
 }
 
 const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
@@ -95,13 +97,14 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
 
   const onTargetIssueTypeChange = (sourceProjectId: string, sourceIssueTypeId: string, targetIssueTypeId: string) => {
     bulkIssueTypeMapping.addMapping(sourceProjectId, sourceIssueTypeId, targetIssueTypeId);
+    props.onIssueTypeMappingChange();
   }
 
   const determineInitiallySelectedOption = (
       sourceProjectId: string,
       sourceIssueTypeId: string,
       options: Option[]
-    ): undefined | Option => {
+  ): undefined | Option => {
     // console.log(`Determining initially selected option for source project: ${sourceProjectId}, source issue type: ${sourceIssueTypeId}`);
     const targetIssueTypeId = getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
     const option = options.find((option: Option) => option.value === targetIssueTypeId);
@@ -127,7 +130,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
           isMulti={false}
           isRequired={true}
           options={options}
-          value={defaultValue}
+          defaultValue={defaultValue}
           placeholder="Select issue type"
           onChange={(option: Option) => {
             console.log(`Selected target issue type: "${option.label} (${option.value})" for source project: ${sourceProjectId}, source issue type: ${sourceIssueTypeId}`);
@@ -201,19 +204,11 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     );
   }
 
-  const renderDataNotRetrievedYet = () => {
-    return (
-      <div>
-        <p>Waiting for previous steps to be completed.</p>
-      </div>
-    );
-  }
-
   const renderPanel = () => {
     if (props.targetProject && props.selectedIssues.length > 0) {
       return renderMappings();
     } else {
-      return renderDataNotRetrievedYet();
+      return renderWaitingMessage('Waiting for previous steps to be completed.');
     }
   }
 

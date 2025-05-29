@@ -19,6 +19,7 @@ import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { mapToObjectMap } from 'src/model/util';
 import { formatIssueType } from 'src/controller/formatters';
+import { renderWaitingMessage } from 'src/widget/renderWaitingMessage';
 
 const showDebug = false;
 
@@ -98,10 +99,6 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
 
   const onRetainFieldValueSelection = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, retainFieldValue: boolean): void => {
     props.targetMandatoryFieldsProvider.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
-  }
-
-  const areEqualValues = (valueA: DefaultFieldValue, valueB: DefaultFieldValue): boolean => {
-    return JSON.stringify(valueA) === JSON.stringify(valueB);
   }
 
   const renderFieldValuesSelect = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
@@ -266,14 +263,6 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     }
   }
 
-  const renderDataNotRetrievedYet = () => {
-    return (
-      <div>
-        <p>Waiting for previous steps to be completed.</p>
-      </div>
-    );
-  }
-
   const renderDebug = () => {
     const targetMandatoryFieldsProvider: TargetMandatoryFieldsProvider = props.targetMandatoryFieldsProvider;
     const targetIssueTypeIdsToFieldIdsToFieldSettings = targetMandatoryFieldsProvider.targetIssueTypeIdsToFieldIdsToFieldSettings;
@@ -326,7 +315,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
 
   return (
     <div style={{margin: '20px 0px'}}>
-      {props.fieldMappingsState.dataRetrieved ? renderFieldMappingsState() : renderDataNotRetrievedYet()}
+      {props.fieldMappingsState.dataRetrieved ? renderFieldMappingsState() : renderWaitingMessage('Waiting for previous steps to be completed.')}
       <div>
         {showDebug || props.showDebug ? renderDebug() : null}
       </div>
