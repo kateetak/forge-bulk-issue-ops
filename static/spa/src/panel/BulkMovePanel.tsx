@@ -40,6 +40,7 @@ import { render } from 'react-dom';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 
 const showDebug = false;
+const showCompletionStateDebug = false;
 const implyAllIssueTypesWhenNoneAreSelected = true;
 const autoShowFieldMappings = true;
 
@@ -928,10 +929,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   return (
     <div>
       <h3>Bulk {bulkOpsMode} Issues</h3>
-
-      {renderStepCompletionState()}
-
-
+      {showCompletionStateDebug ? renderStepCompletionState() : null}
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
         {renderFilterPanel(lastStepNumber++)}

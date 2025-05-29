@@ -78,11 +78,6 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     }
     const clonedSourceToTargetIssueTypeIds = cloneSourceToTargetIssueTypeIds();
     setClonedSourceToTargetIssueTypeIds(clonedSourceToTargetIssueTypeIds);
-    if (unmappedCount === 0) {
-
-    } else {
-
-    }
   }
 
   useEffect(() => {

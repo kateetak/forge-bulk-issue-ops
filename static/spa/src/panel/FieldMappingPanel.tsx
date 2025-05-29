@@ -100,23 +100,36 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     props.targetMandatoryFieldsProvider.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
   }
 
+  const areEqualValues = (valueA: DefaultFieldValue, valueB: DefaultFieldValue): boolean => {
+    return JSON.stringify(valueA) === JSON.stringify(valueB);
+  }
+
   const renderFieldValuesSelect = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+    const selectedDefaultFieldValue = props.targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
+    // console.log(`renderFieldValuesSelect: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     const selectableCustomFieldOptions: CustomFieldOption[] = [];
-      for (const allowedValue of fieldMetadata.allowedValues) {
-        if (allowedValue.value) {
-          const customFieldOption: CustomFieldOption = {
-            id: allowedValue.id,
-            name: allowedValue.value,
-          };
-          selectableCustomFieldOptions.push(customFieldOption);
-        } else {
-          console.log(`getFieldOptionsForProject: Skipping allowed value without a value: ${JSON.stringify(allowedValue)}`);
+    let selectedCustomFieldOption: CustomFieldOption | undefined = undefined;
+    for (const allowedValue of fieldMetadata.allowedValues) {
+      if (allowedValue.value) {
+        const customFieldOption: CustomFieldOption = {
+          id: allowedValue.id,
+          name: allowedValue.value,
+        };
+        selectableCustomFieldOptions.push(customFieldOption);
+        // console.log(`renderFieldValuesSelect: allowedValue = ${JSON.stringify(allowedValue)}`);
+        if (selectedDefaultFieldValue && selectedDefaultFieldValue.value.length && allowedValue.value && allowedValue.id === selectedDefaultFieldValue.value[0]) {
+          selectedCustomFieldOption = customFieldOption;
         }
+      } else {
+        // console.log(`renderFieldValuesSelect: Skipping allowed value without a value: ${JSON.stringify(allowedValue)}`);
       }
+    }
+    // const currentOption = props.targetMandatoryFieldsProvider.getDefaultFieldValue(targetIssueType.id, fieldId);
     return (
       <FieldValuesSelect
         label={undefined}
         selectableCustomFieldOptions={selectableCustomFieldOptions}
+        selectedCustomFieldOption={selectedCustomFieldOption}
         onSelect={async (selectedCustomFieldOption: CustomFieldOption): Promise<void> => {
           const defaultValue: DefaultFieldValue = {
             retain: false,
@@ -130,10 +143,13 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderNumberFieldEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+    const selectedDefaultFieldValue = props.targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
+    // console.log(`renderNumberFieldEntryWidget: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     return (
       <Textfield
         id={`number--for-${fieldId}`}
         name={fieldId}
+        defaultValue={selectedDefaultFieldValue && selectedDefaultFieldValue.value.length > 0 ? selectedDefaultFieldValue.value[0] : ''}
         type="number"
         onChange={(event) => {
           let fieldValue: number | undefined = undefined;
