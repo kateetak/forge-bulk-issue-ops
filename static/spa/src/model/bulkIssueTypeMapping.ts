@@ -14,7 +14,7 @@ class BulkIssueTypeMapping {
     console.log(`BulkIssueTypeMapping.addMapping: ${sourceProjectId}, ${sourceIssueTypeId} -> ${targetIssueTypeId}`);
     const key = this.buildKey(sourceProjectId, sourceIssueTypeId);
     this.sourceToTagetIssueTypeIds.set(key, targetIssueTypeId);
-    this.notifyListeners();
+    // this.notifyListeners();
   }
 
   getTargetIssueTypeId = (sourceProjectId: string, sourceIssueTypeId: string): string | undefined => {
@@ -26,17 +26,17 @@ class BulkIssueTypeMapping {
     return `${sourceProjectId},${sourceIssueTypeId}`;
   }
 
-  registerListener = (listener: any) => {
-    this.listenerGroup.registerListener(listener);
-  };
+  // registerListener = (listener: any) => {
+  //   this.listenerGroup.registerListener(listener);
+  // };
 
-  unregisterListener = (listener: any) => {
-    this.listenerGroup.unregisterListener(listener);
-  };
+  // unregisterListener = (listener: any) => {
+  //   this.listenerGroup.unregisterListener(listener);
+  // };
 
-  private notifyListeners = () => {
-    this.listenerGroup.notifyListeners(undefined);
-  };
+  // private notifyListeners = () => {
+  //   this.listenerGroup.notifyListeners(undefined);
+  // };
 
 }
 

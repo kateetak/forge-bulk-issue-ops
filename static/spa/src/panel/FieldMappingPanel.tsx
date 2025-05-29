@@ -16,8 +16,11 @@ import { DefaultFieldValue } from 'src/types/DefaultFieldValue';
 import { FieldMappingInfo } from 'src/types/FieldMappingInfo';
 import { BulkOpsMode } from 'src/types/BulkOpsMode';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
+import { ObjectMapping } from 'src/types/ObjectMapping';
+import { mapToObjectMap } from 'src/model/util';
+import { formatIssueType } from 'src/controller/formatters';
 
-const showDebug = true;
+const showDebug = false;
 
 export type FieldMappingsState = {
   dataRetrieved: boolean;
@@ -28,12 +31,13 @@ export const nilFieldMappingsState: FieldMappingsState = {
   dataRetrieved: false,
   project: undefined,
   projectFieldMappings: {
-    targetIssueTypesToMappings: new Map<string, IssueTypeFieldMappings>()
+    targetIssueTypeIdsToMappings: new Map<string, IssueTypeFieldMappings>()
   }
 }
 
 export type FieldMappingPanelProps = {
   bulkOpsMode: BulkOpsMode;
+  allIssueTypes: IssueType[];
   issues: Issue[];
   fieldMappingsState: FieldMappingsState;
   targetMandatoryFieldsProvider: TargetMandatoryFieldsProvider;
@@ -43,28 +47,20 @@ export type FieldMappingPanelProps = {
 
 const FieldMappingPanel = (props: FieldMappingPanelProps) => {
 
-  // const determineIssueTypesBeingMapped = (issues: Issue[]): Set<IssueType> => {
-  //   const issueTypes = new Set<IssueType>();
-  //   issues.forEach(issue => {
-  //     issueTypes.add(issue.fields.issuetype);
-  //   });
-  //   return issueTypes;
-  // }
-
-  const determineTargetIssueTypeIdsToTypesBeingMapped = (issues: Issue[]): Map<string, IssueType> => {
-    const targetIssueTypeIdsToTypes = new Map<string, IssueType>();
+  const determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped = (issues: Issue[], allIssueTypes: IssueType[]): Map<string, IssueType> => {
+    const targetIssueTypeIdsToTargetIssueTypes = new Map<string, IssueType>();
     issues.forEach(issue => {
       const sourceProjectId = issue.fields.project.id;
-      const sourceIddueTypeId = issue.fields.issuetype.id;
-      const targetIssuetypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIddueTypeId);
-      targetIssueTypeIdsToTypes.set(targetIssuetypeId, issue.fields.issuetype);
+      const sourceIssueTypeId = issue.fields.issuetype.id;
+      const targetIssuetypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
+      const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssuetypeId);
+      // console.log(` * FieldMappingPanel: ${sourceProjectId},${sourceIssueTypeId} maps to ${targetIssuetypeId}`);
+      targetIssueTypeIdsToTargetIssueTypes.set(targetIssuetypeId, targetIssueType);
     });
-    return targetIssueTypeIdsToTypes;
+    return targetIssueTypeIdsToTargetIssueTypes;
   }
 
-  // const [issueTypesBeingMapped, setIssueTypesBeingMapped] = useState<Set<IssueType>>(determineIssueTypesBeingMapped(props.issues));
-  // const [sourceIssueTypeIdsToTypesBeingMapped, setSourceIssueTypeIdsToTypesBeingMapped] = useState<Map<string, IssueType>>(determineTypeIdsToTypesBeingMapped(props.issues));
-  const [targetIssueTypeIdsToTypesBeingMapped, setTargetIssueTypeIdsToTypesBeingMapped] = useState<Map<string, IssueType>>(determineTargetIssueTypeIdsToTypesBeingMapped(props.issues));
+  const [targetIssueTypeIdsToTargetIssueTypesBeingMapped, setTargetIssueTypeIdsToTargetIssueTypesBeingMapped] = useState<Map<string, IssueType>>(determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped(props.issues, props.allIssueTypes));
   const [fieldIdsToFields, setFieldIdsToFields] = useState< Map<string, Field>>(new Map<string, Field>());
   const [allDefaultsProvided, setAllDefaultsProvided] = useState<boolean>(false);
 
@@ -76,6 +72,11 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     });
     setFieldIdsToFields(fieldIdsToFields);
   }
+
+  // useEffect(() => {
+  //   const targetIssueTypeIdsToTargetIssueTypes = determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped(props.issues);
+  //   setTargetIssueTypeIdsToTargetIssueTypesBeingMapped(targetIssueTypeIdsToTargetIssueTypes);
+  // }, [props.issues]);
 
   useEffect(() => {
     loadFieldInfo();
@@ -193,21 +194,14 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
             </tr>
           </thead>
           <tbody>
-            {Array.from(props.fieldMappingsState.projectFieldMappings.targetIssueTypesToMappings.entries()).map(([targetIssueTypeId, fieldOptionMappings]) => {
-
-
-
-              // const issueType = sourceIssueTypeIdsToTypesBeingMapped.get(targetIssueTypeId);
-              const targetIssueType = targetIssueTypeIdsToTypesBeingMapped.get(targetIssueTypeId);
-
-
-
+            {Array.from(props.fieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings.entries()).map(([targetIssueTypeId, fieldOptionMappings]) => {
+              const targetIssueType = targetIssueTypeIdsToTargetIssueTypesBeingMapped.get(targetIssueTypeId);
               if (targetIssueType) {
                 return Array.from(fieldOptionMappings.fieldIdsToFieldMappingInfos.entries()).map(([fieldId, fieldMappingInfo]) => {
                   fieldCount++;
                   return (
                     <tr key={`mapping-${targetIssueTypeId}-${fieldId}`}>
-                      <td>{targetIssueType.name}</td>
+                      <td>{formatIssueType(targetIssueType)}</td>
                       <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
                       <td>
                         {renderFieldValuesEntryWidget(fieldId, targetIssueType, fieldMappingInfo)}
@@ -246,28 +240,51 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderDebug = () => {
+    const targetMandatoryFieldsProvider: TargetMandatoryFieldsProvider = props.targetMandatoryFieldsProvider;
+    const targetIssueTypeIdsToFieldIdsToFieldSettings = targetMandatoryFieldsProvider.targetIssueTypeIdsToFieldIdsToFieldSettings;
+    const targetIssueTypeIdsToFieldIdsToFieldSettingsObject: any = mapToObjectMap(targetIssueTypeIdsToFieldIdsToFieldSettings);
+    const targetIssueTypeIds = Object.keys(targetIssueTypeIdsToFieldIdsToFieldSettingsObject);
+    for (const targetIssueTypeId of targetIssueTypeIds) {
+      const fieldIdsToFieldSettings = targetIssueTypeIdsToFieldIdsToFieldSettings.get(targetIssueTypeId);
+      if (fieldIdsToFieldSettings) {
+        const fieldIdsToFieldSettingsObject: ObjectMapping<any> =
+          mapToObjectMap<any>(fieldIdsToFieldSettings);
+        targetIssueTypeIdsToFieldIdsToFieldSettingsObject[targetIssueTypeId] = fieldIdsToFieldSettingsObject;
+      } else {
+        console.warn(`No field settings found for target issue type ID: ${targetIssueTypeId}`);
+      }
+    }
+
+    // const clonedFieldMappingsState = props.fieldMappingsState;
     const clonedFieldMappingsState = JSON.parse(JSON.stringify(props.fieldMappingsState));
-    const targetIssueTypesToMappings = props.fieldMappingsState.projectFieldMappings.targetIssueTypesToMappings;
-    let targetIssueTypeInfo;
-    if (targetIssueTypesToMappings) {
-      const targetIssueTypeIds = Array.from(targetIssueTypesToMappings.keys());
-      targetIssueTypeInfo = targetIssueTypeIds.map(issueTypeId => {
-        const issueType = targetIssueTypesToMappings.get(issueTypeId);
-        return {
-          id: issueTypeId,
-          name: issueType ? issueType.fieldIdsToFieldMappingInfos.size + ' fields' : 'No fields',
-        };
-      });
+    const targetIssueTypeIdsToMappings = props.fieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings;
+    // Replace the Map with and object so JSON.stringify includes it...
+    if (targetIssueTypeIdsToMappings) {
+      const targetIssueTypeIdsToMappingsObject: ObjectMapping<IssueTypeFieldMappings> =
+        mapToObjectMap<IssueTypeFieldMappings>(targetIssueTypeIdsToMappings);
+      const targetIssueTypeIds = Object.keys(targetIssueTypeIdsToMappingsObject);
+      for (const targetIssueTypeId of targetIssueTypeIds) {
+        const issueTypeFieldMappings: IssueTypeFieldMappings | undefined =
+          targetIssueTypeIdsToMappings.get(targetIssueTypeId);
+        if (issueTypeFieldMappings) {
+          const fieldIdsToFieldMappingInfos: Map<string, FieldMappingInfo> = issueTypeFieldMappings.fieldIdsToFieldMappingInfos;
+          const fieldIdsToFieldMappingInfosObject: ObjectMapping<FieldMappingInfo> = mapToObjectMap<FieldMappingInfo>(fieldIdsToFieldMappingInfos);
+          targetIssueTypeIdsToMappings[targetIssueTypeId] = fieldIdsToFieldMappingInfosObject;
+        }
+      }
+      // clonedFieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings = targetIssueTypeIdsToMappingsObject;
     } else {
-      targetIssueTypeInfo = '????';
-      clonedFieldMappingsState.targetIssueTypesToMappings = targetIssueTypeInfo;
+      clonedFieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings = '????';
     }
 
     return (
       <div>
         <h3>Debug Information</h3>
-        <pre>{JSON.stringify(clonedFieldMappingsState, null, 2)}</pre>
         <p>All Defaults Provided: {allDefaultsProvided ? 'Yes' : 'No'}</p>
+        <p>targetIssueTypeIdsToFieldIdsToFieldSettings:</p>
+        <pre>{JSON.stringify(targetIssueTypeIdsToFieldIdsToFieldSettingsObject, null, 2)}</pre>
+        {/* <p>fieldMappingsState:</p>
+        <pre>{JSON.stringify(clonedFieldMappingsState, null, 2)}</pre> */}
       </div>
     );
   }

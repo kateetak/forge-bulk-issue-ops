@@ -1,3 +1,4 @@
+import { ObjectMapping } from "src/types/ObjectMapping";
 
 export const debounce = (func: Function, wait: number, immediate: boolean) => {
   let lastTimeout: any;
@@ -18,6 +19,14 @@ export const debounce = (func: Function, wait: number, immediate: boolean) => {
     }
   };
 };
+
+export const mapToObjectMap = <T>(map: Map<string, T>): ObjectMapping<T> => {
+  const obj: ObjectMapping<T> = {};
+  map.forEach((value, key) => {
+    obj[key] = value;
+  });
+  return obj;
+}
 
 export const uuid4 = () => {
   return Math.floor((1 + Math.random()) * 0x10000)

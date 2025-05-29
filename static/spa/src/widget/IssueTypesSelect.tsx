@@ -3,8 +3,7 @@ import { Label } from '@atlaskit/form';
 import { CheckboxSelect } from '@atlaskit/select';
 import { Option } from '../types/Option'
 import { IssueType } from '../types/IssueType';
-import { Project } from '../types/Project';
-import jiraDataModel from 'src/model/jiraDataModel';
+import { formatIssueType } from 'src/controller/formatters';
 
 /*
   Select docs: https://atlassian.design/components/select/examples
@@ -20,18 +19,7 @@ export type IssueTypesSelectProps = {
 const IssueTypesSelect = (props: IssueTypesSelectProps) => {
 
   const [issueTypeInfoRetrievalTime, setIssueTypeInfoRetrievalTime] = useState<number>(0);
-  const [allProjects, setAllProjects] = useState<Project[]>([]);
-
-  const retrieveProjects = async () => {
-    // const projectSearchInfo = await projectSearchInfoCache.getProjectSearchInfo();
-    const projectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
-    setAllProjects(projectSearchInfo.values);
-  }
-
-  useEffect(() => {
-    retrieveProjects();
-  }, []);
-
+ 
   const onChange = async (selectedOptions: Option[]): Promise<void> => {
     // console.log(`IssueTypesSelect.onChange: `, selectedOptions);
     const issueTypes: IssueType[] = props.selectableIssueTypes;;
@@ -45,21 +33,11 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
     await props.onIssueTypesSelect(selectedIssueTypes);
   }
 
-  const issueTypeToLabel = (issueType: IssueType): string => {
-    let label = `${issueType.name} (${issueType.id})`;
-    // let label = `${issueType.name}`;
-    if (issueType.scope) {
-      const maybeProject = allProjects.find(project => project.id === issueType.scope.project.id);
-      label += ` - ${maybeProject ? maybeProject.name : issueType.scope.project.id}`;
-    }
-    return label;
-  }
-
   const renderCheckboxSelect = () => {
     const issueTypes: IssueType[] = props.selectableIssueTypes;;
     // console.log(`Rendering issue types select. project ID = ${projectId}, issueTypes.length = ${issueTypes.length}`);
     const options: Option[] = issueTypes.map((issueType: any) => ({
-      label: issueTypeToLabel(issueType),
+      label: formatIssueType(issueType),
       value: issueType.id,
     }));
     const initiallySelectedOptions: Option[] = [];

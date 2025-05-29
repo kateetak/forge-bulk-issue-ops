@@ -51,7 +51,7 @@ div.bulk-move-main-panel > div {
   padding: 10px;
   flex-grow: 1;
   background-color: #fff;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 }
 
 div.bulk-move-main-panel > div > div {
@@ -60,7 +60,7 @@ div.bulk-move-main-panel > div > div {
 }
 
 div.bulk-move-main-panel > div > div > div {
-  overflow-y: none;
+  /* overflow-y: none; */
 }
 
 div.flex-box-equal-width-grow-panel {

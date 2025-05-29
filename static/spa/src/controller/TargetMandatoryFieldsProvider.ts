@@ -17,7 +17,7 @@ const defaultRetainValueSetting = true;
 export class TargetMandatoryFieldsProvider {
 
   private projectFieldMappings: undefined | ProjectFieldMappings;
-  private targetIssueTypeIdsToFieldIdsToFieldSettings = new Map<string, Map<string, FieldSettings>>();
+  /* private */ targetIssueTypeIdsToFieldIdsToFieldSettings = new Map<string, Map<string, FieldSettings>>();
   private selectedTargetIssueTypeIdsToTypes = new Map<string, IssueType>();
   private selectedIssueTypes: IssueType[] = [];
 
@@ -68,7 +68,7 @@ export class TargetMandatoryFieldsProvider {
     }
     
     for (const selectedIssueType of this.selectedIssueTypes) {
-      const issueTypeFieldMappings = this.projectFieldMappings.targetIssueTypesToMappings.get(selectedIssueType.id);
+      const issueTypeFieldMappings = this.projectFieldMappings.targetIssueTypeIdsToMappings.get(selectedIssueType.id);
       if (issueTypeFieldMappings) {
         const fieldIds = Array.from(issueTypeFieldMappings.fieldIdsToFieldMappingInfos.keys());
         for (const fieldId of fieldIds) {
@@ -141,7 +141,7 @@ export class TargetMandatoryFieldsProvider {
     //   issueTypeIdsToTargetMandatoryFields.set(issueTypeId, { fields });
     // });
     const targetIssueTypeIdsToTargetMandatoryFields = new Map<string, TargetMandatoryFields>();
-    this.projectFieldMappings.targetIssueTypesToMappings.forEach((targetIssueTypeFieldMappings, targetIssueTypeId) => {
+    this.projectFieldMappings.targetIssueTypeIdsToMappings.forEach((targetIssueTypeFieldMappings, targetIssueTypeId) => {
       const fields: { [key: string]: FieldValue } = {};
       targetIssueTypeFieldMappings.fieldIdsToFieldMappingInfos.forEach((fieldMappingInfo, fieldId) => {
         const retainValue = this.getRetainFieldValue(targetIssueTypeId, fieldId);

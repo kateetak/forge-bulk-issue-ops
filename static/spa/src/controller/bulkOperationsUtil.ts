@@ -20,7 +20,7 @@ export const buildFieldMappingsForProject = async (
   onlyIncludeRequiredFields: boolean = true
 ): Promise<DataRetrievalResponse<ProjectFieldMappings>> => {
   const projectFieldMappings: ProjectFieldMappings = {
-    targetIssueTypesToMappings: new Map<string, IssueTypeFieldMappings>()
+    targetIssueTypeIdsToMappings: new Map<string, IssueTypeFieldMappings>()
   }
   const projectCreateIssueMetadata = await jiraDataModel.getCreateIssueMetadataForProject(targetProjectId);
   console.log(`buildFieldMappingsForProject: projectCreateIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
@@ -32,7 +32,7 @@ export const buildFieldMappingsForProject = async (
     const issueTypeFieldMappings: IssueTypeFieldMappings = {
       fieldIdsToFieldMappingInfos: fieldIdsToFieldMappingInfos
     };
-    projectFieldMappings.targetIssueTypesToMappings.set(targetIssueType.id, issueTypeFieldMappings);
+    projectFieldMappings.targetIssueTypeIdsToMappings.set(targetIssueType.id, issueTypeFieldMappings);
     console.log(` * buildFieldMappingsForProject: targetIssueTypesToMappings.set: ${targetIssueType.id} (${targetIssueType.name})`);
 
     for (const fieldId in targetIssueType.fields) {

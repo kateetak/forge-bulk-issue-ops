@@ -728,6 +728,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           <FieldMappingPanel
             key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}`}
             bulkOpsMode={bulkOpsMode}
+            allIssueTypes={allIssueTypes}
             issues={selectedIssues}
             fieldMappingsState={fieldMappingsState}
             targetMandatoryFieldsProvider={targetMandatoryFieldsProvider}

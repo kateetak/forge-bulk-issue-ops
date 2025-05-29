@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Label } from '@atlaskit/form';
 import Select from '@atlaskit/select';
 import { Option } from '../types/Option'
-import { Project } from 'src/types/Project';
-import jiraDataModel from 'src/model/jiraDataModel';
+import { Project } from '../types/Project';
+import jiraDataModel from '../model/jiraDataModel';
+import { formatProject } from '../controller/formatters';
 
 /*
   Select docs: https://atlassian.design/components/select/examples
@@ -44,7 +45,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
 
   const projectToOption = (project: Project): Option => {
     const option: Option = {
-      label: `${project.name} (${project.key})`,
+      label: formatProject(project),
       value: project.id,
     };
     return option;

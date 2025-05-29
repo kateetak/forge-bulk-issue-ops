@@ -6,6 +6,7 @@ import Select from '@atlaskit/select';
 import { Option } from '../types/Option'
 import jiraDataModel from 'src/model/jiraDataModel';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
+import { formatIssueType, formatProject } from 'src/controller/formatters';
 
 const showDebug = false;
 
@@ -56,6 +57,29 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
   const [clonedSourceToTagetIssueTypeIds, setClonedSourceToTagetIssueTypeIds] = useState<Map<string, string>>(
     cloneSourceToTagetIssueTypeIds());
 
+    const autoSelectMatchingTargetIssueTypes = (): void => {
+      // const clonedSourceToTagetIssueTypeIds = cloneSourceToTagetIssueTypeIds();
+      for (const issue of props.selectedIssues) {
+        const sourceProject = issue.fields.project;
+        const sourceIssueType = issue.fields.issuetype;
+        const existingTargetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProject.id, sourceIssueType.id);
+        if (!existingTargetIssueTypeId) {
+          // Auto select the same issue type ID if possible.
+          const targetIssueType = targetProjectIssueTypes.find(issueType => issueType.id === sourceIssueType.id);
+          if (targetIssueType) {
+            // console.log(`Auto selecting target issue type: ${targetIssueType.name} (${targetIssueType.id}) for source project: ${sourceProject.id}, source issue type: ${sourceIssueType.id}`);
+            bulkIssueTypeMapping.addMapping(sourceProject.id, sourceIssueType.id, targetIssueType.id);
+          }
+        }
+      }
+      const clonedSourceToTagetIssueTypeIds = cloneSourceToTagetIssueTypeIds();
+      setClonedSourceToTagetIssueTypeIds(clonedSourceToTagetIssueTypeIds);
+    }
+
+    useEffect(() => {
+      autoSelectMatchingTargetIssueTypes();
+    }, [targetProjectIssueTypes, props.selectedIssues]);
+
   const getTargetIssueTypeId = (sourceProjectId: string, sourceIssueTypeId: string): string | undefined => {
     const key = buildKey(sourceProjectId, sourceIssueTypeId);
     return clonedSourceToTagetIssueTypeIds.get(key);
@@ -85,12 +109,15 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     const options: Option[] = [];
     for (const issueType of targetProjectIssueTypes.map(issueType => issueType)) {
       const option: Option = {
-        label: `${issueType.name} (${issueType.id})`,
+        label: `${formatIssueType(issueType)})`,
         value: issueType.id,
       };
       options.push(option);
     }
     const defaultValue = determineInitiallySelectedOption(sourceProjectId, sourceIssueTypeId, options);
+
+
+
     return (
       <div>
         <Select
@@ -126,17 +153,17 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     }
   }
 
-  const onBulkIssueTypeMappingChange = () => {
-    console.log('IssueTypeMappingPanel: bulkIssueTypeMapping changed, rebuilding all row data.');
-    setAllRowData(buildAllRowData(props.selectedIssues));
-    setClonedSourceToTagetIssueTypeIds(cloneSourceToTagetIssueTypeIds());
-  }
+  // const onBulkIssueTypeMappingChange = () => {
+  //   console.log('IssueTypeMappingPanel: bulkIssueTypeMapping changed, rebuilding all row data.');
+  //   setAllRowData(buildAllRowData(props.selectedIssues));
+  //   setClonedSourceToTagetIssueTypeIds(cloneSourceToTagetIssueTypeIds());
+  // }
  
   useEffect(() => {
     setClonedSourceToTagetIssueTypeIds(cloneSourceToTagetIssueTypeIds());
-    bulkIssueTypeMapping.registerListener(onBulkIssueTypeMappingChange);
+    // bulkIssueTypeMapping.registerListener(onBulkIssueTypeMappingChange);
     return () => {
-      bulkIssueTypeMapping.unregisterListener(onBulkIssueTypeMappingChange);
+      // bulkIssueTypeMapping.unregisterListener(onBulkIssueTypeMappingChange);
     };
   }, []);
 
@@ -160,8 +187,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
             {
               allRowData.map(row => (
                 <tr key={`source-issue-type-${row.sourceProject.id}-${row.sourceIssueType.id}`}>
-                  <td>{row.sourceProject.name} ({row.sourceProject.key})</td>
-                  <td>{row.sourceIssueType.name} {row.sourceIssueType.id}</td>
+                  <td>{formatProject(row.sourceProject)}</td>
+                  <td>{formatIssueType(row.sourceIssueType)}</td>
                   <td>{renderTargetProjectIssueTypeSelect(row.sourceProject.id, row.sourceIssueType.id)}</td>
                 </tr>
               ))
