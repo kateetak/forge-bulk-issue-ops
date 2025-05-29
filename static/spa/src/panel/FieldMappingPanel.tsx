@@ -89,6 +89,13 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     props.onAllDefaultValuesProvided(allDefaultValuesProvided);
   }
 
+  const onDeselectDefaultFieldValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata): void => {
+    props.targetMandatoryFieldsProvider.onDeselectDefaultValue(targetIssueType, fieldId, fieldMetadata);
+    const allDefaultValuesProvided = props.targetMandatoryFieldsProvider.areAllFieldValuesSet();
+    setAllDefaultsProvided(allDefaultValuesProvided);
+    props.onAllDefaultValuesProvided(allDefaultValuesProvided);
+  }
+
   const onRetainFieldValueSelection = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, retainFieldValue: boolean): void => {
     props.targetMandatoryFieldsProvider.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
   }
@@ -129,13 +136,25 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
         name={fieldId}
         type="number"
         onChange={(event) => {
-          const fieldValue = parseInt(event.currentTarget.value);
-          const defaultValue: DefaultFieldValue = {
-            retain: false,
-            type: "raw",
-            value: [fieldValue]
-          };
-          onSelectDefaultFieldValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
+          let fieldValue: number | undefined = undefined;
+          try {
+            fieldValue = parseInt(event.currentTarget.value.trim());
+          } catch (error) {
+            console.error(`Error parsing number field value for field ID ${fieldId}:`, error);
+          }
+          if (fieldValue === undefined || isNaN(fieldValue)) {
+            console.warn(`Invalid number field value for field ID ${fieldId}:`, event.currentTarget.value);
+            onDeselectDefaultFieldValue(targetIssueType, fieldId, fieldMetadata);
+            return;
+          } else {
+            console.log(`Setting default value for field ID ${fieldId} to ${fieldValue}`);
+            const defaultValue: DefaultFieldValue = {
+              retain: false,
+              type: "raw",
+              value: [fieldValue]
+            };
+            onSelectDefaultFieldValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
+          }
         }}
       />
     );

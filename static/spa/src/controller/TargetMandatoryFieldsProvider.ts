@@ -36,7 +36,7 @@ export class TargetMandatoryFieldsProvider {
       }
     });
     this.selectedIssueTypes = Array.from(this.selectedTargetIssueTypeIdsToTypes.values());
-    console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: selectedIssueTypes: ${JSON.stringify(this.selectedIssueTypes, null, 2)}`);
+    console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: selectedIssueTypes: ${this.selectedIssueTypes.map(issue => `${issue.name} (${issue.id})`).join(', ')}`);
   }
 
   setProjectFieldMappings = (projectFieldMappings: ProjectFieldMappings): void => {
@@ -63,8 +63,14 @@ export class TargetMandatoryFieldsProvider {
   }
 
   areAllFieldValuesSet = (): boolean => {
+    console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: checking if all field values are set...`);
+
     if (!this.projectFieldMappings) {
       return false; // If projectFieldMappings is not set, return false
+    }
+
+    if (this.selectedIssueTypes.length === 0) {
+      return false; // If no issue types are selected, return false
     }
     
     for (const selectedIssueType of this.selectedIssueTypes) {
@@ -100,6 +106,23 @@ export class TargetMandatoryFieldsProvider {
       fieldIdsToDefaultFieldSettings.set(fieldId, fieldSettings);
     }
     fieldSettings.defaultFieldValue = defaultValue;
+  }
+
+  onDeselectDefaultValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata): void => {
+    let fieldIdsToDefaultFieldSettings = this.targetIssueTypeIdsToFieldIdsToFieldSettings.get(targetIssueType.id);
+    if (fieldIdsToDefaultFieldSettings) {
+      fieldIdsToDefaultFieldSettings.delete(fieldId);
+    }
+
+    if (!fieldIdsToDefaultFieldSettings) {
+      fieldIdsToDefaultFieldSettings = new Map<string, FieldSettings>();
+      this.targetIssueTypeIdsToFieldIdsToFieldSettings.set(targetIssueType.id, fieldIdsToDefaultFieldSettings);
+    }
+    let fieldSettings = fieldIdsToDefaultFieldSettings.get(fieldId);
+    if (fieldSettings) {
+      fieldSettings.defaultFieldValue = undefined;
+      fieldIdsToDefaultFieldSettings.delete(fieldId);
+    }
   }
 
   onSelectRetainFieldValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, retainFieldValue: boolean): void => {

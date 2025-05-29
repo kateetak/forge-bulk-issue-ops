@@ -15,7 +15,7 @@ export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
   issueSearchInfo: IssueSearchInfo;
   selectedIssues: Issue[];
-  onIssueSelectionChange: (selectedIssues: Issue[]) => Promise<void>;
+  onIssuesSelectionChange: (selectedIssues: Issue[]) => Promise<void>;
 }
 
 type GlobalSelectionMode = 'All' | 'Some' | 'None';
@@ -42,7 +42,8 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
           newSelectedIssues.push(issue);
         }
       }
-      props.onIssueSelectionChange(newSelectedIssues);
+      console.log(` * IssueSelectionPanel: Computed new issue selection: ${newSelectedIssues.map(issue => issue.key).join(', ')}`);
+      props.onIssuesSelectionChange(newSelectedIssues);
     }
   }
 
@@ -62,7 +63,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
           throw new Error(`Unreachable`);
         }
       }
-      props.onIssueSelectionChange(newSelectedIssues);
+      props.onIssuesSelectionChange(newSelectedIssues);
     }
   }
 
@@ -113,7 +114,6 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
             isChecked={!!props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key)}
             isDisabled={globalSelectionMode !== 'Some'}
             onChange={(event: any) => {
-              // console.log(`Issue toggle event: ${JSON.stringify(event, null, 2)}`);
               onToggleIssueSelection(issue);
             }}
           />

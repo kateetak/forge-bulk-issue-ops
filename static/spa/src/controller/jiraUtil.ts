@@ -1,3 +1,4 @@
+import { Issue } from "src/types/Issue";
 import { IssueType } from "../types/IssueType";
 import { Project } from "../types/Project";
 import { ProjectSearchInfo } from "../types/ProjectSearchInfo";
@@ -96,6 +97,15 @@ class JiraUtil {
       return filteredIssueTypes;
     }
   }
+
+  getIssueTypesFromIssues = (issues: Issue[]): Map<string, IssueType> => {
+      // console.log(`BulkIssueTypeMapping: computing is all issue types are mapped based on selected issues = ${issues.map(issue => issue.key).join(', ')}`);
+      const issueTypeIdsToIssueTypes = new Map<string, IssueType>();
+      for (const issue of issues) {
+        issueTypeIdsToIssueTypes.set(issue.fields.issuetype.id, issue.fields.issuetype);
+      }
+      return issueTypeIdsToIssueTypes;
+    }
   
 }
 

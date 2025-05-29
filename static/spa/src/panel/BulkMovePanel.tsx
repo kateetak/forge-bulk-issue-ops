@@ -35,6 +35,9 @@ import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
 import { taskStatusPollPeriodMillis } from 'src/model/config';
 import { BulkOpsMode } from 'src/types/BulkOpsMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
+import { ObjectMapping } from 'src/types/ObjectMapping';
+import { render } from 'react-dom';
+import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 
 const showDebug = false;
 const implyAllIssueTypesWhenNoneAreSelected = true;
@@ -56,15 +59,18 @@ type Activity = {
   description: string;
 }
 
+type StepName = 'filter' | 'issue-selection' | 'target-project-selection' | 'issue-type-mapping' | 'field-mapping' | 'move';
+type CompletionState = 'incomplete' | 'complete';
+
 const BulkMovePanel = (props: BulkMovePanelProps) => {
 
+  const [stepNamesToCompletionState, setStepNamesToCompletionState] = useState<ObjectMapping<CompletionState>>({});
+  const [stepOrder, setStepOrder] = useState<StepName[]>([])
   const [bulkOpsMode, setBulkOpsMode] = useState<BulkOpsMode>(props.bulkOpsMode);
   const [mainWarningMessage, setMainWarningMessage] = useState<string>('');
   const [lastDataLoadTime, setLastDataLoadTime] = useState<number>(0);
   const [filterMode, setFilterMode] = useState<FilterMode>('basic');
   const [enteredJql, setEnteredJql] = useState<string>('');
-  // const [allProjectSearchInfo, setAllProjectSearchInfo] = useState<ProjectSearchInfo>(nilProjectSearchInfo());
-  // const [allProjectSearchInfoTime, setAllProjectSearchInfoTime] = useState<number>(0);
   const [allIssueTypes, setAllIssueTypes] = useState<IssueType[]>([]);
   const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
   const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
@@ -93,7 +99,59 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   useEffect(() => {
     setBulkOpsMode(props.bulkOpsMode);
-  }, [props.bulkOpsMode])
+  }, [props.bulkOpsMode]);
+
+  const defineSteps = () => {
+    const steps: StepName[] = [];
+    steps.push('filter');
+    steps.push('issue-selection');
+    steps.push('target-project-selection');
+    if (bulkOpsMode === 'Move') {
+      steps.push('issue-type-mapping');
+    }
+    steps.push('field-mapping');
+    steps.push('move');
+    setStepOrder(steps);
+  }
+
+  const setStepCompletionState = (stepName: StepName, completionState: CompletionState) => {
+    setStepNamesToCompletionState(prevState => ({
+      ...prevState,
+      [stepName]: completionState
+    }));
+  }
+
+  const arePrerequisiteStepsComplete = (priorToStepName: StepName): boolean => {
+    let complete = true;
+    for (const stepName of stepOrder) {
+      if (stepName === priorToStepName) {
+        break; // Stop checking once we reach the step we're interested in
+      }
+      const completionState = stepNamesToCompletionState[stepName];
+      if (completionState !== 'complete') {
+        complete = false;
+        break;
+      }
+    }
+    return complete;
+  }
+
+  const renderStepCompletionState = (): JSX.Element => {
+    const renderedStates = stepOrder.map((stepName: StepName) => {
+      const completionState = stepNamesToCompletionState[stepName];
+      return (
+        <li key={stepName}><span>{stepName}: </span><span>{completionState === 'complete' ? 'COMPLETE' : 'INCOMPLETE'}</span>
+        </li>
+      );
+    });
+    return (
+      <div>
+        <ul>
+          {renderedStates}
+        </ul>
+      </div>
+    );
+  }
 
   const clearFieldMappingsState = () => {
     setFieldMappingsState(nilFieldMappingsState);
@@ -127,6 +185,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   useEffect(() => {
+    defineSteps();
     // updateAllProjectInfo();
     initialiseSelectedIssueTypes();
     if (showDebug) {
@@ -156,18 +215,35 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
-    setSelectedIssues(newIssueSearchInfo.issues);
-    targetMandatoryFieldsProvider.setSelectedIssues(newIssueSearchInfo.issues, allIssueTypes);
+    const newlySelectedIssues = newIssueSearchInfo.issues;
+    setSelectedIssues(newlySelectedIssues);
+    targetMandatoryFieldsProvider.setSelectedIssues(newlySelectedIssues, allIssueTypes);
     setIssueSearchInfo(newIssueSearchInfo);
     setIssueSearchInfoTime(Date.now());
     setLastDataLoadTime(Date.now());
     clearFieldMappingsState();
+    setStepCompletionState('issue-selection', newlySelectedIssues.length > 0 ? 'complete' : 'incomplete');
+    updateMappingsCompletionStates(newlySelectedIssues);
   }
 
-  const onIssueSelectionChange = async (selectedIssues: Issue[]): Promise<void> => {
+  const updateMappingsCompletionStates = (newlySelectedIssues: Issue[] = selectedIssues): void => {
+    // const issueTypeIdsToIssueTypes = jiraUtil.getIssueTypesFromIssues(newlySelectedIssues);
+
+
+    const allIssueTyesMapped = bulkIssueTypeMapping.areAllIssueTyesMapped(newlySelectedIssues);
+    console.log(`BulkMovePanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
+    setStepCompletionState('issue-type-mapping', allIssueTyesMapped ? 'complete' : 'incomplete');
+
+    const fieldMappingsComplete = isFieldMappingsComplete();
+    setStepCompletionState('field-mapping', fieldMappingsComplete ? 'complete' : 'incomplete');
+  }
+
+  const onIssuesSelectionChange = async (selectedIssues: Issue[]): Promise<void> => {
+    console.log(`BulkMovePanel: onIssuesSelectionChange: selected issues = ${selectedIssues.map(issue => issue.key).join(', ')}`);
     setSelectedIssues(selectedIssues);
     targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
     updateFieldMappingsIfNeeded(selectedToProject);
+    updateMappingsCompletionStates(selectedIssues);
   }
 
   const onBasicModeSearchIssues = async (projects: Project[], issueTypes: IssueType[], labels: string[]): Promise<void> => {
@@ -202,7 +278,10 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setIssueLoadingState('busy');
     setTimeout(async () => {
       const issueSearchInfo = await jiraDataModel.getIssueSearchInfoByJql(jql) as IssueSearchInfo;
-      onIssuesLoaded(true, issueSearchInfo);
+      // onIssuesLoaded(true, issueSearchInfo);
+      const issueCount = issueSearchInfo.issues.length;
+      onIssuesLoaded(issueCount > 0, issueSearchInfo);
+      setStepCompletionState('filter', issueCount > 0 ? 'complete' : 'incomplete');
       setIssueLoadingState('idle');
     }, 0);
   }
@@ -222,6 +301,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setIssueMoveOutcome(undefined);
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
+    setStepCompletionState('filter', selectedProjects.length > 0 ? 'complete' : 'incomplete');
     await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
     const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
     setSelectableIssueTypes(selectableIssueTypes);
@@ -233,6 +313,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setSelectedToProject(selectedProject);
     setSelectedToProjectTime(Date.now());
     updateFieldMappingsIfNeeded(selectedProject);
+    setStepCompletionState('target-project-selection', selectedProject ? 'complete' : 'incomplete');
+    updateMappingsCompletionStates(selectedIssues);
   }
 
   const onIssueTypesSelect = async (selectedIssueTypes: IssueType[]): Promise<void> => {
@@ -344,6 +426,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const onAllDefaultValuesProvided = (allDefaultsProvided: boolean) => {
     setAllDefaultValuesProvided(allDefaultsProvided);
+    updateMappingsCompletionStates();
   }
 
   const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveRequestOutcome): string => {
@@ -626,8 +709,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
             loadingState={issueLoadingState}
             issueSearchInfo={issueSearchInfo}
             selectedIssues={selectedIssues}
-            onIssueSelectionChange={async (selectedIssues: Issue[]): Promise<void> => {
-              await onIssueSelectionChange(selectedIssues);
+            onIssuesSelectionChange={async (selectedIssues: Issue[]): Promise<void> => {
+              await onIssuesSelectionChange(selectedIssues);
             }}
           />
           {renderFlexboxEqualWidthGrowPanel()}
@@ -704,12 +787,6 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
             key={`issue-type-mapping-panel-${lastDataLoadTime}-${selectedIssues.length}`}
             selectedIssues={selectedIssues}
             targetProject={selectedToProject}
-            // bulkOpsMode={bulkOpsMode}
-            // issues={selectedIssues}
-            // fieldMappingsState={fieldMappingsState}
-            // targetMandatoryFieldsProvider={targetMandatoryFieldsProvider}
-            // showDebug={showDebug}
-            // onAllDefaultValuesProvided={onAllDefaultValuesProvided}
           />
           {renderFlexboxEqualWidthGrowPanel()}
         </div>
@@ -851,6 +928,10 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   return (
     <div>
       <h3>Bulk {bulkOpsMode} Issues</h3>
+
+      {renderStepCompletionState()}
+
+
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
         {renderFilterPanel(lastStepNumber++)}
