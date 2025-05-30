@@ -32,7 +32,7 @@ import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFie
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
-import { taskStatusPollPeriodMillis } from 'src/model/config';
+import { allowBulkMovesFromMultipleProjects, taskStatusPollPeriodMillis } from 'src/model/config';
 import { BulkOpsMode } from 'src/types/BulkOpsMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
@@ -222,7 +222,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
     const newlySelectedIssues = newIssueSearchInfo.issues;
-    setSelectedIssues(newlySelectedIssues);
+    // setSelectedIssues(newlySelectedIssues);
     targetMandatoryFieldsProvider.setSelectedIssues(newlySelectedIssues, allIssueTypes);
     setIssueSearchInfo(newIssueSearchInfo);
     setIssueSearchInfoTime(Date.now());
@@ -510,7 +510,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         <ProjectsSelect 
           // key={`from-project=${allProjectSearchInfoTime}`}
           label="From projects"
-          isMulti={true}
+          isMulti={allowBulkMovesFromMultipleProjects}
           selectedProjects={selectedFromProjects}
           filterProjects={filterProjectsForFromSelection}
           onProjectsSelect={onFromProjectsSelect}
@@ -724,6 +724,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
             loadingState={issueLoadingState}
             issueSearchInfo={issueSearchInfo}
             selectedIssues={selectedIssues}
+            allowBulkMovesFromMultipleProjects={allowBulkMovesFromMultipleProjects}
             onIssuesSelectionChange={async (selectedIssues: Issue[]): Promise<void> => {
               await onIssuesSelectionChange(selectedIssues);
             }}

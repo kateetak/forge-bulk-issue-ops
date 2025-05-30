@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FormSection } from "@atlaskit/form";
 import { LoadingState } from "../types/LoadingState";
 import { LinearProgress } from '@mui/material';
@@ -10,11 +10,13 @@ import { Issue } from "../types/Issue";
 import SuccessIcon from '@atlaskit/icon/core/success';
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 import placeholderImage from './issue-filter-placeholder.png';
+import jiraUtil from "src/controller/jiraUtil";
 
 export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
   issueSearchInfo: IssueSearchInfo;
   selectedIssues: Issue[];
+  allowBulkMovesFromMultipleProjects: boolean;
   onIssuesSelectionChange: (selectedIssues: Issue[]) => Promise<void>;
 }
 
@@ -22,7 +24,14 @@ type GlobalSelectionMode = 'All' | 'Some' | 'None';
 
 export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
-  const [globalSelectionMode, setGlobalSelectionMode] = useState<GlobalSelectionMode>('All');
+  const [multipleProjectsDetected, setMultipleProjectsDetected] = useState<boolean>(
+    jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1);
+  const [globalSelectionMode, setGlobalSelectionMode] = useState<GlobalSelectionMode>(multipleProjectsDetected ? 'Some' : 'All');
+
+  useEffect(() => {
+    setMultipleProjectsDetected(jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1);
+  }, [props.issueSearchInfo.issues]);
+
 
   const onToggleIssueSelection = (issueToToggle: Issue) => {
     if (globalSelectionMode === 'Some') {
@@ -83,6 +92,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 				name="global-selection-mode"
 				testId="global-selection-mode"
 				isChecked={mode === globalSelectionMode}
+        isDisabled={multipleProjectsDetected}
 				onChange={() => {
           onGlobalSelectionModeChange(mode);
         }}
@@ -112,7 +122,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
             key={`issue-select-${issue.key}`}
             id={`toggle-${issue.key}`}
             isChecked={!!props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key)}
-            isDisabled={globalSelectionMode !== 'Some'}
+            isDisabled={multipleProjectsDetected || globalSelectionMode !== 'Some'}
             onChange={(event: any) => {
               onToggleIssueSelection(issue);
             }}
@@ -128,29 +138,42 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     }
   }
 
+  const renderMultipleProjectsError = () => {
+    return (
+      <div className="error-message">
+        <p>The issues are in multiple projects but this is not supported. Please select issues from a single project or enable bulk moves from multiple projects in the app settings.</p>
+      </div>
+    );
+  }
+
   const renderIssuesPanel = () => {
     const hasIssues = props.issueSearchInfo.issues.length > 0;
     const renderedIssues = hasIssues ? props.issueSearchInfo.issues.map((issue: Issue) => {
       const issueIsInSelectedFromProject = true;
       return (
-        <div 
-          key={`issue-select-${issue.key}`}
-          className="issue-selection-panel"
-        >
-          <div>
-            {renderIssueSelectionWidget(issue)}
+        <>
+          <div 
+            key={`issue-select-${issue.key}`}
+            className="issue-selection-panel"
+          >
+            <div>
+              {renderIssueSelectionWidget(issue)}
+            </div>
+            <div key={`issue-id-type-${issue.key}-${issue.fields.issuetype.id}`} className={`issue-summary-panel ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
+              <Lozenge appearance="inprogress">{issue.fields.issuetype.name}</Lozenge>
+            </div>
+            <div key={`issue-${issue.key}`} className={`issue-summary-panel clip-text-300 ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
+              {issue.key}: {issue.fields.summary}
+            </div>
           </div>
-          <div key={`issue-id-type-${issue.key}-${issue.fields.issuetype.id}`} className={`issue-summary-panel ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
-            <Lozenge appearance="inprogress">{issue.fields.issuetype.name}</Lozenge>
-          </div>
-          <div key={`issue-${issue.key}`} className={`issue-summary-panel clip-text-300 ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
-            {issue.key}: {issue.fields.summary}
-          </div>
-        </div>
+        </>
       );
     }) : null;
     return (
       <>
+        <div style={{marginTop: '20px', marginBottom: '-20px'}}>
+          {multipleProjectsDetected ? renderMultipleProjectsError() : null}
+        </div>
         {renderIssueLoading()}
         <FormSection>
           {renderGlobalSelectionControls()}

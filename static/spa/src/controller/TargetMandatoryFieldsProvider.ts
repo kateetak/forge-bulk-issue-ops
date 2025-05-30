@@ -38,9 +38,9 @@ export class TargetMandatoryFieldsProvider {
 
     const newlySelectedIssueTypes = Array.from(this.selectedTargetIssueTypeIdsToTypes.values());
 
-    if (newlySelectedIssueTypes.length === 0 && this.selectedIssueTypes.length > 0) {
-      throw new Error("Bad request: no issue types selected. Please select at least one issue type.");
-    }
+    // if (newlySelectedIssueTypes.length === 0 && this.selectedIssueTypes.length > 0) {
+    //   throw new Error("Bad request: no issue types selected. Please select at least one issue type.");
+    // }
 
     this.selectedIssueTypes = newlySelectedIssueTypes;
     // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: selectedIssueTypes: ${this.selectedIssueTypes.map(issue => `${issue.name} (${issue.id})`).join(', ')}`);

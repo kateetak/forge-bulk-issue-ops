@@ -25,6 +25,9 @@ class MoveRuleEnforcer {
     return filteredProjects;
   }
 
+  filterIssueTypeMapping = async () => {
+  }
+
   /**
    * This function is invoked when the user selects a target project to moving issues to. The users starts
    * typing the name or key of the target project which results in a Jira API call to retrieve a set of matching

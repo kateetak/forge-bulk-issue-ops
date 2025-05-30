@@ -83,7 +83,7 @@ const Main = () => {
           <Routes>
             <Route path="/" element={<Home history={history} />}></Route>
             <Route path="/move" element={<BulkMovePanel bulkOpsMode="Move" />}></Route>
-            <Route path="/edit" element={<BulkEditPanel />}></Route>
+            <Route path="/edit" element={<BulkMovePanel bulkOpsMode="Edit" />}></Route>
             <Route path="/import" element={<BulkImportPanel />}></Route>
           </Routes>
         </Router>

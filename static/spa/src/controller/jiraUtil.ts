@@ -1,9 +1,22 @@
 import { Issue } from "src/types/Issue";
 import { IssueType } from "../types/IssueType";
 import { Project } from "../types/Project";
-import { ProjectSearchInfo } from "../types/ProjectSearchInfo";
 
 class JiraUtil {
+
+  countProjectsByIssues(issues: Issue[]) {
+    const projectKeys = new Set<string>();
+    for (const issue of issues) {
+      if (issue.fields.project) {
+        projectKeys.add(issue.fields.project.key);
+      } else {
+        const issueKey = issue.key;
+        const projectKey = issueKey.split('-')[0];
+        projectKeys.add(projectKey);
+      }
+    }
+    return projectKeys.size;
+  }
 
   filterProjectsIssueTypes = (projects: Project[], allIssueTypes: IssueType[]): IssueType[] => {
     const filteredIssueTypes = new Set<IssueType>();

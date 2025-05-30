@@ -84,6 +84,10 @@ This optional step involves reviewing and tuning the access to Jira's built-in b
 - Once the app is installed on a site, the site picks up the new app changes you deploy without needing to rerun the install command.
 
 
+# Additional configuration options
+
+Configuration options can be defined in [static/spa/src/model/config.ts](static/spa/src/model/config.ts).
+
 # Known issues
 
 * The move functionality does not allow the target issue type and status to be specified. It is assumed the target issue type and status exists in the target project and will therefore remain unchanged.
