@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { router, NavigationTarget, view } from '@forge/bridge';
 import { Router, Route, Routes, useNavigate } from "react-router";
-import BulkMovePanel from "./panel/BulkMovePanel";
+import BulkOperationPanel from "./panel/BulkOperationPanel";
 import BulkEditPanel from "./panel/BulkEditPanel";
 import BulkImportPanel from "./panel/BulkImportPanel";
 
@@ -82,8 +82,8 @@ const Main = () => {
         >
           <Routes>
             <Route path="/" element={<Home history={history} />}></Route>
-            <Route path="/move" element={<BulkMovePanel key="Move" bulkOpsMode="Move" />}></Route>
-            <Route path="/edit" element={<BulkMovePanel key="Edit" bulkOpsMode="Edit" />}></Route>
+            <Route path="/move" element={<BulkOperationPanel key="Move" bulkOperationMode="Move" />}></Route>
+            <Route path="/edit" element={<BulkOperationPanel key="Edit" bulkOperationMode="Edit" />}></Route>
             <Route path="/import" element={<BulkImportPanel />}></Route>
           </Routes>
         </Router>

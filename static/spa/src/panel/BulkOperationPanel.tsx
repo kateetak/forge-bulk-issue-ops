@@ -31,7 +31,7 @@ import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
 import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects, taskStatusPollPeriodMillis } from 'src/model/config';
-import { BulkOpsMode } from 'src/types/BulkOpsMode';
+import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
@@ -46,8 +46,8 @@ const showCompletionStateDebug = false;
 const implyAllIssueTypesWhenNoneAreSelected = true;
 const autoShowFieldMappings = true;
 
-export type BulkMovePanelProps = {
-  bulkOpsMode: BulkOpsMode;
+export type BulkOperationPanelProps = {
+  bulkOperationMode: BulkOperationMode;
 }
 
 type DebugInfo = {
@@ -69,11 +69,11 @@ const allSteps: StepName[] = ['filter',  'issue-selection',  'target-project-sel
 // Retain the same instance of TargetMandatoryFieldsProvider across renders
 const targetMandatoryFieldsProviderSingleton = new TargetMandatoryFieldsProvider();
 
-const BulkMovePanel = (props: BulkMovePanelProps) => {
+const BulkOperationPanel = (props: BulkOperationPanelProps) => {
 
   const [stepNamesToCompletionState, setStepNamesToCompletionState] = useState<ObjectMapping<CompletionState>>({});
   const [stepOrder, setStepOrder] = useState<StepName[]>([])
-  const [bulkOpsMode, setBulkOpsMode] = useState<BulkOpsMode>(props.bulkOpsMode);
+  const [bulkOperationMode, setBulkOperationMode] = useState<BulkOperationMode>(props.bulkOperationMode);
   const [mainWarningMessage, setMainWarningMessage] = useState<string>('');
   const [lastDataLoadTime, setLastDataLoadTime] = useState<number>(0);
   const [filterMode, setFilterMode] = useState<FilterMode>('basic');
@@ -106,15 +106,15 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
 
   useEffect(() => {
-    setBulkOpsMode(props.bulkOpsMode);
-  }, [props.bulkOpsMode]);
+    setBulkOperationMode(props.bulkOperationMode);
+  }, [props.bulkOperationMode]);
 
-  const isStepApplicableToBulkOpsMode = (stepName: StepName): boolean => {
-    if (bulkOpsMode === 'Move') {
+  const isStepApplicableToBulkOperationMode = (stepName: StepName): boolean => {
+    if (bulkOperationMode === 'Move') {
       if (stepName === 'edit-fields') {
         return false;
       }
-    } else if (bulkOpsMode === 'Edit') {
+    } else if (bulkOperationMode === 'Edit') {
       if (stepName === 'issue-type-mapping' || stepName === 'field-mapping' || stepName === 'target-project-selection') {
         return false;
       }
@@ -125,7 +125,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   const defineSteps = () => {
     const steps: StepName[] = [];
     for (const step of allSteps) {
-      if (isStepApplicableToBulkOpsMode(step)) {
+      if (isStepApplicableToBulkOperationMode(step)) {
         steps.push(step);
       }
     }
@@ -151,7 +151,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         break; // Stop checking once we reach the step we're interested in
       }
       const completionState = stepNamesToCompletionState[stepName];
-      if (isStepApplicableToBulkOpsMode(stepName)) {
+      if (isStepApplicableToBulkOperationMode(stepName)) {
         if (completionState !== 'complete') {
           complete = false;
           break;
@@ -167,7 +167,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       return (
         <li key={stepName}>
           {`${stepName}: `} 
-          {isStepApplicableToBulkOpsMode(stepName) ? completionState === 'complete' ? 'COMPLETE' : 'INCOMPLETE' : 'N/A'}
+          {isStepApplicableToBulkOperationMode(stepName) ? completionState === 'complete' ? 'COMPLETE' : 'INCOMPLETE' : 'N/A'}
         </li>
       );
     });
@@ -251,7 +251,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
 
     const allIssueTyesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(newlySelectedIssues);
-    // console.log(`BulkMovePanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
+    // console.log(`BulkOperationPanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
     // setStepCompletionState('issue-type-mapping', selectedIssueTypes.length > 0 && allIssueTyesMapped ? 'complete' : 'incomplete');
 
     const fieldMappingsComplete = isFieldMappingsComplete();
@@ -260,7 +260,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const onIssuesSelectionChange = async (selectedIssues: Issue[]): Promise<void> => {
-    // console.log(`BulkMovePanel: onIssuesSelectionChange: selected issues = ${selectedIssues.map(issue => issue.key).join(', ')}`);
+    // console.log(`BulkOperationPanel: onIssuesSelectionChange: selected issues = ${selectedIssues.map(issue => issue.key).join(', ')}`);
     setSelectedIssues(selectedIssues);
     targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
     updateFieldMappingsIfNeeded(selectedToProject);
@@ -322,7 +322,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setIssueMoveOutcome(undefined);
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
-    if (bulkOpsMode === 'Edit') {
+    if (bulkOperationMode === 'Edit') {
       setSelectedToProject(selectedProjects[0]);
       setSelectedToProjectTime(Date.now());
     }
@@ -383,7 +383,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       if (issueMoveController.isDone(outcome.status)) {
         if (taskId !== lastMoveCompletionTaskId) {
           setLastMoveCompletionTaskId(taskId);
-          // console.log(`BulkMovePanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
+          // console.log(`BulkOperationPanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
           const options: FlagOptions = {
             id: taskId,
             type: outcome.status === 'COMPLETE' ? 'info' : 'error',
@@ -407,7 +407,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       }
     } else {
       setMainWarningMessage(`No taskId provided for polling move outcome.`);
-      console.warn(`BulkMovePanel: pollPollMoveOutcome: No taskId provided, cannot poll for move outcome.`);
+      console.warn(`BulkOperationPanel: pollPollMoveOutcome: No taskId provided, cannot poll for move outcome.`);
       setCurrentMoveActivity(undefined);
       setStepCompletionState('move', 'incomplete');
     }
@@ -429,7 +429,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         selectedToProject.id
       );
       if (projectFieldMappings.errorMessage) {
-        console.warn(`BulkMovePanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${projectFieldMappings.errorMessage}`);
+        console.warn(`BulkOperationPanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${projectFieldMappings.errorMessage}`);
         return nilFieldMappingsState;
       } else if (projectFieldMappings.data) {
         const fieldMappingsState: FieldMappingsState = {
@@ -439,7 +439,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         }
         return fieldMappingsState;
       } else {
-        throw new Error(`BulkMovePanel: validateMandatoryFieldsAreFilled: No data retrieved for field options.`);
+        throw new Error(`BulkOperationPanel: validateMandatoryFieldsAreFilled: No data retrieved for field options.`);
       }
     } finally {
       setCurrentFieldMappingActivity(undefined);
@@ -464,13 +464,13 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const onAllDefaultValuesProvided = (allDefaultValuesProvided: boolean) => {
-    // console.log(`BulkMovePanel: onAllDefaultValuesProvided: ${allDefaultValuesProvided}`);
+    // console.log(`BulkOperationPanel: onAllDefaultValuesProvided: ${allDefaultValuesProvided}`);
     setAllDefaultValuesProvided(allDefaultValuesProvided);
     updateFieldMappingState(selectedToProject);
   }
 
   const onIssueTypeMappingChange = async (): Promise<void> => {
-    // console.log(`BulkMovePanel: onIssueTypeMappingChange: }`);
+    // console.log(`BulkOperationPanel: onIssueTypeMappingChange: }`);
     targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
     const allIssueTypesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(selectedIssues);
     setAllIssueTypesMapped(allIssueTypesMapped);
@@ -505,7 +505,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       targetIssueTypeIdsToTargetMandatoryFields
     );
     setCurrentMoveActivity(undefined);
-    console.log(`BulkMovePanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
+    console.log(`BulkOperationPanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
     const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
     if (taskOutcomeErrorMessage) {
       const fullErrorMessage = `Failed to initiate move request: ${taskOutcomeErrorMessage}`;
@@ -545,8 +545,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const renderFromProjectSelect = () => {
     const isMulti =
-      (bulkOpsMode === 'Move' && allowBulkMovesFromMultipleProjects) ||
-      (bulkOpsMode === 'Edit' && allowBulkEditsAcrossMultipleProjects);
+      (bulkOperationMode === 'Move' && allowBulkMovesFromMultipleProjects) ||
+      (bulkOperationMode === 'Edit' && allowBulkEditsAcrossMultipleProjects);
     return (
       <FormSection>
         <ProjectsSelect 
@@ -588,13 +588,13 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
 
     const issueTypesAlreadySelected = selectedIssueTypes.length !== allIssueTypes.length;
-    // console.log(`BulkMovePanel: renderIssueTypesSelect: issueTypesAlreadySelected: ${issueTypesAlreadySelected}`);
+    // console.log(`BulkOperationPanel: renderIssueTypesSelect: issueTypesAlreadySelected: ${issueTypesAlreadySelected}`);
     const candidateIssueTypes: IssueType[] = issueTypesAlreadySelected ?
       selectedIssueTypes :
       [];
-    // console.log(`BulkMovePanel: renderIssueTypesSelect: candidateIssueTypes: ${JSON.stringify(candidateIssueTypes, null, 2)}`);
+    // console.log(`BulkOperationPanel: renderIssueTypesSelect: candidateIssueTypes: ${JSON.stringify(candidateIssueTypes, null, 2)}`);
     const selectedIssueTypeIds = candidateIssueTypes.length ? candidateIssueTypes.map(issueType => issueType.id) : [];
-    // console.log(`BulkMovePanel: renderIssueTypesSelect: selectedIssueTypeIds: ${JSON.stringify(selectedIssueTypeIds, null, 2)}`);
+    // console.log(`BulkOperationPanel: renderIssueTypesSelect: selectedIssueTypeIds: ${JSON.stringify(selectedIssueTypeIds, null, 2)}`);
     return (
       <FormSection>
         <IssueTypesSelect 
@@ -766,7 +766,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label={`Confirm issues to ${bulkOpsMode.toLowerCase()}`}
+            label={`Confirm issues to ${bulkOperationMode.toLowerCase()}`}
             completionState={getStepCompletionState('issue-selection')}
           />
           {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
@@ -824,7 +824,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           isDisabled={!buttonEnabled}
           onClick={onMoveIssues}
         >
-          {bulkOpsMode} issues
+          {bulkOperationMode} issues
         </Button>
       </div>
     );
@@ -908,7 +908,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           {renderFieldMappingIndicator()}
           <FieldMappingPanel
             key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}`}
-            bulkOpsMode={bulkOpsMode}
+            bulkOperationMode={bulkOperationMode}
             allIssueTypes={allIssueTypes}
             issues={selectedIssues}
             fieldMappingsState={fieldMappingsState}
@@ -946,7 +946,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label={`${bulkOpsMode} issues`}
+            label={`${bulkOperationMode} issues`}
             completionState={getStepCompletionState('move')}
           />
           <FormSection>
@@ -1052,21 +1052,21 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   let lastStepNumber = 1;
   return (
     <div>
-      <h3>Bulk {bulkOpsMode} Issues</h3>
+      <h3>Bulk {bulkOperationMode} Issues</h3>
       {showCompletionStateDebug ? renderStepCompletionState() : null}
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
-        {isStepApplicableToBulkOpsMode('filter') ? renderFilterPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOpsMode('issue-selection') ? renderIssuesPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOpsMode('issue-type-mapping') ? renderTargetProjectPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOpsMode('issue-type-mapping') ? renderIssueTypeMappingPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOpsMode('field-mapping') ? renderFieldValueMappingsPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOpsMode('edit-fields') ? renderEditFieldsPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOpsMode('move') ? renderMoveOrEditPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('filter') ? renderFilterPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('issue-selection') ? renderIssuesPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('issue-type-mapping') ? renderTargetProjectPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('issue-type-mapping') ? renderIssueTypeMappingPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('field-mapping') ? renderFieldValueMappingsPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('edit-fields') ? renderEditFieldsPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('move') ? renderMoveOrEditPanel(lastStepNumber++) : null}
       </div>
       {renderDebugPanel()}
     </div>
   );
 }
 
-export default BulkMovePanel;
+export default BulkOperationPanel;

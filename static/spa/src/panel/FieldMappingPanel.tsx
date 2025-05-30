@@ -13,7 +13,7 @@ import { Project } from 'src/types/Project';
 import Textfield from '@atlaskit/textfield';
 import { DefaultFieldValue } from 'src/types/DefaultFieldValue';
 import { FieldMappingInfo } from 'src/types/FieldMappingInfo';
-import { BulkOpsMode } from 'src/types/BulkOpsMode';
+import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { mapToObjectMap } from 'src/model/util';
@@ -36,7 +36,7 @@ export const nilFieldMappingsState: FieldMappingsState = {
 }
 
 export type FieldMappingPanelProps = {
-  bulkOpsMode: BulkOpsMode;
+  bulkOperationMode: BulkOperationMode;
   allIssueTypes: IssueType[];
   issues: Issue[];
   fieldMappingsState: FieldMappingsState;
