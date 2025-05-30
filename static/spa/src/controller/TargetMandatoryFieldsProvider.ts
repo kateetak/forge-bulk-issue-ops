@@ -21,15 +21,17 @@ export class TargetMandatoryFieldsProvider {
   private selectedIssueTypes: IssueType[] = [];
 
   setSelectedIssues = (issues: Issue[], allIssueTypes: IssueType[]): void => {
-    // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Setting selected issue types from selected issues (allIssueTypes.length = ${allIssueTypes.length})...`);
+    console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Setting selected issue types from selected issues (allIssueTypes.length = ${allIssueTypes.length})...`);
     this.selectedTargetIssueTypeIdsToTypes.clear();
     issues.forEach(issue => {
       const sourceProjectId = issue.fields.project.id;
       const sourceIssueTypeId = issue.fields.issuetype.id;
       const targetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
-      // this.selectedTargetIssueTypeIdsToTypes.set(targetIssueTypeId, issue.fields.issuetype);
+      this.selectedTargetIssueTypeIdsToTypes.set(targetIssueTypeId, issue.fields.issuetype);
       const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssueTypeId);
       if (targetIssueType) {
+        console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Adding target issue type ${targetIssueType.name} (${targetIssueType.id}) for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
+        // Ensure the target issue type is in the selected issue types
         this.selectedTargetIssueTypeIdsToTypes.set(targetIssueTypeId, targetIssueType);
       } else {
         console.warn(`TargetMandatoryFieldsProvider.setSelectedIssues: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
@@ -92,11 +94,40 @@ export class TargetMandatoryFieldsProvider {
         }
       } else {
         // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yest mapped in the previous step.`);
-        return false;
+        // return false;
       }
     }
     // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: all field values are set.`);
     return true;
+  }
+
+  getFieldMappingIncompletenessReason = (): string => {
+    if (!this.projectFieldMappings) {
+      // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: projectFieldMappings is not set.`);
+      return `projectFieldMappings is not set`;
+    }
+    if (this.selectedIssueTypes.length === 0) {
+      // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no issue types are selected.`);
+      return `no issue types are selected`;
+    }
+    for (const selectedIssueType of this.selectedIssueTypes) {
+      const issueTypeFieldMappings = this.projectFieldMappings.targetIssueTypeIdsToMappings.get(selectedIssueType.id);
+      if (issueTypeFieldMappings) {
+        const fieldIds = Array.from(issueTypeFieldMappings.fieldIdsToFieldMappingInfos.keys());
+        for (const fieldId of fieldIds) {
+          const defaultValue = this.getSelectedDefaultFieldValue(selectedIssueType.id, fieldId);
+          if (!defaultValue) {
+            // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`);
+            return `no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`;
+          }
+        }
+      } else {
+        // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yest mapped in the previous step.`);
+        // return `no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yet mapped in the previous step.`;
+      }
+    }
+    // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: all field values are set.`);
+    return '';
   }
 
   onSelectDefaultValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, defaultValue: DefaultFieldValue): void => {

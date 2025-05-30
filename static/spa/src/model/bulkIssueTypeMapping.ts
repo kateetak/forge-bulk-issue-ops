@@ -9,7 +9,7 @@ class BulkIssueTypeMapping {
   sourceToTargetIssueTypeIds = new Map<string, string>();
   sourceIssueTypes: IssueType[] = [];
 
-  areAllIssueTyesMapped = (issues: Issue[]): boolean => {
+  areAllIssueTypesMapped = (issues: Issue[]): boolean => {
     // console.log(`BulkIssueTypeMapping: computing is all issue types are mapped based on selected issues = ${issues.map(issue => issue.key).join(', ')}`);
     for (const issue of issues) {
       const targetIssueTypeId = this.getTargetIssueTypeId(issue.fields.project.id, issue.fields.issuetype.id);

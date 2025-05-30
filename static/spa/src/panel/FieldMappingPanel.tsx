@@ -19,7 +19,7 @@ import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { mapToObjectMap } from 'src/model/util';
 import { formatIssueType } from 'src/controller/formatters';
-import { renderWaitingMessage } from 'src/widget/renderWaitingMessage';
+import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
 const showDebug = false;
 
@@ -255,11 +255,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     if (fieldCount > 0) {
       return renderedTable;
     } else {
-      return (
-        <div>
-          <p><span style={{color:'#006644'}}><SuccessIcon label="" color="currentColor" /></span> There are no fields that need default values to be set.</p>
-        </div>
-      )
+      return renderPanelMessage(`There are no fields that need default values to be set.`);      
     }
   }
 
@@ -315,7 +311,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
 
   return (
     <div style={{margin: '20px 0px'}}>
-      {props.fieldMappingsState.dataRetrieved ? renderFieldMappingsState() : renderWaitingMessage('Waiting for previous steps to be completed.')}
+      {props.fieldMappingsState.dataRetrieved ? renderFieldMappingsState() : null}
       <div>
         {showDebug || props.showDebug ? renderDebug() : null}
       </div>

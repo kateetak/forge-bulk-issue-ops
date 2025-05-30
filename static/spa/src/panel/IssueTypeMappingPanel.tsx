@@ -7,7 +7,7 @@ import { Option } from '../types/Option'
 import jiraDataModel from 'src/model/jiraDataModel';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 import { formatIssueType, formatProject } from 'src/controller/formatters';
-import { renderWaitingMessage } from 'src/widget/renderWaitingMessage';
+import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
 const showDebug = false;
 
@@ -208,7 +208,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     if (props.targetProject && props.selectedIssues.length > 0) {
       return renderMappings();
     } else {
-      return renderWaitingMessage('Waiting for previous steps to be completed.');
+      return null;
+      // return renderPanelMessage('Waiting for previous steps to be completed.');
     }
   }
 

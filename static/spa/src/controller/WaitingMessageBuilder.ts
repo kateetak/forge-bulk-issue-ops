@@ -16,9 +16,3 @@ export class WaitingMessageBuilder {
   }
 
 }
-
-// const waitingMessage = new WaitingMessageBuilder()
-//       .addCondition(!allDefaultValuesProvided, 'All field values are not yet provided')
-//       .addCondition(!isFieldMappingsComplete(), 'Field value mapping is not yet complete')
-//       .addCondition(!selectedToProject || !selectedToProject.id, 'Target project is not selected')
-//       .addCondition(selectedIssues.length === 0, 'No issues selected');

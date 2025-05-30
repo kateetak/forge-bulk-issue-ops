@@ -63,6 +63,15 @@ div.bulk-move-main-panel > div > div > div {
   /* overflow-y: none; */
 }
 
+div.panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-items: stretch;
+}
+
 div.flex-box-equal-width-grow-panel {
   /* This panel ensures the various "step" panels grow with equal 
      widths so they look good when they wrap due to insufficient 

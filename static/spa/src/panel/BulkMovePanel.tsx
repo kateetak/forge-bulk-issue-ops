@@ -38,8 +38,10 @@ import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { render } from 'react-dom';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
-import { renderWaitingMessage } from 'src/widget/renderWaitingMessage';
+import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
+import PanelHeader from 'src/widget/PanelHeader';
+import { CompletionState } from 'src/types/CompletionState';
 
 const showDebug = false;
 const showCompletionStateDebug = false;
@@ -63,7 +65,6 @@ type Activity = {
 }
 
 type StepName = 'filter' | 'issue-selection' | 'target-project-selection' | 'issue-type-mapping' | 'field-mapping' | 'move';
-type CompletionState = 'incomplete' | 'complete';
 
 // Retain the same instance of TargetMandatoryFieldsProvider across renders
 const targetMandatoryFieldsProviderSingleton = new TargetMandatoryFieldsProvider();
@@ -91,6 +92,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   const [selectedIssues, setSelectedIssues] = useState<Issue[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
+  const [allIssueTypesMapped, setAllIssueTypesMapped] = useState<boolean>(false);
   const [fieldMappingsState, setFieldMappingsState] = useState<FieldMappingsState>(nilFieldMappingsState);
   const [targetMandatoryFieldsProvider, setTargetMandatoryFieldsProvider] = useState<TargetMandatoryFieldsProvider>(targetMandatoryFieldsProviderSingleton);
   const [targetMandatoryFieldsProviderUpdateTime, setTargetMandatoryFieldsProviderUpdateTime] = useState<number>(0);
@@ -125,6 +127,10 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       ...prevState,
       [stepName]: completionState
     }));
+  }
+
+  const getStepCompletionState = (stepName: StepName): CompletionState => {
+    return stepNamesToCompletionState[stepName];
   }
 
   const arePrerequisiteStepsComplete = (priorToStepName: StepName): boolean => {
@@ -222,7 +228,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
     const newlySelectedIssues = newIssueSearchInfo.issues;
-    // setSelectedIssues(newlySelectedIssues);
+    setSelectedIssues(newlySelectedIssues);
     targetMandatoryFieldsProvider.setSelectedIssues(newlySelectedIssues, allIssueTypes);
     setIssueSearchInfo(newIssueSearchInfo);
     setIssueSearchInfoTime(Date.now());
@@ -236,7 +242,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     // const issueTypeIdsToIssueTypes = jiraUtil.getIssueTypesFromIssues(newlySelectedIssues);
 
 
-    const allIssueTyesMapped = bulkIssueTypeMapping.areAllIssueTyesMapped(newlySelectedIssues);
+    const allIssueTyesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(newlySelectedIssues);
     console.log(`BulkMovePanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
     setStepCompletionState('issue-type-mapping', allIssueTyesMapped ? 'complete' : 'incomplete');
 
@@ -440,6 +446,14 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     updateMappingsCompletionStates(allDefaultValuesProvided);
   }
 
+  const onIssueTypeMappingChange = async (): Promise<void> => {
+    console.log(`BulkMovePanel: onIssueTypeMappingChange: }`);
+    targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
+    const allIssueTypesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(selectedIssues);
+    setAllIssueTypesMapped(allIssueTypesMapped);
+    setStepCompletionState('issue-type-mapping', allIssueTypesMapped ? 'complete' : 'incomplete');
+  }
+
   const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveRequestOutcome): string => {
     if (taskOutcome.errors && taskOutcome.errors.length) {
       let combinedErrorMessages = '';
@@ -632,8 +646,11 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step {stepNumber}</h3>
-          <h4>Select issue filter options</h4>
+          <PanelHeader
+            stepNumber={stepNumber}
+            label="Select issue filter options"
+            completionState={getStepCompletionState('filter')}
+          />
           {renderFilterModeSelect()}
           {renderBasicFieldInputs()}
           {renderAdvancedFieldInputs()}
@@ -717,9 +734,12 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step {stepNumber}</h3>
-          <h4>Confirm issues to {bulkOpsMode.toLowerCase()}</h4>
-          {renderWaitingMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
+          <PanelHeader
+            stepNumber={stepNumber}
+            label={`Confirm issues to ${bulkOpsMode.toLowerCase()}`}
+            completionState={getStepCompletionState('issue-selection')}
+          />
+          {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
           <IssueSelectionPanel
             loadingState={issueLoadingState}
             issueSearchInfo={issueSearchInfo}
@@ -752,7 +772,9 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const renderStartOrEditMoveButton = () => {
+    const fieldMappingIncompletenessReason = targetMandatoryFieldsProvider.getFieldMappingIncompletenessReason();
     const waitingMessage = new WaitingMessageBuilder()
+      .addCheck(fieldMappingIncompletenessReason === '', fieldMappingIncompletenessReason)
       .addCheck(isFieldMappingsComplete(), 'Field value mapping is not yet complete.')
       // .addCheck(allDefaultValuesProvided, 'Field value mapping is not yet complete.')
       .addCheck(!!selectedToProject && !!selectedToProject.id, 'Target project is not selected.')
@@ -764,7 +786,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       <div 
         key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
       >
-        {renderWaitingMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
+        {renderPanelMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
         <Button
           key={`move-button-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
           appearance={buttonEnabled ? 'primary' : 'default'}
@@ -785,9 +807,12 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step {stepNumber}</h3>
-          <h4>Select target project</h4>
-          {renderWaitingMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
+          <PanelHeader
+            stepNumber={stepNumber}
+            label="Select target project"
+            completionState={getStepCompletionState('target-project-selection')}
+          />
+          {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
           {renderToProjectSelect()}
           {renderFlexboxEqualWidthGrowPanel()}
         </div>
@@ -808,22 +833,29 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const renderIssueTypeMappingPanel = (stepNumber: number) => {
+
+    // allIssueTypesMapped
+
+    const waitingMessage = new WaitingMessageBuilder()
+      .addCheck(arePrerequisiteStepsComplete('issue-type-mapping'), 'Waiting for previous steps to be completed.')
+      .build();
+
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step {stepNumber}</h3>
-          <h4>Issue Type Mapping</h4>
+          <PanelHeader
+            stepNumber={stepNumber}
+            label="Issue Type Mapping"
+            completionState={getStepCompletionState('issue-type-mapping')}
+          />
+          {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
           {renderStartFieldMappingButton()}
           {renderFieldMappingIndicator()}
           <IssueTypeMappingPanel
             key={`issue-type-mapping-panel-${lastDataLoadTime}-${selectedIssues.length}`}
             selectedIssues={selectedIssues}
             targetProject={selectedToProject}
-            onIssueTypeMappingChange={async (): Promise<void> => {
-              console.log(`BulkMovePanel: onIssueTypeMappingChange: }`);
-              // The targetMandatoryFieldsProvider needs to know the mapping of issue types...
-              targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
-            }}
+            onIssueTypeMappingChange={onIssueTypeMappingChange}
           />
           {renderFlexboxEqualWidthGrowPanel()}
         </div>
@@ -833,14 +865,17 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
   const renderFieldValueMappingsPanel = (stepNumber: number) => {
     const waitingMessage = new WaitingMessageBuilder()
-      .addCheck(arePrerequisiteStepsComplete('issue-type-mapping'), 'Waiting for previous steps to be completed.')
+      .addCheck(arePrerequisiteStepsComplete('field-mapping'), 'Waiting for previous steps to be completed.')
       .build();
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step {stepNumber}</h3>
-          <h4>Map field values</h4>
-          {renderWaitingMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
+          <PanelHeader
+            stepNumber={stepNumber}
+            label="Map field values"
+            completionState={getStepCompletionState('field-mapping')}
+          />
+          {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
           {renderStartFieldMappingButton()}
           {renderFieldMappingIndicator()}
           <FieldMappingPanel
@@ -863,8 +898,11 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return (
       <div className="padding-panel">
         <div className="content-panel">
-          <h3>Step {stepNumber}</h3>
-          <h4>{bulkOpsMode} issues</h4>
+          <PanelHeader
+            stepNumber={stepNumber}
+            label={`${bulkOpsMode} issues`}
+            completionState={getStepCompletionState('move')}
+          />
           <FormSection>
             {renderStartOrEditMoveButton()}
           </FormSection>
