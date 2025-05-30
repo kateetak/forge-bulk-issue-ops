@@ -21,7 +21,7 @@ class BulkIssueTypeMapping {
   }
 
   addMapping = (sourceProjectId: string, sourceIssueTypeId: string, targetIssueTypeId: string): void => {
-    console.log(`BulkIssueTypeMapping.addMapping: ${sourceProjectId}, ${sourceIssueTypeId} -> ${targetIssueTypeId}`);
+    console.log(`BulkIssueTypeMapping.addMapping: (${sourceProjectId}, ${sourceIssueTypeId}) -> ${targetIssueTypeId}`);
     const key = this.buildKey(sourceProjectId, sourceIssueTypeId);
     this.sourceToTargetIssueTypeIds.set(key, targetIssueTypeId);
     // this.notifyListeners();
@@ -30,6 +30,17 @@ class BulkIssueTypeMapping {
   getTargetIssueTypeId = (sourceProjectId: string, sourceIssueTypeId: string): string | undefined => {
     const key = this.buildKey(sourceProjectId, sourceIssueTypeId);
     return this.sourceToTargetIssueTypeIds.get(key);
+  }
+
+  cloneSourceToTargetIssueTypeIds = (): Map<string, string> => {
+    // console.log('Cloning sourceToTargetIssueTypeIds map from bulkIssueTypeMapping');
+    const originalSourceToTargetIssueTypeIds = this.sourceToTargetIssueTypeIds;
+    const clonedMap = new Map<string, string>();
+    originalSourceToTargetIssueTypeIds.forEach((value, key) => {
+      // console.log(` * Cloning mapping: ${key} -> ${value}`);
+      clonedMap.set(key, value);
+    });
+    return clonedMap;
   }
 
   private buildKey = (sourceProjectId: string, sourceIssueTypeId: string): string => {

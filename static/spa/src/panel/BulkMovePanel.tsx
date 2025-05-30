@@ -8,12 +8,10 @@ import Lozenge from '@atlaskit/lozenge';
 import IssueTypesSelect from '../widget/IssueTypesSelect';
 import { IssueType } from '../types/IssueType';
 import { IssueSearchInfo } from '../types/IssueSearchInfo';
-import { FlagOptions, invoke, showFlag } from '@forge/bridge';
+import { FlagOptions, showFlag } from '@forge/bridge';
 import { Issue } from '../types/Issue';
 import { LinearProgress } from '@mui/material';
 import { LoadingState } from '../types/LoadingState';
-import { ProjectSearchInfo } from '../types/ProjectSearchInfo';
-import { nilProjectSearchInfo } from '../model/nilProjectSearchInfo';
 import { nilIssueSearchInfo } from '../model/nilIssueSearchInfo';
 import { TaskOutcome } from '../types/TaskOutcome';
 import issueMoveController from '../controller/issueMoveController';
@@ -26,7 +24,7 @@ import ProjectsSelect from '../widget/ProjectsSelect';
 import jiraDataModel from '../model/jiraDataModel';
 import { DataRetrievalResponse } from '../types/DataRetrievalResponse';
 import { buildFieldMappingsForProject } from '../controller/bulkOperationsUtil';
-import { IssueTypeFieldMappings, ProjectFieldMappings } from '../types/ProjectFieldMappings';
+import { ProjectFieldMappings } from '../types/ProjectFieldMappings';
 import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
 import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
@@ -36,7 +34,6 @@ import { allowBulkMovesFromMultipleProjects, taskStatusPollPeriodMillis } from '
 import { BulkOpsMode } from 'src/types/BulkOpsMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
-import { render } from 'react-dom';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
@@ -215,13 +212,6 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     return allowableToProjects;
   }
 
-  // const updateAllProjectInfo = async (): Promise<void> => {
-  //   const allProjectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
-  //   setAllProjectSearchInfo(allProjectSearchInfo);
-  //   setAllProjectSearchInfoTime(Date.now());
-  //   setLastDataLoadTime(Date.now());
-  // }
-
   const onClearMainWarningMessage = () => {
     setMainWarningMessage('');
   }
@@ -243,7 +233,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
 
     const allIssueTyesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(newlySelectedIssues);
-    console.log(`BulkMovePanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
+    // console.log(`BulkMovePanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
     setStepCompletionState('issue-type-mapping', allIssueTyesMapped ? 'complete' : 'incomplete');
 
     const fieldMappingsComplete = isFieldMappingsComplete();
@@ -252,7 +242,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const onIssuesSelectionChange = async (selectedIssues: Issue[]): Promise<void> => {
-    console.log(`BulkMovePanel: onIssuesSelectionChange: selected issues = ${selectedIssues.map(issue => issue.key).join(', ')}`);
+    // console.log(`BulkMovePanel: onIssuesSelectionChange: selected issues = ${selectedIssues.map(issue => issue.key).join(', ')}`);
     setSelectedIssues(selectedIssues);
     targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
     updateFieldMappingsIfNeeded(selectedToProject);
@@ -320,17 +310,25 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setSelectableIssueTypes(selectableIssueTypes);
   }
 
+  const updateFieldMappingState = (selectedargetProject: Project) => {
+    updateFieldMappingsIfNeeded(selectedargetProject);
+    targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
+    setStepCompletionState('field-mapping', isFieldMappingsComplete() ? 'complete' : 'incomplete');
+    setStepCompletionState('target-project-selection', selectedargetProject ? 'complete' : 'incomplete');
+    updateMappingsCompletionStates(allDefaultValuesProvided, selectedIssues);
+  }
+
   const onToProjectSelect = async (selectedProject: undefined | Project): Promise<void> => {
     // console.log(`selectedToProject: `, selectedProject);
     setIssueMoveOutcome(undefined);
     setSelectedToProject(selectedProject);
     setSelectedToProjectTime(Date.now());
-    updateFieldMappingsIfNeeded(selectedProject);
-
-    targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
-    
-    setStepCompletionState('target-project-selection', selectedProject ? 'complete' : 'incomplete');
-    updateMappingsCompletionStates(allDefaultValuesProvided, selectedIssues);
+    updateFieldMappingState(selectedProject);
+    // updateFieldMappingsIfNeeded(selectedProject);
+    // targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
+    // setStepCompletionState('field-mapping', isFieldMappingsComplete() ? 'complete' : 'incomplete');
+    // setStepCompletionState('target-project-selection', selectedProject ? 'complete' : 'incomplete');
+    // updateMappingsCompletionStates(allDefaultValuesProvided, selectedIssues);
   }
 
   const onIssueTypesSelect = async (selectedIssueTypes: IssueType[]): Promise<void> => {
@@ -380,13 +378,16 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           const flag = showFlag(options);
         }
         setCurrentMoveActivity(undefined);
+        setStepCompletionState('move', 'complete');
       } else {
         asyncPollMoveOutcome(taskId);
+        setStepCompletionState('move', 'incomplete');
       }
     } else {
       setMainWarningMessage(`No taskId provided for polling move outcome.`);
       console.warn(`BulkMovePanel: pollPollMoveOutcome: No taskId provided, cannot poll for move outcome.`);
       setCurrentMoveActivity(undefined);
+      setStepCompletionState('move', 'incomplete');
     }
   }
 
@@ -441,17 +442,18 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const onAllDefaultValuesProvided = (allDefaultValuesProvided: boolean) => {
-    console.log(`BulkMovePanel: onAllDefaultValuesProvided: ${allDefaultValuesProvided}`);
+    // console.log(`BulkMovePanel: onAllDefaultValuesProvided: ${allDefaultValuesProvided}`);
     setAllDefaultValuesProvided(allDefaultValuesProvided);
-    updateMappingsCompletionStates(allDefaultValuesProvided);
+    updateFieldMappingState(selectedToProject);
   }
 
   const onIssueTypeMappingChange = async (): Promise<void> => {
-    console.log(`BulkMovePanel: onIssueTypeMappingChange: }`);
+    // console.log(`BulkMovePanel: onIssueTypeMappingChange: }`);
     targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
     const allIssueTypesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(selectedIssues);
     setAllIssueTypesMapped(allIssueTypesMapped);
     setStepCompletionState('issue-type-mapping', allIssueTypesMapped ? 'complete' : 'incomplete');
+    updateFieldMappingState(selectedToProject);
   }
 
   const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveRequestOutcome): string => {
@@ -772,7 +774,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const renderStartOrEditMoveButton = () => {
-    const fieldMappingIncompletenessReason = targetMandatoryFieldsProvider.getFieldMappingIncompletenessReason();
+    const debugReasonForFieldMappingIncompleteness = false;
+    const fieldMappingIncompletenessReason = debugReasonForFieldMappingIncompleteness ? targetMandatoryFieldsProvider.getFieldMappingIncompletenessReason() : '';
     const waitingMessage = new WaitingMessageBuilder()
       .addCheck(fieldMappingIncompletenessReason === '', fieldMappingIncompletenessReason)
       .addCheck(isFieldMappingsComplete(), 'Field value mapping is not yet complete.')
@@ -852,7 +855,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           {renderStartFieldMappingButton()}
           {renderFieldMappingIndicator()}
           <IssueTypeMappingPanel
-            key={`issue-type-mapping-panel-${lastDataLoadTime}-${selectedIssues.length}`}
+            key={`issue-type-mapping-panel-${lastDataLoadTime}-${selectedIssues.length}-${selectedToProjectTime}`}
             selectedIssues={selectedIssues}
             targetProject={selectedToProject}
             onIssueTypeMappingChange={onIssueTypeMappingChange}

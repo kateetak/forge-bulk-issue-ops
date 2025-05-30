@@ -21,7 +21,7 @@ export class TargetMandatoryFieldsProvider {
   private selectedIssueTypes: IssueType[] = [];
 
   setSelectedIssues = (issues: Issue[], allIssueTypes: IssueType[]): void => {
-    console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Setting selected issue types from selected issues (allIssueTypes.length = ${allIssueTypes.length})...`);
+    // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Setting selected issue types from selected issues (allIssueTypes.length = ${allIssueTypes.length})...`);
     this.selectedTargetIssueTypeIdsToTypes.clear();
     issues.forEach(issue => {
       const sourceProjectId = issue.fields.project.id;
@@ -30,11 +30,11 @@ export class TargetMandatoryFieldsProvider {
       this.selectedTargetIssueTypeIdsToTypes.set(targetIssueTypeId, issue.fields.issuetype);
       const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssueTypeId);
       if (targetIssueType) {
-        console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Adding target issue type ${targetIssueType.name} (${targetIssueType.id}) for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
+        // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Adding target issue type ${targetIssueType.name} (${targetIssueType.id}) for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
         // Ensure the target issue type is in the selected issue types
         this.selectedTargetIssueTypeIdsToTypes.set(targetIssueTypeId, targetIssueType);
       } else {
-        console.warn(`TargetMandatoryFieldsProvider.setSelectedIssues: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
+        // console.warn(`TargetMandatoryFieldsProvider.setSelectedIssues: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
       }
     });
 

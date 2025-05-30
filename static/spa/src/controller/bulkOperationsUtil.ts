@@ -25,7 +25,7 @@ export const buildFieldMappingsForProject = async (
   const projectCreateIssueMetadata = await jiraDataModel.getCreateIssueMetadataForProject(targetProjectId);
   // console.log(`buildFieldMappingsForProject: projectCreateIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
   // const projectId = projectCreateIssueMetadata.id;
-  console.log(`Found ${projectCreateIssueMetadata.issuetypes.length} issue types for project ${targetProjectId}`);
+  // console.log(`Found ${projectCreateIssueMetadata.issuetypes.length} issue types for project ${targetProjectId}`);
   for (const targetIssueType of projectCreateIssueMetadata.issuetypes) {
     // console.log(` * buildFieldMappingsForProject: Processing issue type: ${targetIssueType.name} (${targetIssueType.id})`);
     const fieldIdsToFieldMappingInfos = new Map<string, FieldMappingInfo>();
