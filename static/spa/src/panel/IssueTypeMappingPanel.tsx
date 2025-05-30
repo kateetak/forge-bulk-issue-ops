@@ -8,6 +8,7 @@ import jiraDataModel from 'src/model/jiraDataModel';
 import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
 import { formatIssueType, formatProject } from 'src/controller/formatters';
 import { mapToObjectMap } from 'src/model/util';
+import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
 const showDebug = false;
 

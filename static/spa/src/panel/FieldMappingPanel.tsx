@@ -8,7 +8,6 @@ import { Field } from 'src/types/Field';
 import jiraDataModel from 'src/model/jiraDataModel';
 import FieldValuesSelect from 'src/widget/FieldValuesSelect';
 import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
-import SuccessIcon from '@atlaskit/icon/core/success';
 import { FieldMetadata } from 'src/types/FieldMetadata';
 import { Project } from 'src/types/Project';
 import Textfield from '@atlaskit/textfield';

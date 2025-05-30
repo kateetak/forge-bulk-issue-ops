@@ -1,6 +1,8 @@
 
 export const allowBulkMovesFromMultipleProjects = false;
 
+export const allowBulkEditsAcrossMultipleProjects = true;
+
 // At this stage, changing this to false is not supported.
 export const invokeBulkOpsApisAsTheAppUser = true;
 

@@ -19,10 +19,14 @@ import { ProjectsFieldConfigurationSchemeMapping } from '../types/ProjectsFieldC
 import { CustomFieldContextOption } from '../types/CustomFieldContextOption';
 import { Project } from '../types/Project';
 import { FieldConfigurationScheme } from '../types/FieldConfigurationScheme';
-import { EditIssueMetadata } from 'src/types/EditIssueMetadata';
+import { EditIssueMetadata } from '../types/EditIssueMetadata';
 import { CreateIssueMetadata, ProjectCreateIssueMetadata } from '../types/CreateIssueMetadata';
-import { InvocationResult } from 'src/types/InvocationResult';
-import { ProjectWithIssueTypes } from 'src/types/ProjectWithIssueTypes';
+import { InvocationResult } from '../types/InvocationResult';
+import { ProjectWithIssueTypes } from '../types/ProjectWithIssueTypes';
+import { IssueBulkEditFieldApiResponse, IssueBulkEditField } from '../types/IssueBulkEditFieldApiResponse';
+import { Issue } from 'src/types/Issue';
+import { UserSearchInfo } from 'src/types/UserSearchInfo';
+import { User } from 'src/types/User';
 
 class JiraDataModel {
 
@@ -31,6 +35,11 @@ class JiraDataModel {
   private fieldAndContextIdsToCustomFieldContextOptions = new Map<string, CustomFieldContextOption[]>();
   private projectIdsToProjectCreateIssueMetadata = new Map<string, ProjectCreateIssueMetadata>();
   private issueIdsOrKeysToEditIssueMetadata = new Map<string, EditIssueMetadata>();
+
+  // This cache could be changed to be on a per page basis, but for now, the requesting of IssueBulkEditFields
+  // recursively fetches all fields for the project and issue type ids of the issues which might be prone to failure 
+  // due to the possibility of Forge function timeouts.
+  private projectAndIssueTypeIdsToIssueBulkEditFields = new Map<string, IssueBulkEditField[]>();
 
   constructor() {
     // Eagerly load cachable data is separate threads in order for it to be faster to
@@ -206,6 +215,28 @@ class JiraDataModel {
       // console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
       return projects;
     }
+  }
+
+  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-search-get
+  searchUsers = async (query: string, includeAppUsers: boolean = false, startAt: number = 0, maxResults: number = 100): Promise<User[]> => {
+    console.log(`JiraDataModel.searchUsers: Searching for users with query "${query}" starting at ${startAt} with max results ${maxResults}`);
+    const path = `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
+    console.log(`JiraDataModel.searchUsers: path = ${path}`);
+    const response = await requestJira(path, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    console.log(`Response: ${response.status} ${response.statusText}`);
+    const users = await response.json();
+    const filteredUsers = users.filter((user: User) => {
+      if (!includeAppUsers && user.accountType === 'app') {
+        return false;
+      }
+      return true;
+    });
+    console.log(`Users: ${JSON.stringify(filteredUsers, null, 2)}`);
+    return filteredUsers;
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get
@@ -503,6 +534,69 @@ class JiraDataModel {
     });
     const outcome = await response.json();
     return outcome;
+  }
+
+  getAllIssueBulkEditFields = async (issues: Issue[]): Promise<IssueBulkEditField[]> => {
+    const key = this.buildProjectAndIssueTypeIdsKey(issues);
+    const cachedIssueBulkEditFields = this.projectAndIssueTypeIdsToIssueBulkEditFields.get(key);
+    if (cachedIssueBulkEditFields) {
+      return cachedIssueBulkEditFields;
+    } else {
+      const fields: IssueBulkEditField[] = [];
+      let loadMoreFields = true;
+      let startingAfter = '';
+      while (loadMoreFields) {
+        const invocationResult = await this.pageOfIssueBulkEditFieldApiResponse(issues, startingAfter);
+        if (invocationResult.ok) {
+          if (invocationResult.data) {
+            fields.push(...invocationResult.data.fields);
+            startingAfter = invocationResult.data.startingAfter || '';
+            loadMoreFields = startingAfter !== '';
+          } else {
+            console.warn(`No data in IssueBulkEditFieldApiResponse for issueIdsOrKeys: ${issues.map(issue => issue.key).join(', ')}`);
+            loadMoreFields = false;
+          }
+        } else {
+          console.warn(`Failed to retrieve IssueBulkEditFieldApiResponse for issueIdsOrKeys: ${issues.map(issue => issue.key).join(', ')}. Error: ${invocationResult.errorMessage}`);
+          loadMoreFields = false;
+        }
+      }
+      this.projectAndIssueTypeIdsToIssueBulkEditFields.set(key, fields);
+      return fields;
+    }
+  }
+
+  private pageOfIssueBulkEditFieldApiResponse = async (issues: Issue[], startingAfter: string): Promise<InvocationResult<IssueBulkEditFieldApiResponse>> => {
+    let queryOptions = '';
+    for (const issue of issues) {
+      const separator = queryOptions ? '&' : '';
+      queryOptions += `${separator}issueIdsOrKeys=${issue.key}`;
+    }
+    if (startingAfter) {
+      queryOptions += `&startingAfter=${startingAfter}`;
+    }
+    const path = `/rest/api/3/bulk/issues/fields?${queryOptions}`;
+    console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields for ${issues.length} issues.`);
+    const response = await requestJira(path, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const invocationResult = await this.readResponse<IssueBulkEditFieldApiResponse>(response);
+    return invocationResult;
+  }
+
+  private buildProjectAndIssueTypeIdsKey = (issues: Issue[]): string => {
+    let key = '';
+    const projectIssueTypePairs = new Set<string>();
+    for (const issue of issues) {
+      const projectIssueTypePair = `${issue.fields.project.id},${issue.fields.issuetype.id}`;
+      if (!projectIssueTypePairs.has(projectIssueTypePair)) {
+        projectIssueTypePairs.add(projectIssueTypePair);
+        key += (key ? ',' : '') + projectIssueTypePair;
+      }
+    }
+    return key;
   }
 
 }

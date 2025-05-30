@@ -15,8 +15,9 @@ export type ProjectsSelectProps = {
   selectedProjects: Project[];
   isMulti: boolean
   isDisabled?: boolean;
+  isClearable: boolean;
   filterProjects?: (projectsToFilter: Project[]) => Promise<Project[]>;
-  onProjectsSelect: (selectedProject: Project[]) => Promise<void>;
+  onProjectsSelect: (selectedProjects: Project[]) => Promise<void>;
 }
 
 const ProjectsSelect = (props: ProjectsSelectProps) => {
@@ -24,10 +25,12 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
   const [loadingOption, setLoadingOption] = useState<boolean>(false);
   const [currentProjects, setCurrentProjects] = useState<Project[]>([]);
 
-  const onChange = async (selection: any): Promise<void> => {
+  const onChange = async (selection: undefined | Option | Option[]): Promise<void> => {
     // console.log(`ProjectsSelect.onChange: `, selectedOptions);
     let selectedProjects: Project[] = [];
-    if (props.isMulti) {
+    if (!selection) {
+      selectedProjects = [];
+    } else if (props.isMulti) {
       const selectedOptions = selection as Option[];
       for (const selectedOption of selectedOptions) {
         const project = currentProjects.find(project => project.id === selectedOption.value);
@@ -37,10 +40,14 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
       }
     } else {
       const selectedOption = selection as Option;
-      const selectedProject = currentProjects.find(project => project.id === selectedOption.value);
-      selectedProjects = [selectedProject];
+      if (selectedOption.value) {
+        const selectedUser = currentProjects.find(project => project.id === selectedOption.value);
+        selectedProjects = [selectedUser];
+      } else {
+        selectedProjects = [];
+      }
     }
-    await props.onProjectsSelect(selectedProjects);  
+    await props.onProjectsSelect(selectedProjects);
   }
 
   const projectToOption = (project: Project): Option => {
@@ -81,6 +88,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
         defaultOptions
         cacheOptions
         isDisabled={props.isDisabled}
+        isClearable={props.isClearable}
 				loadOptions={promiseOptions}
         placeholder={props.label}
         onChange={onChange}

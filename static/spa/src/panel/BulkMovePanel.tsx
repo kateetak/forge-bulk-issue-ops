@@ -30,7 +30,7 @@ import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFie
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
-import { allowBulkMovesFromMultipleProjects, taskStatusPollPeriodMillis } from 'src/model/config';
+import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects, taskStatusPollPeriodMillis } from 'src/model/config';
 import { BulkOpsMode } from 'src/types/BulkOpsMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
@@ -39,6 +39,7 @@ import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
 import PanelHeader from 'src/widget/PanelHeader';
 import { CompletionState } from 'src/types/CompletionState';
+import { FieldEditsPanel } from './FieldEditsPanel';
 
 const showDebug = false;
 const showCompletionStateDebug = false;
@@ -61,7 +62,9 @@ type Activity = {
   description: string;
 }
 
-type StepName = 'filter' | 'issue-selection' | 'target-project-selection' | 'issue-type-mapping' | 'field-mapping' | 'move';
+type StepName =               'filter' | 'issue-selection' | 'target-project-selection' | 'issue-type-mapping' | 'field-mapping' | 'edit-fields' | 'move';
+const allSteps: StepName[] = ['filter',  'issue-selection',  'target-project-selection',  'issue-type-mapping',  'field-mapping',  'edit-fields',  'move'
+    ];
 
 // Retain the same instance of TargetMandatoryFieldsProvider across renders
 const targetMandatoryFieldsProviderSingleton = new TargetMandatoryFieldsProvider();
@@ -106,16 +109,26 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setBulkOpsMode(props.bulkOpsMode);
   }, [props.bulkOpsMode]);
 
+  const isStepApplicableToBulkOpsMode = (stepName: StepName): boolean => {
+    if (bulkOpsMode === 'Move') {
+      if (stepName === 'edit-fields') {
+        return false;
+      }
+    } else if (bulkOpsMode === 'Edit') {
+      if (stepName === 'issue-type-mapping' || stepName === 'field-mapping' || stepName === 'target-project-selection') {
+        return false;
+      }
+    }
+    return true;
+  }
+
   const defineSteps = () => {
     const steps: StepName[] = [];
-    steps.push('filter');
-    steps.push('issue-selection');
-    steps.push('target-project-selection');
-    if (bulkOpsMode === 'Move') {
-      steps.push('issue-type-mapping');
+    for (const step of allSteps) {
+      if (isStepApplicableToBulkOpsMode(step)) {
+        steps.push(step);
+      }
     }
-    steps.push('field-mapping');
-    steps.push('move');
     setStepOrder(steps);
   }
 
@@ -131,15 +144,18 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const arePrerequisiteStepsComplete = (priorToStepName: StepName): boolean => {
+    // const 
     let complete = true;
     for (const stepName of stepOrder) {
       if (stepName === priorToStepName) {
         break; // Stop checking once we reach the step we're interested in
       }
       const completionState = stepNamesToCompletionState[stepName];
-      if (completionState !== 'complete') {
-        complete = false;
-        break;
+      if (isStepApplicableToBulkOpsMode(stepName)) {
+        if (completionState !== 'complete') {
+          complete = false;
+          break;
+        }
       }
     }
     return complete;
@@ -149,7 +165,9 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     const renderedStates = stepOrder.map((stepName: StepName) => {
       const completionState = stepNamesToCompletionState[stepName];
       return (
-        <li key={stepName}><span>{stepName}: </span><span>{completionState === 'complete' ? 'COMPLETE' : 'INCOMPLETE'}</span>
+        <li key={stepName}>
+          {`${stepName}: `} 
+          {isStepApplicableToBulkOpsMode(stepName) ? completionState === 'complete' ? 'COMPLETE' : 'INCOMPLETE' : 'N/A'}
         </li>
       );
     });
@@ -234,7 +252,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
 
     const allIssueTyesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(newlySelectedIssues);
     // console.log(`BulkMovePanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
-    setStepCompletionState('issue-type-mapping', allIssueTyesMapped ? 'complete' : 'incomplete');
+    // setStepCompletionState('issue-type-mapping', selectedIssueTypes.length > 0 && allIssueTyesMapped ? 'complete' : 'incomplete');
 
     const fieldMappingsComplete = isFieldMappingsComplete();
     const fieldMappingComplete = allDefaultValuesProvided;
@@ -304,6 +322,10 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     setIssueMoveOutcome(undefined);
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
+    if (bulkOpsMode === 'Edit') {
+      setSelectedToProject(selectedProjects[0]);
+      setSelectedToProjectTime(Date.now());
+    }
     setStepCompletionState('filter', selectedProjects.length > 0 ? 'complete' : 'incomplete');
     await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
     const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
@@ -452,7 +474,8 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
     targetMandatoryFieldsProvider.setSelectedIssues(selectedIssues, allIssueTypes);
     const allIssueTypesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(selectedIssues);
     setAllIssueTypesMapped(allIssueTypesMapped);
-    setStepCompletionState('issue-type-mapping', allIssueTypesMapped ? 'complete' : 'incomplete');
+    // setStepCompletionState('issue-type-mapping', allIssueTypesMapped ? 'complete' : 'incomplete');
+    setStepCompletionState('issue-type-mapping', selectedIssues.length > 0 && selectedIssueTypes.length > 0 && allIssueTypesMapped ? 'complete' : 'incomplete');
     updateFieldMappingState(selectedToProject);
   }
 
@@ -521,12 +544,16 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const renderFromProjectSelect = () => {
+    const isMulti =
+      (bulkOpsMode === 'Move' && allowBulkMovesFromMultipleProjects) ||
+      (bulkOpsMode === 'Edit' && allowBulkEditsAcrossMultipleProjects);
     return (
       <FormSection>
         <ProjectsSelect 
           // key={`from-project=${allProjectSearchInfoTime}`}
           label="From projects"
-          isMulti={allowBulkMovesFromMultipleProjects}
+          isMulti={isMulti}
+          isClearable={false}
           selectedProjects={selectedFromProjects}
           filterProjects={filterProjectsForFromSelection}
           onProjectsSelect={onFromProjectsSelect}
@@ -543,6 +570,7 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
           key={`to-project`}
           label="To project"
           isMulti={false}
+          isClearable={false}
           isDisabled={!allowSelection}
           selectedProjects={[selectedToProject]}
           filterProjects={filterProjectsForToSelection}
@@ -836,19 +864,16 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
   }
 
   const renderIssueTypeMappingPanel = (stepNumber: number) => {
-
-    // allIssueTypesMapped
-
     const waitingMessage = new WaitingMessageBuilder()
       .addCheck(arePrerequisiteStepsComplete('issue-type-mapping'), 'Waiting for previous steps to be completed.')
       .build();
-
     return (
       <div className="padding-panel">
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
             label="Issue Type Mapping"
+            // completionState={'incomplete'}
             completionState={getStepCompletionState('issue-type-mapping')}
           />
           {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
@@ -890,6 +915,24 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
             targetMandatoryFieldsProvider={targetMandatoryFieldsProvider}
             showDebug={showDebug}
             onAllDefaultValuesProvided={onAllDefaultValuesProvided}
+          />
+          {renderFlexboxEqualWidthGrowPanel()}
+        </div>
+      </div>
+    );
+  }
+
+  const renderEditFieldsPanel = (stepNumber: number) => {
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <PanelHeader
+            stepNumber={stepNumber}
+            label={`Set field values`}
+            completionState={getStepCompletionState('edit-fields')}
+          />
+          <FieldEditsPanel
+            selectedIssues={selectedIssues}
           />
           {renderFlexboxEqualWidthGrowPanel()}
         </div>
@@ -1013,12 +1056,13 @@ const BulkMovePanel = (props: BulkMovePanelProps) => {
       {showCompletionStateDebug ? renderStepCompletionState() : null}
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
-        {renderFilterPanel(lastStepNumber++)}
-        {renderIssuesPanel(lastStepNumber++)}
-        {bulkOpsMode === 'Move' ? renderTargetProjectPanel(lastStepNumber++) : null}
-        {renderIssueTypeMappingPanel(lastStepNumber++)}
-        {renderFieldValueMappingsPanel(lastStepNumber++)}
-        {renderMoveOrEditPanel(lastStepNumber++)}
+        {isStepApplicableToBulkOpsMode('filter') ? renderFilterPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOpsMode('issue-selection') ? renderIssuesPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOpsMode('issue-type-mapping') ? renderTargetProjectPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOpsMode('issue-type-mapping') ? renderIssueTypeMappingPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOpsMode('field-mapping') ? renderFieldValueMappingsPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOpsMode('edit-fields') ? renderEditFieldsPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOpsMode('move') ? renderMoveOrEditPanel(lastStepNumber++) : null}
       </div>
       {renderDebugPanel()}
     </div>

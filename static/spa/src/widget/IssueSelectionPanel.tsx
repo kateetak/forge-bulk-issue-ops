@@ -151,7 +151,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     const renderedIssues = hasIssues ? props.issueSearchInfo.issues.map((issue: Issue) => {
       const issueIsInSelectedFromProject = true;
       return (
-        <>
+        <div key={`issue-key-${issue.key}`}>
           <div 
             key={`issue-select-${issue.key}`}
             className="issue-selection-panel"
@@ -166,7 +166,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
               {issue.key}: {issue.fields.summary}
             </div>
           </div>
-        </>
+        </div>
       );
     }) : null;
     return (

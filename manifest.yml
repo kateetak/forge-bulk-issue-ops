@@ -31,6 +31,7 @@ permissions:
     - read:jira-work
     - write:jira-work
     - manage:jira-configuration
+    - read:jira-user
   external:
     fetch:
       backend:
