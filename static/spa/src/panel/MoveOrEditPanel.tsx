@@ -29,7 +29,6 @@ const showDebug = false;
 export type MoveOrEditPanelProps = {
   bulkOperationMode: BulkOperationMode;
   fieldMappingsComplete: boolean;
-  // targetMandatoryFieldsProvider: TargetMandatoryFieldsProvider;
   selectedIssues: Issue[];
   selectedToProject: Project | undefined;
   allDefaultValuesProvided: boolean;

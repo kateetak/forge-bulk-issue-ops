@@ -3,14 +3,19 @@ import { ObjectMapping } from "src/types/ObjectMapping";
 import ListenerGroup from "src/model/ListenerGroup";
 import { Issue } from "src/types/Issue";
 import jiraDataModel from "./jiraDataModel";
+import moveRuleEnforcer from "src/controller/moveRuleEnforcer";
 
 export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, editedFieldValue: any) => void;
+
+export type EditState = 'no-change' | 'change';
+export const defaultEditState: EditState = 'no-change';
 
 class EditedFieldsModel {
 
   private listenerGroup = new ListenerGroup('EditedFieldsModel');
   private sendBulkNotification: boolean = false;
   private issues: Issue[] = [];
+  private fieldIdsToEditStates: ObjectMapping<EditState> = {};
   private fieldIdsToFields: ObjectMapping<IssueBulkEditField> = {};
   private fieldIdsToValues: ObjectMapping<any> = {};
 
@@ -30,6 +35,10 @@ class EditedFieldsModel {
     return this.sendBulkNotification;
   }
 
+  setFieldEditState(fieldId: string, newState: EditState): void {
+    this.fieldIdsToEditStates[fieldId] = newState;
+  }
+
   setSendBulkNotification = (sendBulkNotification: boolean): void => {
     this.sendBulkNotification = sendBulkNotification;
   }
@@ -37,9 +46,11 @@ class EditedFieldsModel {
   iterateFields = (callback: EditedFieldsModelIteratorCallback): void => {
     for (const fieldId in this.fieldIdsToFields) {
       if (this.fieldIdsToFields.hasOwnProperty(fieldId)) {
-        const field = this.fieldIdsToFields[fieldId];
-        const value = this.fieldIdsToValues[fieldId];
-        callback(field, value);
+        if (this.fieldIdsToEditStates[fieldId] === 'change') {
+          const field = this.fieldIdsToFields[fieldId];
+          const value = this.fieldIdsToValues[fieldId];
+          callback(field, value);
+        }
       }
     }
   }
@@ -48,7 +59,8 @@ class EditedFieldsModel {
     console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
     const fields = await jiraDataModel.getAllIssueBulkEditFields(issues);
     // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
-    const sortedFields = this.sortFields(fields);
+    const filteredFields = await moveRuleEnforcer.filterEditFields(fields);
+    const sortedFields = this.sortFields(filteredFields);
     this.setFields(sortedFields);
     this.issues = issues;
   }

@@ -5,7 +5,7 @@ import { Issue } from 'src/types/Issue';
 import { IssueBulkEditField } from 'src/types/IssueBulkEditFieldApiResponse';
 import { FieldEditor } from 'src/widget/FieldEditor';
 import { ObjectMapping } from 'src/types/ObjectMapping';
-import editedFieldsModel from 'src/model/editedFieldsModel';
+import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
 
 const fieldInfoDebugEnabled = false;
 const fieldValuesDebugEnabled = true;
@@ -17,6 +17,7 @@ export type FieldEditsPanelProps = {
 
 export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
+  const [fieldIdsToEditStates, setFieldIdsToEditStates] = React.useState<ObjectMapping<EditState>>({});
   const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<any>>({});
   const [fields, setFields] = React.useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
@@ -32,6 +33,22 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   useEffect(() => {
     initialiseStateFromIssues(props.selectedIssues);
   }, [props.selectedIssues]);
+
+  const isSelectedForChange = (fieldId: string): boolean => {
+    const editState = fieldIdsToEditStates[fieldId];
+    return editState === 'change';
+  }
+
+  const onToggleEditState = (fieldId: string, isChecked: boolean) => {
+    const newState = {...fieldIdsToEditStates};
+    if (isChecked) {
+      newState[fieldId] = 'change';
+    } else {
+      newState[fieldId] = 'no-change';
+    }
+    editedFieldsModel.setFieldEditState(fieldId, newState[fieldId]);
+    setFieldIdsToEditStates(newState);
+  }
 
   const onFieldChange = (field: IssueBulkEditField, value: any) => {
     const newState = editedFieldsModel.setFieldValue(field, value);
@@ -53,14 +70,15 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     );
     const renderedTableRows = (
       fields.map((field, index) => {
-        const isChecked = true;
+        const selectedForChange = isSelectedForChange(field.id);
         return (
           <tr key={`field-${field.id}`}>
             <td>
               <Toggle
                 id={`toggle-field-${field.id}`}
-                defaultChecked={isChecked}
+                isChecked={selectedForChange}
                 onChange={(event: any) => {
+                  onToggleEditState(field.id, event.currentTarget.checked);
                   // onRetainFieldValueSelection(targetIssueType, fieldId, fieldMetadata, event.currentTarget.checked);
                 }}
               />
@@ -69,6 +87,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
             <td>
               <FieldEditor
                 field={field}
+                enabled={selectedForChange}
                 value={fieldIdsToValues[field.id]}
                 onChange={(value: any) => {
                   onFieldChange(field, value)

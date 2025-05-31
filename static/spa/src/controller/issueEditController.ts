@@ -2,12 +2,17 @@ import { TaskOutcome, TaskStatus } from "../types/TaskOutcome";
 import { IssueMoveRequestOutcome, OutcomeError } from "../types/IssueMoveRequestOutcome";
 import jiraDataModel from "../model/jiraDataModel";
 import { InvocationResult } from "../types/InvocationResult";
-import { BulkIssueEditRequestData, JiraNumberField } from "src/types/BulkIssueEditRequestData";
+import { 
+  BulkIssueEditRequestData,
+  JiraNumberField,
+  JiraSelectedOptionField,
+  JiraSingleSelectField,
+  JiraSingleSelectUserPickerField
+} from "src/types/BulkIssueEditRequestData";
 import { BulkIssueEditRequestDataBuilder, JiraIssueFieldsBuilder } from "./BulkIssueEditRequestDataBuilder";
 import editedFieldsModel from "src/model/editedFieldsModel";
 import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 import { Issue } from "src/types/Issue";
-import { send } from "process";
 
 const issueEditPollPeriodMillis = 1000;
 
@@ -78,69 +83,52 @@ class IssueEditController {
     const editedFieldsInputBuilder = new JiraIssueFieldsBuilder();
     const selectedActions: string[] = [];
     const callback = (field: IssueBulkEditField, editedFieldValue: any) => {
-
       if (editedFieldValue === undefined || editedFieldValue === null) {
         // If the value is undefined or null, skip this field.
         return;
       }
-
       selectedActions.push(field.id);
       switch (field.type) {
-        case 'text':
-        case 'textarea':
-        case 'string':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
-          break;
         case 'com.atlassian.jira.plugin.system.customfieldtypes:float':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           const jiraNumberField: JiraNumberField = {
             fieldId: field.id,
             value: editedFieldValue
           }
           editedFieldsInputBuilder.addClearableNumberField(jiraNumberField);
           break;
-        case 'date':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
+        case 'com.atlassian.jira.plugin.system.customfieldtypes:select':
+          const option: JiraSelectedOptionField = {
+            optionId: editedFieldValue
+          }
+          const jiraSingleSelectField: JiraSingleSelectField = {
+            fieldId: field.id,
+            option: option
+          }
+          editedFieldsInputBuilder.addSingleSelectField(jiraSingleSelectField);
           break;
-        case 'select':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
-          break;
-        case 'multi-select':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
-          break;
-        case 'user-picker':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
-          break;
-        case 'group-picker':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
-          break;
-        case 'project-picker':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
-          break;
-        case 'issue-type-picker':
-          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
+        case 'reporter':
+        case 'assignee':
+          const jiraSingleSelectUserPickerField: JiraSingleSelectUserPickerField = {
+            fieldId: field.id,
+            user: {
+              accountId: editedFieldValue
+            }
+          }
+          editedFieldsInputBuilder.addSingleSelectClearableUserPickerField(jiraSingleSelectUserPickerField);
           break;
         default:
-          console.warn(` * Unsupported field type: ${field.type} for field ${field.id}. Skipping.`);
+          console.warn(` * Unsupported field type: "${field.type}" (field ID ${field.id}). Skipping.`);
           return;
       }
     }
     editedFieldsModel.iterateFields(callback);
     const issues: Issue[] = editedFieldsModel.getIssues();
-
-
-    // const editedFieldsInput = new JiraIssueFieldsBuilder()
-    //   .build();
     return new BulkIssueEditRequestDataBuilder()
       .setEditedFieldsInput(editedFieldsInputBuilder.build())
       .setSelectedActions(selectedActions)
       .addSelectedIssues(issues)
       .setSendBulkNotification(sendBulkNotification)
       .build();
-  }
-
-  private addField = (fieldId: string, value: any, editedFieldsInputBuilder: JiraIssueFieldsBuilder): void => {
-    // editedFieldsInputBuilder.setFieldValue(fieldId, value);
   }
 
 }

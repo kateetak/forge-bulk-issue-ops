@@ -13,6 +13,7 @@ import { User } from 'src/types/User';
 
 export interface FieldEditorProps {
   field: IssueBulkEditField;
+  enabled: boolean;
   value: any;
   onChange: (value: any) => void;
 }
@@ -44,7 +45,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         isRequired={true}
         options={options}
         cacheOptions
-        isDisabled={false}
+        isDisabled={!props.enabled}
         onChange={(selectedOption: Option) => {
           props.onChange(selectedOption.value);
         }}
@@ -68,6 +69,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
       <Textfield
         id={`number-for-${numberField.id}`}
         name={numberField.id}
+        isDisabled={!props.enabled}
         defaultValue={isNaN(defaultValue) ? '' : defaultValue.toString()}
         type="number"
         onChange={(event) => {
@@ -112,7 +114,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         isRequired={true}
         options={options}
         cacheOptions
-        isDisabled={false}
+        isDisabled={!props.enabled}
         onChange={(selectedOption: Option) => {
           props.onChange(selectedOption.value);
         }}
@@ -120,11 +122,12 @@ export const FieldEditor = (props: FieldEditorProps) => {
     );
   }
 
-  const renderReporterFieldEditor = () => {
+  const renderSingleUserSelectFieldEditor = () => {
     // return renderDebugFieldInfo();
     return (
       <UsersSelect
         label=""
+        isDisabled={!props.enabled}
         isMulti={false}
         isClearable={true}
         includeAppUsers={false}
@@ -155,7 +158,8 @@ export const FieldEditor = (props: FieldEditorProps) => {
       case 'com.atlassian.jira.plugin.system.customfieldtypes:select':
         return renderSelectFieldEditor();
       case 'reporter':
-        return renderReporterFieldEditor();
+      case 'assignee':
+        return renderSingleUserSelectFieldEditor();
       case 'text':
         return renderTextFieldEditor();
       default:

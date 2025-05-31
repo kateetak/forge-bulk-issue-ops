@@ -1,3 +1,4 @@
+import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 import { allowTheTargetProjectToMatchAnyIssueSourceProject } from "../model/config";
 import { Issue } from "../types/Issue";
 import { Project } from "../types/Project";
@@ -44,6 +45,17 @@ class MoveRuleEnforcer {
       candidateProjects :
       this.filterIssuesToMoveProjectsFromTargetProjects(selectedIssuesToMove, candidateProjects);
     return filteredProjects;
+  }
+
+  filterEditFields = async (fields: IssueBulkEditField[]): Promise<IssueBulkEditField[]> => {
+    const filteredFields = fields.filter(field => {
+      if (field.id === 'reporter') {
+        // It is assummed that the reporter field is not editable.
+        return false;
+      }
+      return true;
+    });
+    return filteredFields;
   }
 
   private filterIssuesToMoveProjectsFromTargetProjects = (
