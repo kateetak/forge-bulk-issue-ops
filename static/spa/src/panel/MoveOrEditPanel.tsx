@@ -13,7 +13,6 @@ import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import { CompletionState } from 'src/types/CompletionState';
 import { IssueMoveRequestOutcome } from 'src/types/IssueMoveRequestOutcome';
 import { TaskOutcome } from 'src/types/TaskOutcome';
-import PanelHeader from 'src/widget/PanelHeader';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 import targetMandatoryFieldsProvider from '../controller/TargetMandatoryFieldsProvider';
 import { Project } from 'src/types/Project';
@@ -21,6 +20,9 @@ import { Issue } from 'src/types/Issue';
 import { IssueMoveOutcomeResult } from 'src/types/IssueMoveOutcomeResult';
 import Lozenge from '@atlaskit/lozenge';
 import { TaskStatusLozenge } from 'src/widget/TaskStatusLozenge';
+import { formatProject } from 'src/controller/formatters';
+import issueEditController from 'src/controller/issueEditController';
+import { uuid } from 'src/model/util';
 
 const showDebug = false;
 
@@ -64,7 +66,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
         if (taskId !== lastMoveCompletionTaskId) {
           setLastMoveCompletionTaskId(taskId);
           // console.log(`BulkOperationPanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
-          const options: FlagOptions = {
+          const flagOptions: FlagOptions = {
             id: taskId,
             type: outcome.status === 'COMPLETE' ? 'info' : 'error',
             title: outcome.status === 'COMPLETE' ? 'Move completed' : `Move ended with status ${outcome.status}`,
@@ -77,7 +79,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
               },
             }]
           }
-          const flag = showFlag(options);
+          const flag = showFlag(flagOptions);
         }
         setCurrentMoveActivity(undefined);
         props.setStepCompletionState('move-or-edit', 'complete');
@@ -94,10 +96,13 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
   }
 
   const onMoveIssues = async (): Promise<void> => {
-    // Step 1: Initiate the move request...
+    // Step 1: Update the model with final inputs...
+    // xxxxxxxxxModel.setSendBulkNotification(sendBulkNotification);
+
+    // Step 2: Initiate the bulk move request...
     const destinationProjectId: string = props.selectedToProject.id;
     setIssueMoveRequestOutcome(undefined);
-    setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating move request...'});
+    setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating bulk move request...'});
     const targetIssueTypeIdsToTargetMandatoryFields = targetMandatoryFieldsProvider.buildIssueTypeIdsToTargetMandatoryFields();
     const initiateOutcome: IssueMoveRequestOutcome = await issueMoveController.initiateMove(
       destinationProjectId,
@@ -105,28 +110,44 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       targetIssueTypeIdsToTargetMandatoryFields
     );
     setCurrentMoveActivity(undefined);
-    console.log(`BulkOperationPanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
+    console.log(`BulkOperationPanel: bulk issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
     const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
     if (taskOutcomeErrorMessage) {
-      const fullErrorMessage = `Failed to initiate move request: ${taskOutcomeErrorMessage}`;
+      const fullErrorMessage = `Failed to initiate bulk move request: ${taskOutcomeErrorMessage}`;
       props.setMainWarningMessage(fullErrorMessage);
       console.warn(fullErrorMessage);
       setIssueMoveRequestOutcome(undefined);
       setCurrentMoveActivity(undefined);
+      showBulkOperationErrorFlag(fullErrorMessage);
     } else {
-      // Step 2: Start polling for the outcome...
-      setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for move outcome...'});
+      // Step 3: Start polling for the outcome...
+      setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for bulk move outcome...'});
       pollPollMoveOutcome(initiateOutcome.taskId);
+    }
+  }
 
-      // Step 2: (now redundant since we switched to the polling approach) Wait for the outcome...
-      // setIssueMoveRequestOutcome(initiateOutcome);
-      // if (initiateOutcome.statusCode === 201 && initiateOutcome.taskId) {
-      //   setCurrentIssueMoveTaskId(initiateOutcome.taskId);
-      //   setIssueMoveOutcome(undefined);
-      //   const issueMoveOutcome = await issueMoveController.awaitMoveCompletion(props.invoke, initiateOutcome.taskId);
-      //   setIssueMoveOutcome(issueMoveOutcome);
-      //   setCurrentIssueMoveTaskId(undefined);  
-      // }
+  const onEditIssues = async (): Promise<void> => {
+    // Step 1: Update the model with final inputs...
+    editedFieldsModel.setSendBulkNotification(sendBulkNotification);
+
+    // Step 2: Initiate the bulk edit request...
+    setIssueMoveRequestOutcome(undefined);
+    setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating bulk edit request...'});
+    const initiateOutcome = await issueEditController.initiateBulkEdit();
+    setCurrentMoveActivity(undefined);
+    console.log(`BulkOperationPanel: bulk issue edit request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
+    const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
+    if (taskOutcomeErrorMessage) {
+      const fullErrorMessage = `Failed to initiate bulk edit request: ${taskOutcomeErrorMessage}`;
+      props.setMainWarningMessage(fullErrorMessage);
+      console.warn(fullErrorMessage);
+      setIssueMoveRequestOutcome(undefined);
+      setCurrentMoveActivity(undefined);
+      showBulkOperationErrorFlag(fullErrorMessage);
+    } else {
+      // Step 3: Start polling for the outcome...
+      setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for bulk move outcome...'});
+      pollPollMoveOutcome(initiateOutcome.taskId);
     }
   }
 
@@ -134,6 +155,38 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     setTimeout(async () => {
       await pollPollMoveOutcome(taskId);
     }, taskStatusPollPeriodMillis);
+  }
+
+  const buildButtonLabel = (): string => {
+    if (props.selectedIssues.length === 0) {
+      return `${props.bulkOperationMode} issues`;
+    } else if (props.bulkOperationMode === 'Move') {
+      let label = `Move ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
+      if (props.selectedToProject) {
+        label += ` to ${formatProject(props.selectedToProject)}`;
+      }
+      return label;
+    } else if (props.bulkOperationMode === 'Edit') {
+      return `Edit ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
+    }
+    throw new Error(`Unsupported bulk operation mode: ${props.bulkOperationMode}`);
+  }
+
+  const showBulkOperationErrorFlag = (errorMessage: string): void => {
+    const flagOptions: FlagOptions = {
+      id: uuid(),
+      type: 'error',
+      title: `Bulk edit error`,
+      description: errorMessage,
+      isAutoDismiss: false,
+      actions: [{
+        text: 'Acknowledge',
+        onClick: async () => {
+          flag.close();
+        },
+      }]
+    }
+    const flag = showFlag(flagOptions);
   }
 
   const renderStartMoveOrEditButton = () => {
@@ -170,11 +223,11 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
             if (props.bulkOperationMode === 'Move') {
               onMoveIssues();
             } else if (props.bulkOperationMode === 'Edit') {
-              // onEditIssues();
+              onEditIssues();
             }
           }}
         >
-          {props.bulkOperationMode} issues
+          {buildButtonLabel()}
         </Button>
       </div>
     );

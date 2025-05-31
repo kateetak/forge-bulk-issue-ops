@@ -277,7 +277,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     // const issueTypeIdsToIssueTypes = jiraUtil.getIssueTypesFromIssues(newlySelectedIssues);
 
 
-    const allIssueTyesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(newlySelectedIssues);
+    const allIssueTypesMapped = bulkIssueTypeMapping.areAllIssueTypesMapped(newlySelectedIssues);
     // console.log(`BulkOperationPanel: updateIssueTypeMappingCompletionState: allIssueTyesMapped = ${allIssueTyesMapped}`);
     // setStepCompletionState('issue-type-mapping', selectedIssueTypes.length > 0 && allIssueTyesMapped ? 'complete' : 'incomplete');
 
@@ -1005,6 +1005,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
           />
           <FieldEditsPanel
             selectedIssues={selectedIssues}
+            selectedIssuesTime={issueSearchInfoTime}
           />
           {renderFlexboxEqualWidthGrowPanel()}
         </div>

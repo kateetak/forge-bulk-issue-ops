@@ -66,6 +66,17 @@ export class BulkIssueEditRequestDataBuilder {
     return this;
   }
 
+  private deleteEmptyParameters = (data: Object): void => {
+    const parameterKeys = Object.keys(data);
+    for (const key of parameterKeys) {
+      if (data[key] === undefined || data[key] === null) {
+        delete data[key];
+      } else if (Array.isArray(data[key]) && data[key].length === 0) {
+        delete data[key];
+      }
+    }
+  }
+
   build = () => {
     const bulkIssueEditRequestData: BulkIssueEditRequestData = {
       editedFieldsInput: this.editedFieldsInput,
@@ -73,7 +84,10 @@ export class BulkIssueEditRequestDataBuilder {
       selectedIssueIdsOrKeys: this.selectedIssueIdsOrKeys,
       sendBulkNotification: this.sendBulkNotification
     };
-    return bulkIssueEditRequestData;
+    const clonedBulkIssueEditRequestData = JSON.parse(JSON.stringify(bulkIssueEditRequestData));
+    this.deleteEmptyParameters(clonedBulkIssueEditRequestData);
+    this.deleteEmptyParameters(clonedBulkIssueEditRequestData.editedFieldsInput);
+    return clonedBulkIssueEditRequestData;
   }
 
 }

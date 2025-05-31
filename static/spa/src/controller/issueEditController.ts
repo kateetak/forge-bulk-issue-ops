@@ -2,7 +2,7 @@ import { TaskOutcome, TaskStatus } from "../types/TaskOutcome";
 import { IssueMoveRequestOutcome, OutcomeError } from "../types/IssueMoveRequestOutcome";
 import jiraDataModel from "../model/jiraDataModel";
 import { InvocationResult } from "../types/InvocationResult";
-import { BulkIssueEditRequestData } from "src/types/BulkIssueEditRequestData";
+import { BulkIssueEditRequestData, JiraNumberField } from "src/types/BulkIssueEditRequestData";
 import { BulkIssueEditRequestDataBuilder, JiraIssueFieldsBuilder } from "./BulkIssueEditRequestDataBuilder";
 import editedFieldsModel from "src/model/editedFieldsModel";
 import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
@@ -77,38 +77,52 @@ class IssueEditController {
     const sendBulkNotification = editedFieldsModel.getSendBulkNotification();
     const editedFieldsInputBuilder = new JiraIssueFieldsBuilder();
     const selectedActions: string[] = [];
-    const callback = (field: IssueBulkEditField, value: any) => {
+    const callback = (field: IssueBulkEditField, editedFieldValue: any) => {
+
+      if (editedFieldValue === undefined || editedFieldValue === null) {
+        // If the value is undefined or null, skip this field.
+        return;
+      }
+
       selectedActions.push(field.id);
       switch (field.type) {
         case 'text':
         case 'textarea':
         case 'string':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
-        case 'number':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+        case 'com.atlassian.jira.plugin.system.customfieldtypes:float':
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
+          const jiraNumberField: JiraNumberField = {
+            fieldId: field.id,
+            value: editedFieldValue
+          }
+          editedFieldsInputBuilder.addClearableNumberField(jiraNumberField);
           break;
         case 'date':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
         case 'select':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
         case 'multi-select':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
         case 'user-picker':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
         case 'group-picker':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
         case 'project-picker':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
         case 'issue-type-picker':
-          this.addField(field.id, value, editedFieldsInputBuilder);
+          this.addField(field.id, editedFieldValue, editedFieldsInputBuilder);
           break;
+        default:
+          console.warn(` * Unsupported field type: ${field.type} for field ${field.id}. Skipping.`);
+          return;
       }
     }
     editedFieldsModel.iterateFields(callback);

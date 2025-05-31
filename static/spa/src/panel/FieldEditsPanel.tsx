@@ -12,15 +12,16 @@ const fieldValuesDebugEnabled = true;
 
 export type FieldEditsPanelProps = {
   selectedIssues: Issue[];
+  selectedIssuesTime: number;
 }
 
 export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
-  const [fields, setFields] = React.useState<IssueBulkEditField[]>([]);
   const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<any>>({});
+  const [fields, setFields] = React.useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
-  const initialiseStateFromIssues = (issues: Issue[]) => {
-    editedFieldsModel.setIssues(props.selectedIssues);
+  const initialiseStateFromIssues = async (issues: Issue[]): Promise<void> => {
+    await editedFieldsModel.setIssues(issues);
     setFields(editedFieldsModel.getFields());
   }
 

@@ -4,7 +4,7 @@ import ListenerGroup from "src/model/ListenerGroup";
 import { Issue } from "src/types/Issue";
 import jiraDataModel from "./jiraDataModel";
 
-export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, value: any) => void;
+export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, editedFieldValue: any) => void;
 
 class EditedFieldsModel {
 
@@ -22,8 +22,16 @@ class EditedFieldsModel {
     return Object.values(this.fieldIdsToFields);
   }
 
+  getFieldIdsToValues = (): ObjectMapping<any> => {
+    return this.fieldIdsToValues;
+  }
+
   getSendBulkNotification() {
     return this.sendBulkNotification;
+  }
+
+  setSendBulkNotification = (sendBulkNotification: boolean): void => {
+    this.sendBulkNotification = sendBulkNotification;
   }
 
   iterateFields = (callback: EditedFieldsModelIteratorCallback): void => {
@@ -67,10 +75,6 @@ class EditedFieldsModel {
 
     this.notifyListeners();
     return newFieldIdsToValues;
-  }
-
-  getFieldIdsToValues = (): ObjectMapping<any> => {
-    return this.fieldIdsToValues;
   }
 
   haveValuesBeenSpecified = (): boolean => {
