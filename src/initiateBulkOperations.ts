@@ -1,14 +1,14 @@
 import api, { APIResponse, route } from  '@forge/api'
 import { InvocationResult } from './types/InvocationResult';
-import { IssueMoveRequestOutcome } from './types/IssueMoveRequestOutcome';
+import { TaskRequestOutcome } from './types/TaskRequestOutcome';
 import { getBasicAuthHeader, getBulkOpsAppGroupId, getSiteDomain } from './userManagementConfig';
 
 // This is set to false since the app user can't be authorized to add/remove users to/from groups.
 const manageUserGroupsUsingAppUserAccount = false
 
-export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestData: any): Promise<InvocationResult<IssueMoveRequestOutcome>> => {
+export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
   const bulkOpsAppGroupId = getBulkOpsAppGroupId();
-  let result: InvocationResult<IssueMoveRequestOutcome>;
+  let result: InvocationResult<TaskRequestOutcome>;
   await addUserToGroup(accountId, bulkOpsAppGroupId);
   try {
     result = await doBulkMove(bulkIssueMoveRequestData);
@@ -18,7 +18,19 @@ export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestDa
   return result;
 }
 
-const doBulkMove = async (bulkIssueMoveRequestData: any): Promise<InvocationResult<IssueMoveRequestOutcome>> => {
+export const initiateBulkEdit = async (accountId: string, bulkIssueEditRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
+  const bulkOpsAppGroupId = getBulkOpsAppGroupId();
+  let result: InvocationResult<TaskRequestOutcome>;
+  await addUserToGroup(accountId, bulkOpsAppGroupId);
+  try {
+    result = await doBulkEdit(bulkIssueEditRequestData);
+  } finally {
+    await removeUserFromGroup(accountId, bulkOpsAppGroupId);
+  }
+  return result;
+}
+
+const doBulkMove = async (bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
   console.log(`Initiating bulk move with request data: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
   const response = await api.asUser().requestJira(route`/rest/api/3/bulk/issues/move`, {
     method: 'POST',
@@ -29,8 +41,24 @@ const doBulkMove = async (bulkIssueMoveRequestData: any): Promise<InvocationResu
     body: JSON.stringify(bulkIssueMoveRequestData)
   });
   console.log(` * Response status: ${response.status}`);
-  const invocationResult = await readResponse<IssueMoveRequestOutcome>(response);
+  const invocationResult = await readResponse<TaskRequestOutcome>(response);
   console.log(`Bulk issue move invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
+  return invocationResult;
+}
+
+const doBulkEdit = async (bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
+  console.log(`Initiating bulk edit with request data: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
+  const response = await api.asUser().requestJira(route`/rest/api/3/bulk/issues/fields`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(bulkIssueMoveRequestData)
+  });
+  console.log(` * Response status: ${response.status}`);
+  const invocationResult = await readResponse<TaskRequestOutcome>(response);
+  console.log(`Bulk issue edit invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
   return invocationResult;
 }
 

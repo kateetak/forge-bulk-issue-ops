@@ -27,6 +27,7 @@ import { IssueBulkEditFieldApiResponse, IssueBulkEditField } from '../types/Issu
 import { Issue } from 'src/types/Issue';
 import { UserSearchInfo } from 'src/types/UserSearchInfo';
 import { User } from 'src/types/User';
+import { BulkIssueEditRequestData } from 'src/types/BulkIssueEditRequestData';
 
 class JiraDataModel {
 
@@ -219,15 +220,15 @@ class JiraDataModel {
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-search-get
   searchUsers = async (query: string, includeAppUsers: boolean = false, startAt: number = 0, maxResults: number = 100): Promise<User[]> => {
-    console.log(`JiraDataModel.searchUsers: Searching for users with query "${query}" starting at ${startAt} with max results ${maxResults}`);
+    // console.log(`JiraDataModel.searchUsers: Searching for users with query "${query}" starting at ${startAt} with max results ${maxResults}`);
     const path = `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
-    console.log(`JiraDataModel.searchUsers: path = ${path}`);
+    // console.log(`JiraDataModel.searchUsers: path = ${path}`);
     const response = await requestJira(path, {
       headers: {
         'Accept': 'application/json'
       }
     });
-    console.log(`Response: ${response.status} ${response.statusText}`);
+    // console.log(`Response: ${response.status} ${response.statusText}`);
     const users = await response.json();
     const filteredUsers = users.filter((user: User) => {
       if (!includeAppUsers && user.accountType === 'app') {
@@ -235,7 +236,7 @@ class JiraDataModel {
       }
       return true;
     });
-    console.log(`Users: ${JSON.stringify(filteredUsers, null, 2)}`);
+    // console.log(`Users: ${JSON.stringify(filteredUsers, null, 2)}`);
     return filteredUsers;
   }
 
@@ -268,6 +269,27 @@ class JiraDataModel {
       invocationResult = await this.readResponse<IssueMoveRequestOutcome>(response);
     }
     console.log(`Bulk issue move invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
+    return invocationResult;
+  }
+
+  initiateBulkIssuesEdit = async (
+    bulkIssueEditRequestData: BulkIssueEditRequestData
+  ): Promise<InvocationResult<IssueMoveRequestOutcome>> => {
+    let invocationResult: InvocationResult<IssueMoveRequestOutcome>;
+    if (invokeBulkOpsApisAsTheAppUser) {
+      invocationResult = await invoke('initiateBulkEdit', { bulkIssueEditRequestData });
+    } else {
+      const response = await requestJira(`/rest/api/3/bulk/issues/fields`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bulkIssueEditRequestData)
+      });
+      invocationResult = await this.readResponse<IssueMoveRequestOutcome>(response);
+    }
+    console.log(`Bulk issue edit invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
     return invocationResult;
   }
 

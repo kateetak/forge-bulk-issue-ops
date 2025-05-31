@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import Toggle from '@atlaskit/toggle';
 import { Label } from '@atlaskit/form';
-import jiraDataModel from 'src/model/jiraDataModel';
 import { Issue } from 'src/types/Issue';
 import { IssueBulkEditField } from 'src/types/IssueBulkEditFieldApiResponse';
 import { FieldEditor } from 'src/widget/FieldEditor';
 import { ObjectMapping } from 'src/types/ObjectMapping';
+import editedFieldsModel from 'src/model/editedFieldsModel';
 
 const fieldInfoDebugEnabled = false;
 const fieldValuesDebugEnabled = true;
@@ -19,41 +19,22 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   const [fields, setFields] = React.useState<IssueBulkEditField[]>([]);
   const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<any>>({});
 
-  const sortFields = (fields: IssueBulkEditField[]) => {
-    // Put the required firelds first since they are the most important.
-    return fields.sort((a, b) => {
-      const requirementComparison = a.isRequired === b.isRequired ? 0 : (a.isRequired ? -1 : 1);
-      if (requirementComparison === 0) {
-        const idComparison = a.id.localeCompare(b.id);
-        const nameComparison = a.name.localeCompare(b.name);
-        if (nameComparison === 0) {
-          return idComparison;
-        } else {
-          return nameComparison;
-        }
-      } else {
-        return requirementComparison;
-      }
-    });
-  }
-
-  const loadFields = async (issues: Issue[]) => {
-    console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
-    const fields = await jiraDataModel.getAllIssueBulkEditFields(issues);
-    console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
-    const sortedFields = sortFields(fields);
-    setFields(sortedFields);
+  const initialiseStateFromIssues = (issues: Issue[]) => {
+    editedFieldsModel.setIssues(props.selectedIssues);
+    setFields(editedFieldsModel.getFields());
   }
 
   useEffect(() => {
-    loadFields(props.selectedIssues);
+    initialiseStateFromIssues(props.selectedIssues);
+  }, []);
+
+  useEffect(() => {
+    initialiseStateFromIssues(props.selectedIssues);
   }, [props.selectedIssues]);
 
   const onFieldChange = (field: IssueBulkEditField, value: any) => {
-    setFieldIdsToValues((prev) => ({
-      ...prev,
-      [field.id]: value,
-    }));
+    const newState = editedFieldsModel.setFieldValue(field, value);
+    setFieldIdsToValues(newState);
   }
 
   const renderFields = () => {

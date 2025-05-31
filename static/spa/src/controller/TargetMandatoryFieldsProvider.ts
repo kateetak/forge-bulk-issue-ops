@@ -13,7 +13,7 @@ type FieldSettings = {
 
 const defaultRetainValueSetting = true;
 
-export class TargetMandatoryFieldsProvider {
+class TargetMandatoryFieldsProvider {
 
   private projectFieldMappings: undefined | ProjectFieldMappings = undefined;
   /* private */ targetIssueTypeIdsToFieldIdsToFieldSettings = new Map<string, Map<string, FieldSettings>>();
@@ -205,3 +205,5 @@ export class TargetMandatoryFieldsProvider {
   }
 
 }
+
+export default new TargetMandatoryFieldsProvider();

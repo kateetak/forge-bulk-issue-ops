@@ -7,7 +7,7 @@ import { IssueType } from '../types/IssueType';
 import { Field } from 'src/types/Field';
 import jiraDataModel from 'src/model/jiraDataModel';
 import FieldValuesSelect from 'src/widget/FieldValuesSelect';
-import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
+import targetMandatoryFieldsProvider from 'src/controller/TargetMandatoryFieldsProvider';
 import { FieldMetadata } from 'src/types/FieldMetadata';
 import { Project } from 'src/types/Project';
 import Textfield from '@atlaskit/textfield';
@@ -40,7 +40,6 @@ export type FieldMappingPanelProps = {
   allIssueTypes: IssueType[];
   issues: Issue[];
   fieldMappingsState: FieldMappingsState;
-  targetMandatoryFieldsProvider: TargetMandatoryFieldsProvider;
   showDebug?: boolean;
   onAllDefaultValuesProvided: (allDefaultsProvided: boolean) => void;
 }
@@ -83,25 +82,25 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }, []);
 
   const onSelectDefaultFieldValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, defaultValue: DefaultFieldValue): void => {
-    props.targetMandatoryFieldsProvider.onSelectDefaultValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
-    const allDefaultValuesProvided = props.targetMandatoryFieldsProvider.areAllFieldValuesSet();
+    targetMandatoryFieldsProvider.onSelectDefaultValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
+    const allDefaultValuesProvided = targetMandatoryFieldsProvider.areAllFieldValuesSet();
     setAllDefaultsProvided(allDefaultValuesProvided);
     props.onAllDefaultValuesProvided(allDefaultValuesProvided);
   }
 
   const onDeselectDefaultFieldValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata): void => {
-    props.targetMandatoryFieldsProvider.onDeselectDefaultValue(targetIssueType, fieldId, fieldMetadata);
-    const allDefaultValuesProvided = props.targetMandatoryFieldsProvider.areAllFieldValuesSet();
+    targetMandatoryFieldsProvider.onDeselectDefaultValue(targetIssueType, fieldId, fieldMetadata);
+    const allDefaultValuesProvided = targetMandatoryFieldsProvider.areAllFieldValuesSet();
     setAllDefaultsProvided(allDefaultValuesProvided);
     props.onAllDefaultValuesProvided(allDefaultValuesProvided);
   }
 
   const onRetainFieldValueSelection = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, retainFieldValue: boolean): void => {
-    props.targetMandatoryFieldsProvider.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
+    targetMandatoryFieldsProvider.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
   }
 
   const renderFieldValuesSelect = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
-    const selectedDefaultFieldValue = props.targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
+    const selectedDefaultFieldValue = targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
     // console.log(`renderFieldValuesSelect: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     const selectableCustomFieldOptions: CustomFieldOption[] = [];
     let selectedCustomFieldOption: CustomFieldOption | undefined = undefined;
@@ -120,7 +119,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
         // console.log(`renderFieldValuesSelect: Skipping allowed value without a value: ${JSON.stringify(allowedValue)}`);
       }
     }
-    // const currentOption = props.targetMandatoryFieldsProvider.getDefaultFieldValue(targetIssueType.id, fieldId);
+    // const currentOption = targetMandatoryFieldsProvider.getDefaultFieldValue(targetIssueType.id, fieldId);
     return (
       <FieldValuesSelect
         label={undefined}
@@ -139,7 +138,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderNumberFieldEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
-    const selectedDefaultFieldValue = props.targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
+    const selectedDefaultFieldValue = targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
     // console.log(`renderNumberFieldEntryWidget: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     return (
       <Textfield
@@ -199,7 +198,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     fieldMappingInfo: FieldMappingInfo
   ): JSX.Element => {
     const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
-    const isChecked = props.targetMandatoryFieldsProvider.getRetainFieldValue(targetIssueType.id, fieldId);
+    const isChecked = targetMandatoryFieldsProvider.getRetainFieldValue(targetIssueType.id, fieldId);
     return (
       <Toggle
         id={`toggle-filter-mode-advanced`}
@@ -259,7 +258,6 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderDebug = () => {
-    const targetMandatoryFieldsProvider: TargetMandatoryFieldsProvider = props.targetMandatoryFieldsProvider;
     const targetIssueTypeIdsToFieldIdsToFieldSettings = targetMandatoryFieldsProvider.targetIssueTypeIdsToFieldIdsToFieldSettings;
     const targetIssueTypeIdsToFieldIdsToFieldSettingsObject: any = mapToObjectMap(targetIssueTypeIdsToFieldIdsToFieldSettings);
     const targetIssueTypeIds = Object.keys(targetIssueTypeIdsToFieldIdsToFieldSettingsObject);

@@ -5,9 +5,9 @@ import { IssueType } from "../types/IssueType";
 
 class BulkIssueTypeMapping {
 
-  // listenerGroup = new ListenerGroup('BulkIssueTypeMapping');
-  sourceToTargetIssueTypeIds = new Map<string, string>();
-  sourceIssueTypes: IssueType[] = [];
+  // private listenerGroup = new ListenerGroup('BulkIssueTypeMapping');
+  private sourceToTargetIssueTypeIds = new Map<string, string>();
+  private sourceIssueTypes: IssueType[] = [];
 
   areAllIssueTypesMapped = (issues: Issue[]): boolean => {
     // console.log(`BulkIssueTypeMapping: computing is all issue types are mapped based on selected issues = ${issues.map(issue => issue.key).join(', ')}`);

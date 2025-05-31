@@ -73,7 +73,12 @@ export const FieldEditor = (props: FieldEditorProps) => {
         onChange={(event) => {
           let fieldValue: number | undefined = undefined;
           try {
-            fieldValue = parseInt(event.currentTarget.value.trim());
+            const fieldText = event.currentTarget.value.trim();
+            if (fieldText === '' || fieldText === 'null') {
+              fieldValue = undefined;
+            } else {
+              fieldValue = parseInt(event.currentTarget.value.trim());
+            }
           } catch (error) {
             console.error(`Error parsing number field value for field ID ${numberField.id}:`, error);
           }

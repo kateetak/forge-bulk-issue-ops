@@ -8,9 +8,9 @@ import Lozenge from '@atlaskit/lozenge';
 import IssueTypesSelect from '../widget/IssueTypesSelect';
 import { IssueType } from '../types/IssueType';
 import { IssueSearchInfo } from '../types/IssueSearchInfo';
-import { FlagOptions, showFlag } from '@forge/bridge';
+// import { FlagOptions, showFlag } from '@forge/bridge';
 import { Issue } from '../types/Issue';
-import { LinearProgress } from '@mui/material';
+// import { LinearProgress } from '@mui/material';
 import { LoadingState } from '../types/LoadingState';
 import { nilIssueSearchInfo } from '../model/nilIssueSearchInfo';
 import { TaskOutcome } from '../types/TaskOutcome';
@@ -26,7 +26,7 @@ import { DataRetrievalResponse } from '../types/DataRetrievalResponse';
 import { buildFieldMappingsForProject } from '../controller/bulkOperationsUtil';
 import { ProjectFieldMappings } from '../types/ProjectFieldMappings';
 import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
-import { TargetMandatoryFieldsProvider } from 'src/controller/TargetMandatoryFieldsProvider';
+import targetMandatoryFieldsProvider from 'src/controller/TargetMandatoryFieldsProvider';
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
@@ -40,6 +40,10 @@ import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
 import PanelHeader from 'src/widget/PanelHeader';
 import { CompletionState } from 'src/types/CompletionState';
 import { FieldEditsPanel } from './FieldEditsPanel';
+import editedFieldsModel from 'src/model/editedFieldsModel';
+import { MoveOrEditPanel } from './MoveOrEditPanel';
+import { Activity } from 'src/types/Activity';
+import { allSteps, StepName } from 'src/model/BulkOperationsWorkflow';
 
 const showDebug = false;
 const showCompletionStateDebug = false;
@@ -57,17 +61,17 @@ type DebugInfo = {
 
 type FilterMode = 'basic' | 'advanced';
 
-type Activity = {
-  taskId: string;
-  description: string;
-}
+// type StepName =               'filter' | 'issue-selection' | 'target-project-selection' | 'issue-type-mapping' | 'field-mapping' | 'edit-fields' | 'move-or-edit';
+// const allSteps: StepName[] = ['filter',  'issue-selection',  'target-project-selection',  'issue-type-mapping',  'field-mapping',  'edit-fields',  'move-or-edit'];
 
-type StepName =               'filter' | 'issue-selection' | 'target-project-selection' | 'issue-type-mapping' | 'field-mapping' | 'edit-fields' | 'move';
-const allSteps: StepName[] = ['filter',  'issue-selection',  'target-project-selection',  'issue-type-mapping',  'field-mapping',  'edit-fields',  'move'
-    ];
+
+
 
 // Retain the same instance of TargetMandatoryFieldsProvider across renders
-const targetMandatoryFieldsProviderSingleton = new TargetMandatoryFieldsProvider();
+// const targetMandatoryFieldsProviderSingleton = new TargetMandatoryFieldsProvider();
+
+
+
 
 const BulkOperationPanel = (props: BulkOperationPanelProps) => {
 
@@ -94,20 +98,44 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
   const [allIssueTypesMapped, setAllIssueTypesMapped] = useState<boolean>(false);
   const [fieldMappingsState, setFieldMappingsState] = useState<FieldMappingsState>(nilFieldMappingsState);
-  const [targetMandatoryFieldsProvider, setTargetMandatoryFieldsProvider] = useState<TargetMandatoryFieldsProvider>(targetMandatoryFieldsProviderSingleton);
+  // const [targetMandatoryFieldsProvider, setTargetMandatoryFieldsProvider] = useState<TargetMandatoryFieldsProvider>(targetMandatoryFieldsProvider);
   const [targetMandatoryFieldsProviderUpdateTime, setTargetMandatoryFieldsProviderUpdateTime] = useState<number>(0);
   const [allDefaultValuesProvided, setAllDefaultValuesProvided] = useState<boolean>(false);
   const [currentFieldMappingActivity, setCurrentFieldMappingActivity] = useState<undefined | Activity>(undefined);
-  const [currentMoveActivity, setCurrentMoveActivity] = useState<undefined | Activity>(undefined);
-  const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
-  const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
+  // const [currentMoveActivity, setCurrentMoveActivity] = useState<undefined | Activity>(undefined);
+  // const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
+  // const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
   const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
-  const [lastMoveCompletionTaskId, setLastMoveCompletionTaskId] = useState<string>('none');
+  // const [lastMoveCompletionTaskId, setLastMoveCompletionTaskId] = useState<string>('none');
+  // const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<any>>({});
+  const [fieldIdsToValuesTime, setFieldIdsToValuesTime] = React.useState<number>(0);
+  const [fieldMappingsComplete, setFieldMappingsComplete] = useState<boolean>(false);
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
+
+
+
+  // TODO: can this and the issueMoveOutcome state above be deleted now?
+  const setIssueMoveOutcome = (issueMoveOutcome: undefined | TaskOutcome) => {
+
+  }
+
+
 
   useEffect(() => {
     setBulkOperationMode(props.bulkOperationMode);
   }, [props.bulkOperationMode]);
+
+  const onEditedFieldsModelChange = (fieldId: string, value: any) => {
+    // setFieldIdsToValues(editedFieldsModel.getFieldIdsToValues());
+    setFieldIdsToValuesTime(Date.now());
+  }
+
+  useEffect(() => {
+    editedFieldsModel.registerListener(onEditedFieldsModelChange);
+    return () => {
+      editedFieldsModel.unregisterListener(onEditedFieldsModelChange);
+    };
+  }, []);
 
   const isStepApplicableToBulkOperationMode = (stepName: StepName): boolean => {
     if (bulkOperationMode === 'Move') {
@@ -144,7 +172,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   }
 
   const arePrerequisiteStepsComplete = (priorToStepName: StepName): boolean => {
-    // const 
     let complete = true;
     for (const stepName of stepOrder) {
       if (stepName === priorToStepName) {
@@ -256,6 +283,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
 
     const fieldMappingsComplete = isFieldMappingsComplete();
     const fieldMappingComplete = allDefaultValuesProvided;
+    setFieldMappingsComplete(fieldMappingsComplete);
     setStepCompletionState('field-mapping', fieldMappingsComplete ? 'complete' : 'incomplete');
   }
 
@@ -376,48 +404,48 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     await onBasicModeSearchIssues(selectedFromProjects, selectedIssueTypes, selectedLabels);
   }
 
-  const pollPollMoveOutcome = async (taskId: string): Promise<void> => {
-    if (taskId) {
-      const outcome: TaskOutcome = await issueMoveController.pollMoveProgress(taskId);
-      setIssueMoveOutcome(outcome);
-      if (issueMoveController.isDone(outcome.status)) {
-        if (taskId !== lastMoveCompletionTaskId) {
-          setLastMoveCompletionTaskId(taskId);
-          // console.log(`BulkOperationPanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
-          const options: FlagOptions = {
-            id: taskId,
-            type: outcome.status === 'COMPLETE' ? 'info' : 'error',
-            title: outcome.status === 'COMPLETE' ? 'Move completed' : `Move ended with status ${outcome.status}`,
-            description: outcome.status === 'COMPLETE' ? 'The issues have been moved successfully.' : 'There were problems moving the issues.',
-            isAutoDismiss: outcome.status === 'COMPLETE',
-            actions: outcome.status === 'COMPLETE' ? [] : [{
-              text: 'Got it',
-              onClick: async () => {
-                flag.close();
-              },
-            }]
-          }
-          const flag = showFlag(options);
-        }
-        setCurrentMoveActivity(undefined);
-        setStepCompletionState('move', 'complete');
-      } else {
-        asyncPollMoveOutcome(taskId);
-        setStepCompletionState('move', 'incomplete');
-      }
-    } else {
-      setMainWarningMessage(`No taskId provided for polling move outcome.`);
-      console.warn(`BulkOperationPanel: pollPollMoveOutcome: No taskId provided, cannot poll for move outcome.`);
-      setCurrentMoveActivity(undefined);
-      setStepCompletionState('move', 'incomplete');
-    }
-  }
+  // const pollPollMoveOutcome = async (taskId: string): Promise<void> => {
+  //   if (taskId) {
+  //     const outcome: TaskOutcome = await issueMoveController.pollMoveProgress(taskId);
+  //     setIssueMoveOutcome(outcome);
+  //     if (issueMoveController.isDone(outcome.status)) {
+  //       if (taskId !== lastMoveCompletionTaskId) {
+  //         setLastMoveCompletionTaskId(taskId);
+  //         // console.log(`BulkOperationPanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
+  //         const options: FlagOptions = {
+  //           id: taskId,
+  //           type: outcome.status === 'COMPLETE' ? 'info' : 'error',
+  //           title: outcome.status === 'COMPLETE' ? 'Move completed' : `Move ended with status ${outcome.status}`,
+  //           description: outcome.status === 'COMPLETE' ? 'The issues have been moved successfully.' : 'There were problems moving the issues.',
+  //           isAutoDismiss: outcome.status === 'COMPLETE',
+  //           actions: outcome.status === 'COMPLETE' ? [] : [{
+  //             text: 'Got it',
+  //             onClick: async () => {
+  //               flag.close();
+  //             },
+  //           }]
+  //         }
+  //         const flag = showFlag(options);
+  //       }
+  //       setCurrentMoveActivity(undefined);
+  //       setStepCompletionState('move-or-edit', 'complete');
+  //     } else {
+  //       asyncPollMoveOutcome(taskId);
+  //       setStepCompletionState('move-or-edit', 'incomplete');
+  //     }
+  //   } else {
+  //     setMainWarningMessage(`No taskId provided for polling move outcome.`);
+  //     console.warn(`BulkOperationPanel: pollPollMoveOutcome: No taskId provided, cannot poll for move outcome.`);
+  //     setCurrentMoveActivity(undefined);
+  //     setStepCompletionState('move-or-edit', 'incomplete');
+  //   }
+  // }
 
-  const asyncPollMoveOutcome = async (taskId: string): Promise<void> => {
-    setTimeout(async () => {
-      await pollPollMoveOutcome(taskId);
-    }, taskStatusPollPeriodMillis);
-  }
+  // const asyncPollMoveOutcome = async (taskId: string): Promise<void> => {
+  //   setTimeout(async () => {
+  //     await pollPollMoveOutcome(taskId);
+  //   }, taskStatusPollPeriodMillis);
+  // }
 
   const buildFieldMappingsState = async (selectedToProject: undefined | Project): Promise<FieldMappingsState> => {
     if (!selectedToProject) {
@@ -479,56 +507,56 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     updateFieldMappingState(selectedToProject);
   }
 
-  const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveRequestOutcome): string => {
-    if (taskOutcome.errors && taskOutcome.errors.length) {
-      let combinedErrorMessages = '';
-      for (const error of taskOutcome.errors) {
-        const separator = combinedErrorMessages.length > 0 ? ', ' : '';
-        combinedErrorMessages += `${separator}${error.message}`;
-      }
-      return combinedErrorMessages;
-    } else {
-      return '';
-    }
-  }
+  // const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveRequestOutcome): string => {
+  //   if (taskOutcome.errors && taskOutcome.errors.length) {
+  //     let combinedErrorMessages = '';
+  //     for (const error of taskOutcome.errors) {
+  //       const separator = combinedErrorMessages.length > 0 ? ', ' : '';
+  //       combinedErrorMessages += `${separator}${error.message}`;
+  //     }
+  //     return combinedErrorMessages;
+  //   } else {
+  //     return '';
+  //   }
+  // }
 
-  const onMoveIssues = async (): Promise<void> => {
-    // Step 1: Initiate the move request...
-    const destinationProjectId: string = selectedToProject.id;
-    setIssueMoveRequestOutcome(undefined);
-    setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating move request...'});
-    const targetIssueTypeIdsToTargetMandatoryFields = targetMandatoryFieldsProvider.buildIssueTypeIdsToTargetMandatoryFields();
-    const initiateOutcome: IssueMoveRequestOutcome = await issueMoveController.initiateMove(
-      destinationProjectId,
-      selectedIssues,
-      issueSearchInfo,
-      targetIssueTypeIdsToTargetMandatoryFields
-    );
-    setCurrentMoveActivity(undefined);
-    console.log(`BulkOperationPanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
-    const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
-    if (taskOutcomeErrorMessage) {
-      const fullErrorMessage = `Failed to initiate move request: ${taskOutcomeErrorMessage}`;
-      setMainWarningMessage(fullErrorMessage);
-      console.warn(fullErrorMessage);
-      setIssueMoveRequestOutcome(undefined);
-      setCurrentMoveActivity(undefined);
-    } else {
-      // Step 2: Start polling for the outcome...
-      setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for move outcome...'});
-      pollPollMoveOutcome(initiateOutcome.taskId);
+  // const onMoveIssues = async (): Promise<void> => {
+  //   // Step 1: Initiate the move request...
+  //   const destinationProjectId: string = selectedToProject.id;
+  //   setIssueMoveRequestOutcome(undefined);
+  //   setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating move request...'});
+  //   const targetIssueTypeIdsToTargetMandatoryFields = targetMandatoryFieldsProvider.buildIssueTypeIdsToTargetMandatoryFields();
+  //   const initiateOutcome: IssueMoveRequestOutcome = await issueMoveController.initiateMove(
+  //     destinationProjectId,
+  //     selectedIssues,
+  //     issueSearchInfo,
+  //     targetIssueTypeIdsToTargetMandatoryFields
+  //   );
+  //   setCurrentMoveActivity(undefined);
+  //   console.log(`BulkOperationPanel: issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
+  //   const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
+  //   if (taskOutcomeErrorMessage) {
+  //     const fullErrorMessage = `Failed to initiate move request: ${taskOutcomeErrorMessage}`;
+  //     setMainWarningMessage(fullErrorMessage);
+  //     console.warn(fullErrorMessage);
+  //     setIssueMoveRequestOutcome(undefined);
+  //     setCurrentMoveActivity(undefined);
+  //   } else {
+  //     // Step 2: Start polling for the outcome...
+  //     setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for move outcome...'});
+  //     pollPollMoveOutcome(initiateOutcome.taskId);
 
-      // Step 2: (now redundant since we switched to the polling approach) Wait for the outcome...
-      // setIssueMoveRequestOutcome(initiateOutcome);
-      // if (initiateOutcome.statusCode === 201 && initiateOutcome.taskId) {
-      //   setCurrentIssueMoveTaskId(initiateOutcome.taskId);
-      //   setIssueMoveOutcome(undefined);
-      //   const issueMoveOutcome = await issueMoveController.awaitMoveCompletion(props.invoke, initiateOutcome.taskId);
-      //   setIssueMoveOutcome(issueMoveOutcome);
-      //   setCurrentIssueMoveTaskId(undefined);  
-      // }
-    }
-  }
+  //     // Step 2: (now redundant since we switched to the polling approach) Wait for the outcome...
+  //     // setIssueMoveRequestOutcome(initiateOutcome);
+  //     // if (initiateOutcome.statusCode === 201 && initiateOutcome.taskId) {
+  //     //   setCurrentIssueMoveTaskId(initiateOutcome.taskId);
+  //     //   setIssueMoveOutcome(undefined);
+  //     //   const issueMoveOutcome = await issueMoveController.awaitMoveCompletion(props.invoke, initiateOutcome.taskId);
+  //     //   setIssueMoveOutcome(issueMoveOutcome);
+  //     //   setCurrentIssueMoveTaskId(undefined);  
+  //     // }
+  //   }
+  // }
 
   const renderJQLInputPanel = () => {
     return (
@@ -694,67 +722,67 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     return null;
   }
 
-  const renderIssueMoveActivityIndicator = () => {
-    if (currentMoveActivity || issueMoveOutcome) {
-      const description = currentMoveActivity ? currentMoveActivity.description : issueMoveOutcome ? issueMoveOutcome.status : 'No activity';
-      // https://mui.com/material-ui/api/linear-progress/
-      const progressPercent = issueMoveOutcome ? issueMoveOutcome.progress : 0;
-      return (
-        <div>
-          <Label htmlFor={''}>{description}</Label>
-          <LinearProgress variant="determinate" value={progressPercent} color="secondary" />
-        </div>
-      );
-    } else {
-      return null;
-    }
-  }
+  // const renderIssueMoveActivityIndicator = () => {
+  //   if (currentMoveActivity || issueMoveOutcome) {
+  //     const description = currentMoveActivity ? currentMoveActivity.description : issueMoveOutcome ? issueMoveOutcome.status : 'No activity';
+  //     // https://mui.com/material-ui/api/linear-progress/
+  //     const progressPercent = issueMoveOutcome ? issueMoveOutcome.progress : 0;
+  //     return (
+  //       <div>
+  //         <Label htmlFor={''}>{description}</Label>
+  //         <LinearProgress variant="determinate" value={progressPercent} color="secondary" />
+  //       </div>
+  //     );
+  //   } else {
+  //     return null;
+  //   }
+  // }
 
-  const renderIssueMoveRequestOutcome = () => {
-    if (issueMoveRequestOutcome) {
-      const renderedErrors = issueMoveRequestOutcome.errors ? issueMoveRequestOutcome.errors.map((error: Error, index: number) => {
-        return (
-          <div key={`issue-move-request-error-${index}`} className="error-message">
-            {error.message}
-          </div>
-        );
-      }) : null;
-      return (
-        <div>
-          {renderedErrors}
-        </div>
-      );
-    } else {
-      return null;
-    }
-  }
+  // const renderIssueMoveRequestOutcome = () => {
+  //   if (issueMoveRequestOutcome) {
+  //     const renderedErrors = issueMoveRequestOutcome.errors ? issueMoveRequestOutcome.errors.map((error: Error, index: number) => {
+  //       return (
+  //         <div key={`issue-move-request-error-${index}`} className="error-message">
+  //           {error.message}
+  //         </div>
+  //       );
+  //     }) : null;
+  //     return (
+  //       <div>
+  //         {renderedErrors}
+  //       </div>
+  //     );
+  //   } else {
+  //     return null;
+  //   }
+  // }
 
-  const renderIssueMoveOutcome = () => {
-    if (issueMoveOutcome) {
-      const moveResult: IssueMoveOutcomeResult | undefined = issueMoveOutcome.result;
-      const movedCount = moveResult ? moveResult.successfulIssues.length : -1;
-      const failedCount = moveResult ? moveResult.totalIssueCount - movedCount : -1;
-      const renderedIssuesMovedResult = issueMoveOutcome.result ? <span># issues moved: <Lozenge appearance="success">{movedCount}</Lozenge></span> : null;
-      const renderedIssuesNotMovedResult = issueMoveOutcome.result ? <span># issues not moved: <Lozenge appearance="removed">{failedCount}</Lozenge></span> : null;
-      const renderedOutcomeDebugJson = showDebug ? <pre>{JSON.stringify(issueMoveOutcome, null, 2)}</pre> : null;
-      const progressPercent = issueMoveOutcome.progress ?? 0;
-      const renderedProgress = <div>Progress: {progressPercent}%</div>;
-      return (
-        <div key={`issue-move-outcome-${allDefaultValuesProvided}`} style={{margin: '20px 0px'}}>
-          <Label htmlFor="none">Issues moved to the {selectedToProject?.name} ({selectedToProject?.key}) project</Label>
-          <ul>
-            <li>Status: <TaskStatusLozenge status={issueMoveOutcome.status} /></li>
-            <li>{renderedIssuesMovedResult}</li>
-            <li>{renderedIssuesNotMovedResult}</li>
-            <li>{renderedProgress}</li>
-          </ul>
-          {renderedOutcomeDebugJson}
-        </div>
-      );
-    } else {
-      return null;
-    }
-  }
+  // const renderIssueMoveOutcome = () => {
+  //   if (issueMoveOutcome) {
+  //     const moveResult: IssueMoveOutcomeResult | undefined = issueMoveOutcome.result;
+  //     const movedCount = moveResult ? moveResult.successfulIssues.length : -1;
+  //     const failedCount = moveResult ? moveResult.totalIssueCount - movedCount : -1;
+  //     const renderedIssuesMovedResult = issueMoveOutcome.result ? <span># issues moved: <Lozenge appearance="success">{movedCount}</Lozenge></span> : null;
+  //     const renderedIssuesNotMovedResult = issueMoveOutcome.result ? <span># issues not moved: <Lozenge appearance="removed">{failedCount}</Lozenge></span> : null;
+  //     const renderedOutcomeDebugJson = showDebug ? <pre>{JSON.stringify(issueMoveOutcome, null, 2)}</pre> : null;
+  //     const progressPercent = issueMoveOutcome.progress ?? 0;
+  //     const renderedProgress = <div>Progress: {progressPercent}%</div>;
+  //     return (
+  //       <div key={`issue-move-outcome-${allDefaultValuesProvided}`} style={{margin: '20px 0px'}}>
+  //         <Label htmlFor="none">Issues moved to the {selectedToProject?.name} ({selectedToProject?.key}) project</Label>
+  //         <ul>
+  //           <li>Status: <TaskStatusLozenge status={issueMoveOutcome.status} /></li>
+  //           <li>{renderedIssuesMovedResult}</li>
+  //           <li>{renderedIssuesNotMovedResult}</li>
+  //           <li>{renderedProgress}</li>
+  //         </ul>
+  //         {renderedOutcomeDebugJson}
+  //       </div>
+  //     );
+  //   } else {
+  //     return null;
+  //   }
+  // }
 
   const renderIssuesPanel = (stepNumber: number) => {
     const hasIssues = issueSearchInfo.issues.length > 0;
@@ -787,7 +815,8 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
 
   const renderStartFieldValueMappingsButton = () => {
     const allowValidation = selectedToProject && selectedToProject.id && selectedIssues.length > 0;
-    const buttonEnabled = !currentMoveActivity && allowValidation;
+    // const buttonEnabled = !currentMoveActivity && allowValidation;
+    const buttonEnabled = allowValidation;
     return (
       <Button
         appearance={fieldMappingsState.dataRetrieved ? 'default' : 'primary'}
@@ -801,34 +830,78 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     );
   }
 
-  const renderStartOrEditMoveButton = () => {
-    const debugReasonForFieldMappingIncompleteness = false;
-    const fieldMappingIncompletenessReason = debugReasonForFieldMappingIncompleteness ? targetMandatoryFieldsProvider.getFieldMappingIncompletenessReason() : '';
-    const waitingMessage = new WaitingMessageBuilder()
-      .addCheck(fieldMappingIncompletenessReason === '', fieldMappingIncompletenessReason)
-      .addCheck(isFieldMappingsComplete(), 'Field value mapping is not yet complete.')
-      // .addCheck(allDefaultValuesProvided, 'Field value mapping is not yet complete.')
-      .addCheck(!!selectedToProject && !!selectedToProject.id, 'Target project is not selected.')
-      .addCheck(selectedIssues.length > 0, 'No issues selected.')
-      .addCheck(!currentMoveActivity, 'Current move activity is not yet complete.')
-      .build();
-    const buttonEnabled = waitingMessage === '';
-    return (
-      <div 
-        key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
-      >
-        {renderPanelMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
-        <Button
-          key={`move-button-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
-          appearance={buttonEnabled ? 'primary' : 'default'}
-          isDisabled={!buttonEnabled}
-          onClick={onMoveIssues}
-        >
-          {bulkOperationMode} issues
-        </Button>
-      </div>
-    );
-  }
+  // const renderStartMoveOrEditButton = () => {
+  //   let waitingMessage = '';
+  //   if (bulkOperationMode === 'Move') {
+  //     const debugReasonForFieldMappingIncompleteness = false;
+  //     const fieldMappingIncompletenessReason = debugReasonForFieldMappingIncompleteness ? targetMandatoryFieldsProvider.getFieldMappingIncompletenessReason() : '';
+  //     waitingMessage = new WaitingMessageBuilder()
+  //       .addCheck(fieldMappingIncompletenessReason === '', fieldMappingIncompletenessReason)
+  //       .addCheck(isFieldMappingsComplete(), 'Field value mapping is not yet complete.')
+  //       // .addCheck(allDefaultValuesProvided, 'Field value mapping is not yet complete.')
+  //       .addCheck(!!selectedToProject && !!selectedToProject.id, 'Target project is not selected.')
+  //       .addCheck(selectedIssues.length > 0, 'No issues selected.')
+  //       .addCheck(!currentMoveActivity, 'Current move activity is not yet complete.')
+  //       .build();
+  //   } else if (bulkOperationMode === 'Edit') {
+  //     // const dd = fieldIdsToValues;
+  //     const editValuesSpecified = editedFieldsModel.haveValuesBeenSpecified();
+  //     waitingMessage = new WaitingMessageBuilder()
+  //       .addCheck(editValuesSpecified, 'Waiting for at least one new field value.')
+  //       .build();
+  //   }
+  //   const buttonEnabled = waitingMessage === '';
+  //   return (
+  //     <div 
+  //       key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
+  //     >
+  //       {renderPanelMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
+  //       <Button
+  //         key={`move-edit-button-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}-${fieldIdsToValuesTime}`}
+  //         appearance={buttonEnabled ? 'primary' : 'default'}
+  //         isDisabled={!buttonEnabled}
+  //         onClick={() => {
+  //           if (bulkOperationMode === 'Move') {
+  //             onMoveIssues();
+  //           } else if (bulkOperationMode === 'Edit') {
+  //             // onEditIssues();
+  //           }
+  //         }}
+  //       >
+  //         {bulkOperationMode} issues
+  //       </Button>
+  //     </div>
+  //   );
+  // }
+
+  // const renderEditButton = () => {
+  //   const debugReasonForFieldMappingIncompleteness = false;
+  //   const fieldMappingIncompletenessReason = debugReasonForFieldMappingIncompleteness ? targetMandatoryFieldsProvider.getFieldMappingIncompletenessReason() : '';
+  //   const waitingMessage = new WaitingMessageBuilder()
+  //     .addCheck(fieldMappingIncompletenessReason === '', fieldMappingIncompletenessReason)
+  //     .addCheck(isFieldMappingsComplete(), 'Field value mapping is not yet complete.')
+  //     // .addCheck(allDefaultValuesProvided, 'Field value mapping is not yet complete.')
+  //     .addCheck(!!selectedToProject && !!selectedToProject.id, 'Target project is not selected.')
+  //     .addCheck(selectedIssues.length > 0, 'No issues selected.')
+  //     .addCheck(!currentMoveActivity, 'Current move activity is not yet complete.')
+  //     .build();
+  //   const buttonEnabled = waitingMessage === '';
+  //   return (
+  //     <div 
+  //       key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
+  //     >
+  //       {renderPanelMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
+  //       <Button
+  //         key={`move-button-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
+  //         appearance={buttonEnabled ? 'primary' : 'default'}
+  //         isDisabled={!buttonEnabled}
+  //         onClick={onMoveIssues}
+  //       >
+  //         {bulkOperationMode} issues
+  //       </Button>
+  //     </div>
+  //   );
+  // }
 
   const renderTargetProjectPanel = (stepNumber: number) => {
     const waitingMessage = new WaitingMessageBuilder()
@@ -912,7 +985,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
             allIssueTypes={allIssueTypes}
             issues={selectedIssues}
             fieldMappingsState={fieldMappingsState}
-            targetMandatoryFieldsProvider={targetMandatoryFieldsProvider}
             showDebug={showDebug}
             onAllDefaultValuesProvided={onAllDefaultValuesProvided}
           />
@@ -947,21 +1019,45 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
           <PanelHeader
             stepNumber={stepNumber}
             label={`${bulkOperationMode} issues`}
-            completionState={getStepCompletionState('move')}
+            completionState={getStepCompletionState('move-or-edit')}
           />
-          <FormSection>
-            {renderStartOrEditMoveButton()}
-          </FormSection>
-          <FormSection>
-            {renderIssueMoveActivityIndicator()}
-          </FormSection>
-          {renderIssueMoveRequestOutcome()}
-          {renderIssueMoveOutcome()}
+          <MoveOrEditPanel
+            bulkOperationMode={bulkOperationMode}
+            fieldMappingsComplete={fieldMappingsComplete}
+            selectedIssues={selectedIssues}
+            selectedToProject={selectedToProject}
+            allDefaultValuesProvided={allDefaultValuesProvided}
+            setStepCompletionState={setStepCompletionState}
+            setMainWarningMessage={setMainWarningMessage}
+          />
           {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );
   }
+
+  // const renderMoveOrEditPanel = (stepNumber: number) => {
+  //   return (
+  //     <div className="padding-panel">
+  //       <div className="content-panel">
+  //         <PanelHeader
+  //           stepNumber={stepNumber}
+  //           label={`${bulkOperationMode} issues`}
+  //           completionState={getStepCompletionState('move-or-edit')}
+  //         />
+  //         <FormSection>
+  //           {renderStartMoveOrEditButton()}
+  //         </FormSection>
+  //         <FormSection>
+  //           {renderIssueMoveActivityIndicator()}
+  //         </FormSection>
+  //         {renderIssueMoveRequestOutcome()}
+  //         {renderIssueMoveOutcome()}
+  //         {renderFlexboxEqualWidthGrowPanel()}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const renderDebugPanel = () => {
     const projectsToIssueTypes: {} = {};
@@ -1062,7 +1158,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
         {isStepApplicableToBulkOperationMode('issue-type-mapping') ? renderIssueTypeMappingPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('field-mapping') ? renderFieldValueMappingsPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('edit-fields') ? renderEditFieldsPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOperationMode('move') ? renderMoveOrEditPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('move-or-edit') ? renderMoveOrEditPanel(lastStepNumber++) : null}
       </div>
       {renderDebugPanel()}
     </div>

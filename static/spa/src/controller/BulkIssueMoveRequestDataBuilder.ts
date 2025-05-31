@@ -7,7 +7,7 @@ import {
 
 export class BulkIssueMoveRequestDataBuilder {
 
-  bulkIssueMoveRequestData: BulkIssueMoveRequestData = {
+  private bulkIssueMoveRequestData: BulkIssueMoveRequestData = {
     sendBulkNotification: false,
     targetToSourcesMapping: {}
   }
