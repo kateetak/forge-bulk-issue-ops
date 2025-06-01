@@ -95,4 +95,5 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-1: Using deprecated API https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
 * KNOWN-2: The `REMOVE` option is not supported when bulk editing labels.
 * KNOWN-3: Labels can not be created within the bulk edit form.
+* KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
 

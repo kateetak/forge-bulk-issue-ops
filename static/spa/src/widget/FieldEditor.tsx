@@ -1,5 +1,6 @@
 import React from 'react';
 import { 
+  CommentField,
   IssueBulkEditField,
   IssueTypeField,
   LabelsField,
@@ -9,12 +10,15 @@ import {
 } from "../types/IssueBulkEditFieldApiResponse";
 import { Option } from '../types/Option'
 import Select from '@atlaskit/select';
+import TextArea from '@atlaskit/textarea';
 import Textfield from '@atlaskit/textfield';
 import UsersSelect from './UserSelect';
 import { User } from 'src/types/User';
 import LabelsSelect from './LabelsSelect';
 import FixedOptionsSelect from './FixedOptionsSelect';
 import { FieldEditValue, MultiSelectFieldEditOption } from 'src/types/FieldEditValue';
+import { adfToText, textToAdf } from 'src/controller/textToAdf';
+import { Label } from '@atlaskit/form';
 
 export interface FieldEditorProps {
   field: IssueBulkEditField;
@@ -196,10 +200,6 @@ export const FieldEditor = (props: FieldEditorProps) => {
     );
   }
 
-  const renderTextFieldEditor = () => {
-    return <input type="text" defaultValue={'Foo'} />;
-  }
-
   const renderSelectFieldEditor = () => {
     const selectField: SelectField = field as SelectField;
     const options: Option[] = [];
@@ -256,6 +256,36 @@ export const FieldEditor = (props: FieldEditorProps) => {
     // return <div>Reporter field editor not implemented yet.</div>;
   }
 
+  const renderTextFieldEditor = () => {
+    return <input type="text" defaultValue={'Foo'} />;
+  }
+
+  const renderCommentFieldEditor = () => {
+    const initialValue = props.maybeEditValue?.value || '';
+    // KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
+    const initialText = adfToText(initialValue);
+    return (
+      <div>
+        <Label htmlFor="bulk-edit-comment">Plain text comment</Label>
+        <TextArea
+          id="bulk-edit-comment"
+          resize="auto"
+          minimumRows={3}
+          name="area"
+          defaultValue={initialText}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+            // KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
+            const adf = textToAdf(event.target.value);
+            const newValue: FieldEditValue = {
+              value: adf
+            }
+            props.onChange(newValue);
+          }}
+        />
+      </div>
+    )
+  }
+
   const renderUnsupportedFieldEditor = () => {
     return <div>Unsupported field type: {field.type}</div>;
   }
@@ -278,6 +308,8 @@ export const FieldEditor = (props: FieldEditorProps) => {
         return renderPriorityFieldEditor();
       case 'text':
         return renderTextFieldEditor();
+      case 'comment':
+        return renderCommentFieldEditor();
       default:
         return renderUnsupportedFieldEditor();
     }

@@ -164,28 +164,28 @@ export type JiraUrlField = {
 
 export type JiraIssueFields = {
   issueType?: JiraIssueTypeField
-  cascadingSelectFields?:JiraCascadingSelectField[];
-  clearableNumberFields?:JiraNumberField[];
-  colorFields?:JiraColorField[];
-  datePickerFields?:JiraDateField[];
-  dateTimePickerFields?:JiraDateTimeField[];
-  labelsFields?:JiraLabelsField[];
-  multipleGroupPickerFields?:JiraMultipleGroupPickerField[];
-  multipleSelectClearableUserPickerFields?:JiraMultipleSelectUserPickerField[];
-  multipleSelectFields?:JiraMultipleSelectField[];
-  multipleVersionPickerFields?:JiraMultipleVersionPickerField[];
-  multiselectComponents?:JiraMultiSelectComponentField[];
-  originalEstimateField?:JiraDurationField;
-  priority?:JiraPriorityField;
-  richTextFields?:JiraRichTextField[];
-  singleGroupPickerFields?:JiraSingleGroupPickerField[];
-  singleLineTextFields?:JiraSingleLineTextField[];
-  singleSelectClearableUserPickerFields?:JiraSingleSelectUserPickerField[];
-  singleSelectFields?:JiraSingleSelectField[];
-  singleVersionPickerFields?:JiraSingleVersionPickerField[];
-  status?:JiraStatusInput;
-  timeTrackingField?:JiraTimeTrackingField;
-  urlFields?:JiraUrlField[];
+  cascadingSelectFields?: JiraCascadingSelectField[];
+  clearableNumberFields?: JiraNumberField[];
+  colorFields?: JiraColorField[];
+  datePickerFields?: JiraDateField[];
+  dateTimePickerFields?: JiraDateTimeField[];
+  labelsFields?: JiraLabelsField[];
+  multipleGroupPickerFields?: JiraMultipleGroupPickerField[];
+  multipleSelectClearableUserPickerFields?: JiraMultipleSelectUserPickerField[];
+  multipleSelectFields?: JiraMultipleSelectField[];
+  multipleVersionPickerFields?: JiraMultipleVersionPickerField[];
+  multiselectComponents?: JiraMultiSelectComponentField[];
+  originalEstimateField?: JiraDurationField;
+  priority?: JiraPriorityField;
+  richTextFields?: JiraRichTextField[];
+  singleGroupPickerFields?: JiraSingleGroupPickerField[];
+  singleLineTextFields?: JiraSingleLineTextField[];
+  singleSelectClearableUserPickerFields?: JiraSingleSelectUserPickerField[];
+  singleSelectFields?: JiraSingleSelectField[];
+  singleVersionPickerFields?: JiraSingleVersionPickerField[];
+  status?: JiraStatusInput;
+  timeTrackingField?: JiraTimeTrackingField;
+  urlFields?: JiraUrlField[];
 }
 
 export type BulkIssueEditRequestData = {

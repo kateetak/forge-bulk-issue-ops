@@ -10,6 +10,7 @@ import {
   JiraMultipleSelectUserPickerField,
   JiraNumberField,
   JiraPriorityField,
+  JiraRichTextField,
   JiraSelectedOptionField,
   JiraSingleSelectField,
   JiraSingleSelectUserPickerField
@@ -146,6 +147,15 @@ class IssueEditController {
             labels: labels
           }
           editedFieldsInputBuilder.addLabelsField(jiraLabelsField);
+        case 'comment':
+          const jiraCommentField: JiraRichTextField = {
+            fieldId: field.id,
+            richText: {
+              adfValue: editedFieldValue.value
+            }
+          }
+          editedFieldsInputBuilder.addRichTextField(jiraCommentField);
+          break;
         default:
           console.warn(` * Unsupported field type: "${field.type}" (field ID ${field.id}). Skipping.`);
           return;
