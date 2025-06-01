@@ -1,8 +1,7 @@
 import { TaskOutcome, TaskStatus } from "../types/TaskOutcome";
 import { BulkIssueMoveRequestDataBuilder, ProjectIssueTypeClassificationBuilder } from "./BulkIssueMoveRequestDataBuilder";
-import { IssueMoveRequestOutcome, OutcomeError } from "../types/IssueMoveRequestOutcome";
+import { IssueMoveEditRequestOutcome, OutcomeError } from "../types/IssueMoveRequestOutcome";
 import { IssueType } from "../types/IssueType";
-import { IssueSearchInfo } from "../types/IssueSearchInfo";
 import { Issue } from "../types/Issue";
 import jiraDataModel from "../model/jiraDataModel";
 import { TargetMandatoryFields } from "../types/TargetMandatoryField";
@@ -18,7 +17,7 @@ class IssueMoveController {
     issues: Issue[],
     targetIssueTypeIdsToTargetMandatoryFields: Map<string, TargetMandatoryFields>,
     sendBulkNotification: boolean,
-  ): Promise<IssueMoveRequestOutcome> => {
+  ): Promise<IssueMoveEditRequestOutcome> => {
     const allProjectsSearchInfo = await jiraDataModel.pageOfProjectSearchInfo('');
     const allIssueTypes: IssueType[] = await jiraDataModel.getissueTypes();
     const destinationProject = allProjectsSearchInfo.values.find(project => project.id === destinationProjectId);
@@ -98,9 +97,9 @@ class IssueMoveController {
       console.log(` * bulkIssueMoveRequestData: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
 
       // Step 4: Initiate the bulk issue move request
-      const invocationResult: InvocationResult<IssueMoveRequestOutcome> = await jiraDataModel.initiateBulkIssuesMove(bulkIssueMoveRequestData);
+      const invocationResult: InvocationResult<IssueMoveEditRequestOutcome> = await jiraDataModel.initiateBulkIssuesMove(bulkIssueMoveRequestData);
       if (invocationResult.ok && invocationResult.data) {
-        const requestOutcome: IssueMoveRequestOutcome = invocationResult.data;
+        const requestOutcome: IssueMoveEditRequestOutcome = invocationResult.data;
         if (requestOutcome.taskId) {
           console.log(` * Initiated bulk issue move with taskId: ${requestOutcome.taskId}`);
         } else {
@@ -112,7 +111,7 @@ class IssueMoveController {
         const errors: OutcomeError[] = [{
           message: invocationResult.errorMessage,
         }];
-        const requestOutcome: IssueMoveRequestOutcome = {
+        const requestOutcome: IssueMoveEditRequestOutcome = {
           taskId: undefined,
           errors: invocationResult.errorMessage ? errors : [],
           statusCode: 500

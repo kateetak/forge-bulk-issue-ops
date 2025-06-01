@@ -1,6 +1,6 @@
 import { TaskOutcome, TaskStatus } from "../types/TaskOutcome";
 import { BulkIssueMoveRequestDataBuilder, ProjectIssueTypeClassificationBuilder } from "../controller/BulkIssueMoveRequestDataBuilder";
-import { IssueMoveRequestOutcome } from "../types/IssueMoveRequestOutcome";
+import { IssueMoveEditRequestOutcome } from "../types/IssueMoveRequestOutcome";
 // import projectSearchInfoCache from "../model/projectSearchInfoCache";
 import { IssueType } from "../types/IssueType";
 import { IssueSearchInfo } from "../types/IssueSearchInfo";
@@ -26,7 +26,7 @@ class IssueMoveController {
     destinationProjectId: string,
     issueKeys: string[],
     issueSearchInfo: IssueSearchInfo
-  ): Promise<IssueMoveRequestOutcome> => {
+  ): Promise<IssueMoveEditRequestOutcome> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const taskId = `task-${Math.floor(Math.random() * 100000)}`;
@@ -39,7 +39,7 @@ class IssueMoveController {
           targetEndStatus: 'COMPLETE'
         }
         this.taskIdsToTaskInfos.set(taskId, taskInfo);
-        const requestOutcome: IssueMoveRequestOutcome = {
+        const requestOutcome: IssueMoveEditRequestOutcome = {
           statusCode: 201,
           taskId: taskId
         }

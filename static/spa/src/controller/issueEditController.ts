@@ -1,5 +1,5 @@
 import { TaskOutcome, TaskStatus } from "../types/TaskOutcome";
-import { IssueMoveRequestOutcome, OutcomeError } from "../types/IssueMoveRequestOutcome";
+import { IssueMoveEditRequestOutcome, OutcomeError } from "../types/IssueMoveRequestOutcome";
 import jiraDataModel from "../model/jiraDataModel";
 import { InvocationResult } from "../types/InvocationResult";
 import { 
@@ -31,10 +31,10 @@ class IssueEditController {
 
   initiateBulkEdit = async (
     bulkIssueEditRequestData: BulkIssueEditRequestData = this.buildBulkIssueEditRequestData(),
-  ): Promise<IssueMoveRequestOutcome> => {
-    const invocationResult: InvocationResult<IssueMoveRequestOutcome> = await jiraDataModel.initiateBulkIssuesEdit(bulkIssueEditRequestData);
+  ): Promise<IssueMoveEditRequestOutcome> => {
+    const invocationResult: InvocationResult<IssueMoveEditRequestOutcome> = await jiraDataModel.initiateBulkIssuesEdit(bulkIssueEditRequestData);
     if (invocationResult.ok && invocationResult.data) {
-      const requestOutcome: IssueMoveRequestOutcome = invocationResult.data;
+      const requestOutcome: IssueMoveEditRequestOutcome = invocationResult.data;
       if (requestOutcome.taskId) {
         console.log(` * Initiated bulk issue edit with taskId: ${requestOutcome.taskId}`);
       } else {
@@ -46,7 +46,7 @@ class IssueEditController {
       const errors: OutcomeError[] = [{
         message: invocationResult.errorMessage,
       }];
-      const requestOutcome: IssueMoveRequestOutcome = {
+      const requestOutcome: IssueMoveEditRequestOutcome = {
         taskId: undefined,
         errors: invocationResult.errorMessage ? errors : [],
         statusCode: 500

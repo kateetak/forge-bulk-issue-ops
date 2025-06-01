@@ -8,7 +8,7 @@ import { BulkIssueMoveRequestData } from "../types/BulkIssueMoveRequestData";
 import { CustomFieldsContextItem } from '../types/CustomFieldsContextItem';
 import { Field } from '../types/Field';
 import { FieldConfigurationItem } from '../types/FieldConfigurationItem';
-import { IssueMoveRequestOutcome } from "../types/IssueMoveRequestOutcome";
+import { IssueMoveEditRequestOutcome } from "../types/IssueMoveRequestOutcome";
 import { IssueSearchInfo } from '../types/IssueSearchInfo';
 import { IssueSearchParameters } from '../types/IssueSearchParameters';
 import { IssueType } from '../types/IssueType';
@@ -284,8 +284,8 @@ class JiraDataModel {
   
   initiateBulkIssuesMove = async (
     bulkIssueMoveRequestData: BulkIssueMoveRequestData
-  ): Promise<InvocationResult<IssueMoveRequestOutcome>> => {
-    let invocationResult: InvocationResult<IssueMoveRequestOutcome>;
+  ): Promise<InvocationResult<IssueMoveEditRequestOutcome>> => {
+    let invocationResult: InvocationResult<IssueMoveEditRequestOutcome>;
     if (invokeBulkOpsApisAsTheAppUser) {
       invocationResult = await invoke('initiateBulkMove', { bulkIssueMoveRequestData });
     } else {
@@ -297,7 +297,7 @@ class JiraDataModel {
         },
         body: JSON.stringify(bulkIssueMoveRequestData)
       });
-      invocationResult = await this.readResponse<IssueMoveRequestOutcome>(response);
+      invocationResult = await this.readResponse<IssueMoveEditRequestOutcome>(response);
     }
     console.log(`Bulk issue move invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
     return invocationResult;
@@ -305,8 +305,8 @@ class JiraDataModel {
 
   initiateBulkIssuesEdit = async (
     bulkIssueEditRequestData: BulkIssueEditRequestData
-  ): Promise<InvocationResult<IssueMoveRequestOutcome>> => {
-    let invocationResult: InvocationResult<IssueMoveRequestOutcome>;
+  ): Promise<InvocationResult<IssueMoveEditRequestOutcome>> => {
+    let invocationResult: InvocationResult<IssueMoveEditRequestOutcome>;
     if (invokeBulkOpsApisAsTheAppUser) {
       invocationResult = await invoke('initiateBulkEdit', { bulkIssueEditRequestData });
     } else {
@@ -318,7 +318,7 @@ class JiraDataModel {
         },
         body: JSON.stringify(bulkIssueEditRequestData)
       });
-      invocationResult = await this.readResponse<IssueMoveRequestOutcome>(response);
+      invocationResult = await this.readResponse<IssueMoveEditRequestOutcome>(response);
     }
     console.log(`Bulk issue edit invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
     return invocationResult;

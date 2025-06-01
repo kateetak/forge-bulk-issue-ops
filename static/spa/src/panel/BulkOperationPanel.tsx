@@ -23,7 +23,7 @@ import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './
 import targetMandatoryFieldsProvider from 'src/controller/TargetMandatoryFieldsProvider';
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
-import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects, taskStatusPollPeriodMillis } from 'src/model/config';
+import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects } from 'src/model/config';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
@@ -54,15 +54,6 @@ type DebugInfo = {
 
 type FilterMode = 'basic' | 'advanced';
 
-
-
-
-// Retain the same instance of TargetMandatoryFieldsProvider across renders
-// const targetMandatoryFieldsProviderSingleton = new TargetMandatoryFieldsProvider();
-
-
-
-
 const BulkOperationPanel = (props: BulkOperationPanelProps) => {
 
   const [stepNamesToCompletionState, setStepNamesToCompletionState] = useState<ObjectMapping<CompletionState>>({});
@@ -73,7 +64,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const [filterMode, setFilterMode] = useState<FilterMode>('basic');
   const [enteredJql, setEnteredJql] = useState<string>('');
   const [allIssueTypes, setAllIssueTypes] = useState<IssueType[]>([]);
-  // const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
   const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
   const [selectedFromProjects, setSelectedFromProjects] = useState<Project[]>([]);
   const [selectedFromProjectsTime, setSelectedFromProjectsTime] = useState<number>(0);

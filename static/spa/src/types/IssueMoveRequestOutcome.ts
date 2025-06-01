@@ -3,7 +3,7 @@ export type OutcomeError = {
   message: string;
 }
 
-export type IssueMoveRequestOutcome = {
+export type IssueMoveEditRequestOutcome = {
   statusCode: number;
   taskId?: string;
   errors?: OutcomeError[];
