@@ -75,7 +75,6 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
         label="Clear"
         appearance="subtle"
         value={fieldNameFilter}
-        isDisabled={fieldNameFilter === ''}
         icon={CrossCircleIcon}
         onClick={() => {
           setFieldNameFilter('');
@@ -86,19 +85,17 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
   const renderFieldNameFilterControl = () => {
     return (
-      <div style={{marginBottom: '10px'}}>
-        <Textfield
-          name='fieldNameFilter'
-          placeholder='Filter by field name...'
-          value={fieldNameFilter}
-          isCompact={true}
-          elemAfterInput={renderClearFilterControl()}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            const filterValue = event.currentTarget.value.toLowerCase();
-            setFieldNameFilter(filterValue);
-          }}
-        />
-      </div>
+      <Textfield
+        name='fieldNameFilter'
+        placeholder='Filter by field name...'
+        value={fieldNameFilter}
+        isCompact={true}
+        elemAfterInput={renderClearFilterControl()}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          const filterValue = event.currentTarget.value.toLowerCase();
+          setFieldNameFilter(filterValue);
+        }}
+      />
     );
   }
 
@@ -113,7 +110,12 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
       <thead>
         <tr>
           <th style={{ width: toggleColumnWidth }}></th>
-          <th><><Label htmlFor=''>Field name</Label><div>{renderFieldNameFilterControl()}</div></></th>
+          <th>{renderFieldNameFilterControl()}</th>
+          <th></th>
+        </tr>
+        <tr>
+          <th style={{ width: toggleColumnWidth }}></th>
+          <th><Label htmlFor=''>Field name</Label></th>
           <th><Label htmlFor=''>Field value</Label></th>
         </tr>
       </thead>
@@ -152,7 +154,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     });
     return (
       <div>
-        <table>
+        <table className="field-edit-table">
           {renderedTableHead}
           <tbody>
             {renderedTableRows}

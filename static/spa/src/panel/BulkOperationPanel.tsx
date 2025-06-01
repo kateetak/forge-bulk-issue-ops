@@ -529,12 +529,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     );
   }
 
-  const renderFlexboxEqualWidthGrowPanel = () => {
-    return (
-      <div className="flex-box-equal-width-grow-panel"></div>
-    );
-  }
-
   const renderFilterModeSelect = () => {
     return (
       <FormSection>
@@ -592,7 +586,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
           {renderFilterModeSelect()}
           {renderBasicFieldInputs()}
           {renderAdvancedFieldInputs()}
-          {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );
@@ -625,7 +618,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
               await onIssuesSelectionChange(selectedIssues);
             }}
           />
-          {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );
@@ -661,7 +653,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
           />
           {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
           {renderToProjectSelect()}
-          {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );
@@ -701,7 +692,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
             targetProject={selectedToProject}
             onIssueTypeMappingChange={onIssueTypeMappingChange}
           />
-          {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );
@@ -731,7 +721,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
             showDebug={showDebug}
             onAllDefaultValuesProvided={onAllDefaultValuesProvided}
           />
-          {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );
@@ -751,7 +740,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
             selectedIssuesTime={issueSearchInfoTime}
             onEditsValidityChange={onEditsValidityChange}
           />
-          {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );
@@ -775,7 +763,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
             setStepCompletionState={setStepCompletionState}
             setMainWarningMessage={setMainWarningMessage}
           />
-          {renderFlexboxEqualWidthGrowPanel()}
         </div>
       </div>
     );

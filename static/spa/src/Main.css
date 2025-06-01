@@ -54,9 +54,10 @@ div.edit-options-panel > div.edit-value {
 
 div.bulk-move-main-panel {
   margin-top: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  grid-column-gap: 6px;
+  grid-row-gap: 6px;
   justify-content: space-between;
   align-items: flex-start;
   align-items: stretch;
@@ -65,9 +66,7 @@ div.bulk-move-main-panel {
 div.bulk-move-main-panel > div {
   margin-bottom: 20px;
   padding: 10px;
-  flex-grow: 1;
   background-color: #fff;
-  /* overflow-y: auto; */
 }
 
 div.bulk-move-main-panel > div > div {
@@ -86,15 +85,6 @@ div.panel-header {
   justify-content: space-between;
   align-items: flex-start;
   align-items: stretch;
-}
-
-div.flex-box-equal-width-grow-panel {
-  /* This panel ensures the various "step" panels grow with equal 
-     widths so they look good when they wrap due to insufficient 
-     screen width */
-  width: 300px;
-  height: 1px;
-  background-color: initial;
 }
 
 div.filter-panel {
@@ -192,4 +182,21 @@ div.fake-button {
   padding: 0px;
   cursor: pointer;
   border-radius: 4px;
+}
+
+table.field-edit-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.field-edit-table > thead > tr > th {
+  padding: 2px;
+}
+
+table.field-edit-table > thead > tr > th > div {
+  border-width: 0.1px;
+}
+
+table.field-edit-table > tbody > tr > td {
+  padding: 2px;
 }
