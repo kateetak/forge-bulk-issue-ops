@@ -73,7 +73,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const [filterMode, setFilterMode] = useState<FilterMode>('basic');
   const [enteredJql, setEnteredJql] = useState<string>('');
   const [allIssueTypes, setAllIssueTypes] = useState<IssueType[]>([]);
-  const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
+  // const [allIssueTypesTime, setAllIssueTypesTime] = useState<number>(0);
   const [issueLoadingState, setIssueLoadingState] = useState<LoadingState>('idle');
   const [selectedFromProjects, setSelectedFromProjects] = useState<Project[]>([]);
   const [selectedFromProjectsTime, setSelectedFromProjectsTime] = useState<number>(0);
@@ -88,28 +88,13 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
   const [allIssueTypesMapped, setAllIssueTypesMapped] = useState<boolean>(false);
   const [fieldMappingsState, setFieldMappingsState] = useState<FieldMappingsState>(nilFieldMappingsState);
-  // const [targetMandatoryFieldsProvider, setTargetMandatoryFieldsProvider] = useState<TargetMandatoryFieldsProvider>(targetMandatoryFieldsProvider);
   const [targetMandatoryFieldsProviderUpdateTime, setTargetMandatoryFieldsProviderUpdateTime] = useState<number>(0);
   const [allDefaultValuesProvided, setAllDefaultValuesProvided] = useState<boolean>(false);
   const [currentFieldMappingActivity, setCurrentFieldMappingActivity] = useState<undefined | Activity>(undefined);
-  // const [currentMoveActivity, setCurrentMoveActivity] = useState<undefined | Activity>(undefined);
-  // const [issueMoveRequestOutcome, setIssueMoveRequestOutcome] = useState<undefined | IssueMoveRequestOutcome>(undefined);
-  // const [issueMoveOutcome, setIssueMoveOutcome] = useState<undefined | TaskOutcome>(undefined);
   const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
-  // const [lastMoveCompletionTaskId, setLastMoveCompletionTaskId] = useState<string>('none');
-  // const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<any>>({});
   const [fieldIdsToValuesTime, setFieldIdsToValuesTime] = React.useState<number>(0);
   const [fieldMappingsComplete, setFieldMappingsComplete] = useState<boolean>(false);
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({ projects: [], issueTypes: [] });
-
-
-
-  // TODO: can this and the issueMoveOutcome state above be deleted now?
-  const setIssueMoveOutcome = (issueMoveOutcome: undefined | TaskOutcome) => {
-
-  }
-
-
 
   useEffect(() => {
     setBulkOperationMode(props.bulkOperationMode);
@@ -126,6 +111,10 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
       editedFieldsModel.unregisterListener(onEditedFieldsModelChange);
     };
   }, []);
+
+  const setIssueMoveOutcome = (issueMoveOutcome: undefined | TaskOutcome) => {
+    // Do nothing - this is now obsolte
+  }
 
   const isStepApplicableToBulkOperationMode = (stepName: StepName): boolean => {
     if (bulkOperationMode === 'Move') {
@@ -228,7 +217,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const initialiseSelectedIssueTypes = async (): Promise<void> => {
     const allIssueTypes: IssueType[] = await jiraDataModel.getissueTypes();
     setAllIssueTypes(allIssueTypes);
-    setAllIssueTypesTime(Date.now());
+    // setAllIssueTypesTime(Date.now());
     setLastDataLoadTime(Date.now());
     if (selectedIssueTypesTime === 0) {
       setSelectedIssueTypes(allIssueTypes);
@@ -318,7 +307,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     setIssueLoadingState('busy');
     setTimeout(async () => {
       const issueSearchInfo = await jiraDataModel.getIssueSearchInfoByJql(jql) as IssueSearchInfo;
-      // onIssuesLoaded(true, issueSearchInfo);
       const issueCount = issueSearchInfo.issues.length;
       onIssuesLoaded(issueCount > 0, issueSearchInfo);
       setStepCompletionState('filter', issueCount > 0 ? 'complete' : 'incomplete');
