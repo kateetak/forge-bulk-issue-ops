@@ -145,7 +145,7 @@ export class JiraIssueFieldsBuilder {
     return this;
   }
   
-  addDataTimePickerField = (field: JiraDateTimeField): JiraIssueFieldsBuilder => {
+  addDateTimePickerField = (field: JiraDateTimeField): JiraIssueFieldsBuilder => {
     this.jiraIssueFields.dateTimePickerFields.push(field);
     return this;
   }

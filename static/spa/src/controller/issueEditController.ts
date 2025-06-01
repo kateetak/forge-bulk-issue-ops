@@ -6,6 +6,7 @@ import {
   BulkIssueEditRequestData,
   JiraDateField,
   JiraDateInput,
+  JiraDateTimeField,
   JiraIssueTypeField,
   JiraLabelsField,
   JiraLabelsInput,
@@ -22,6 +23,7 @@ import editedFieldsModel from "src/model/editedFieldsModel";
 import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 import { Issue } from "src/types/Issue";
 import { FieldEditValue } from "src/types/FieldEditValue";
+import { dateToJiraEditFormat } from "./dateTimeUtil";
 
 const issueEditPollPeriodMillis = 1000;
 
@@ -166,6 +168,17 @@ class IssueEditController {
             }
           }
           editedFieldsInputBuilder.addDatePickerField(jiraDueDateField);
+          break;
+        case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':
+          const parsedDateTime = new Date(editedFieldValue.value as string);
+          const formattedDateTime = dateToJiraEditFormat(parsedDateTime);
+          const jiraDateTimeField: JiraDateTimeField = {
+            fieldId: field.id,
+            dateTime: {
+              formattedDateTime: formattedDateTime
+            }
+          }
+          editedFieldsInputBuilder.addDateTimePickerField(jiraDateTimeField);
           break;
         default:
           console.warn(` * Unsupported field type: "${field.type}" (field ID ${field.id}). Skipping.`);

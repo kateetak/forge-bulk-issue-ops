@@ -13,7 +13,7 @@ import { Option } from '../types/Option'
 import Select from '@atlaskit/select';
 import TextArea from '@atlaskit/textarea';
 import Textfield from '@atlaskit/textfield';
-import { DatePicker } from '@atlaskit/datetime-picker';
+import { DatePicker, DateTimePicker } from '@atlaskit/datetime-picker';
 import UsersSelect from './UserSelect';
 import { User } from 'src/types/User';
 import LabelsSelect from './LabelsSelect';
@@ -289,7 +289,6 @@ export const FieldEditor = (props: FieldEditorProps) => {
   }
 
   const renderDateFieldEditor = () => {
-    // const dueDateField = field as DueDateField;
     const initialValue = props.maybeEditValue?.value;
     return (
       <div style={{width: '200px'}}>
@@ -298,6 +297,26 @@ export const FieldEditor = (props: FieldEditorProps) => {
           name={field.id}
           isDisabled={!props.enabled}
           shouldShowCalendarButton={true}
+          defaultValue={initialValue}
+          onChange={(isoTimeOrEmpty: string) => {
+            const newValue: FieldEditValue = {
+              value: isoTimeOrEmpty,
+            }
+            props.onChange(newValue);
+          }}
+        />
+      </div>
+    );
+  }
+
+  const renderDateTimeFieldEditor = () => {
+    const initialValue = props.maybeEditValue?.value;
+    return (
+      <div style={{width: '200px'}}>
+        <DateTimePicker
+          id={`date-for-${field.id}`}
+          name={field.id}
+          isDisabled={!props.enabled}
           defaultValue={initialValue}
           onChange={(isoTimeOrEmpty: string) => {
             const newValue: FieldEditValue = {
@@ -336,6 +355,8 @@ export const FieldEditor = (props: FieldEditorProps) => {
         return renderCommentFieldEditor();
       case 'duedate':
         return renderDateFieldEditor();
+      case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':
+        return renderDateTimeFieldEditor();
       default:
         return renderUnsupportedFieldEditor();
     }
