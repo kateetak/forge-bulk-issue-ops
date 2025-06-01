@@ -1,8 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { router, NavigationTarget, view } from '@forge/bridge';
-import { Router, Route, Routes, useNavigate } from "react-router";
+import { view } from '@forge/bridge';
+import { Router, Route, Routes } from "react-router";
 import BulkOperationPanel from "./panel/BulkOperationPanel";
-import BulkEditPanel from "./panel/BulkEditPanel";
 import BulkImportPanel from "./panel/BulkImportPanel";
 
 export type HomeProps = {

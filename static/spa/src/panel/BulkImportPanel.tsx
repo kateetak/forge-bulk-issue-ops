@@ -9,7 +9,7 @@ const BulkImportPanel = (props: BulkImportPanelProps) => {
     <div>
       <h3>Bulk Import Issues</h3>
       <p>
-        Sorry, this functionality is not available yet. Blame Dugald.
+        Sorry, this functionality is not available yet.
       </p>
     </div>
   )
