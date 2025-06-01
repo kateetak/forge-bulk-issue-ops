@@ -6,6 +6,7 @@ import { IssueBulkEditField } from 'src/types/IssueBulkEditFieldApiResponse';
 import { FieldEditor } from 'src/widget/FieldEditor';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
+import { FieldEditValue } from 'src/types/FieldEditValue';
 
 const fieldInfoDebugEnabled = false;
 const fieldValuesDebugEnabled = true;
@@ -18,7 +19,7 @@ export type FieldEditsPanelProps = {
 export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
   const [fieldIdsToEditStates, setFieldIdsToEditStates] = React.useState<ObjectMapping<EditState>>({});
-  const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<any>>({});
+  const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<FieldEditValue>>({});
   const [fields, setFields] = React.useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
   const initialiseStateFromIssues = async (issues: Issue[]): Promise<void> => {
@@ -88,8 +89,8 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
               <FieldEditor
                 field={field}
                 enabled={selectedForChange}
-                value={fieldIdsToValues[field.id]}
-                onChange={(value: any) => {
+                maybeEditValue={fieldIdsToValues[field.id]}
+                onChange={(value: FieldEditValue) => {
                   onFieldChange(field, value)
                 }}
               />

@@ -22,7 +22,7 @@ export interface IssueTypeOption {
 }
 
 // Main field types
-type MultiSelectOption = "ADD" | "REMOVE" | "REPLACE" | "REMOVE_ALL";
+export type MultiSelectOption = "ADD" | "REMOVE" | "REPLACE" | "REMOVE_ALL";
 
 export interface BaseField {
   type: string;

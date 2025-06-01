@@ -2,6 +2,7 @@ import React from 'react';
 import { 
   IssueBulkEditField,
   IssueTypeField,
+  LabelsField,
   NumberField,
   SelectField
 } from "../types/IssueBulkEditFieldApiResponse";
@@ -10,12 +11,15 @@ import Select from '@atlaskit/select';
 import Textfield from '@atlaskit/textfield';
 import UsersSelect from './UserSelect';
 import { User } from 'src/types/User';
+import LabelsSelect from './LabelsSelect';
+import FixedOptionsSelect from './FixedOptionsSelect';
+import { FieldEditValue, MultiSelectFieldEditOption, multiSelectFieldEditOptions } from 'src/types/FieldEditValue';
 
 export interface FieldEditorProps {
   field: IssueBulkEditField;
   enabled: boolean;
-  value: any;
-  onChange: (value: any) => void;
+  maybeEditValue?: FieldEditValue;
+  onChange: (value: FieldEditValue) => void;
 }
 
 export const FieldEditor = (props: FieldEditorProps) => {
@@ -27,7 +31,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
   }
 
   const renderIssueTypeFieldEditor = () => {
-    const issueTypeField: IssueTypeField = field as IssueTypeField;
+    const issueTypeField = field as IssueTypeField;
     const options: Option[] = [];
     for (const fieldOption of issueTypeField.fieldOptions) {
       const option: Option = {
@@ -47,7 +51,10 @@ export const FieldEditor = (props: FieldEditorProps) => {
         cacheOptions
         isDisabled={!props.enabled}
         onChange={(selectedOption: Option) => {
-          props.onChange(selectedOption.value);
+          const newValue: FieldEditValue = {
+            value: selectedOption.value,
+          }
+          props.onChange(newValue);
         }}
       />
     );
@@ -57,10 +64,11 @@ export const FieldEditor = (props: FieldEditorProps) => {
     const numberField: NumberField = field as NumberField;
     let defaultValue: number = NaN;
     try {
-      if (typeof props.value === 'number') {
-        defaultValue = props.value;
+      const value = props.maybeEditValue?.value;
+      if (typeof value === 'number') {
+        defaultValue = value;
       }
-      defaultValue = parseFloat(props.value);
+      defaultValue = parseFloat(value);
     } catch (error) {
       console.warn(`Error parsing number field value for field ID ${numberField.id}:`, error);
       defaultValue = NaN;
@@ -84,9 +92,76 @@ export const FieldEditor = (props: FieldEditorProps) => {
           } catch (error) {
             console.error(`Error parsing number field value for field ID ${numberField.id}:`, error);
           }
-          props.onChange(fieldValue);
+          const newValue: FieldEditValue = {
+            value: fieldValue,
+          }
+          props.onChange(newValue);
         }}
       />
+    );
+  }
+
+  const renderLabelsFieldEditor = () => {
+    const labelsField = field as LabelsField;
+    const multiSelectFieldOptions = labelsField.multiSelectFieldOptions;
+    // KNOWN-2: Filter out the 'REPLACE' option if it exists, as it is not supported in the UI.
+    const supportedMultiSelectFieldOptions: MultiSelectFieldEditOption[] = multiSelectFieldOptions.filter(option => option !== 'REPLACE');
+    const selectedMultiSelectFieldOption = props.maybeEditValue?.multiSelectFieldOption || 'ADD';
+    const selectedLabelOptions: Option[] = [];
+    const value = props.maybeEditValue?.value;
+    if (value && Array.isArray(value)) {
+      for (const label of value) {
+        const option: Option = {
+          value: label,
+          label: label,
+        };
+        selectedLabelOptions.push(option);
+      }
+    } else if (typeof value === 'string') {
+      const option: Option = {
+        value: value,
+        label: value,
+      };
+      selectedLabelOptions.push(option);
+    }
+    const selectedLabels = props.maybeEditValue?.value;
+    // KNOWN-3: Labels can not be created within the bulk edit form. The LabelsSelect component needs to be enhanced to support 
+    //          this (the underlying Select component supports this. See https://atlassian.design/components/select/code).
+    return (
+      <div className='edit-options-panel'>
+        <div className='edit-options'>
+          <FixedOptionsSelect
+            label="Edit type"
+            allowMultiple={false}
+            isDisabled={!props.enabled}
+            allOptionTexts={supportedMultiSelectFieldOptions}
+            selectedOptionTexts={[selectedMultiSelectFieldOption]}
+            onSelect={async (selectedOptionTexts: string[]): Promise<void> => {
+              const multiSelectFieldOption = selectedOptionTexts.length > 0 ? selectedOptionTexts[0] : undefined;
+              const newValue: FieldEditValue = {
+                value: value,
+                multiSelectFieldOption: multiSelectFieldOption as MultiSelectFieldEditOption,
+              }
+              props.onChange(newValue);
+            }}
+          />
+        </div>
+        <div className='edit-value'>
+          <LabelsSelect
+            label="Labels"
+            allowMultiple={true}
+            isDisabled={!props.enabled || selectedMultiSelectFieldOption === 'REMOVE_ALL'}
+            selectedLabels={selectedLabels}
+            onLabelsSelect={async (selectedLabels: string[]): Promise<void> => {
+              const newValue: FieldEditValue = {
+                value: selectedLabels,
+                multiSelectFieldOption: props.maybeEditValue?.multiSelectFieldOption,
+              }
+              props.onChange(newValue);
+            }}
+          />
+        </div>
+      </div>
     );
   }
 
@@ -116,7 +191,10 @@ export const FieldEditor = (props: FieldEditorProps) => {
         cacheOptions
         isDisabled={!props.enabled}
         onChange={(selectedOption: Option) => {
-          props.onChange(selectedOption.value);
+          const newValue: FieldEditValue = {
+            value: selectedOption.value,
+          }
+          props.onChange(newValue);
         }}
       />
     );
@@ -136,7 +214,10 @@ export const FieldEditor = (props: FieldEditorProps) => {
           if (selectedUsers.length === 0) {
             props.onChange(undefined);
           } else {
-            props.onChange(selectedUsers[0].accountId);
+            const newValue: FieldEditValue = {
+              value: selectedUsers[0].accountId,
+            }
+            props.onChange(newValue);
           }
         }}
       />
@@ -160,6 +241,8 @@ export const FieldEditor = (props: FieldEditorProps) => {
       case 'reporter':
       case 'assignee':
         return renderSingleUserSelectFieldEditor();
+      case 'labels':
+        return renderLabelsFieldEditor();
       case 'text':
         return renderTextFieldEditor();
       default:

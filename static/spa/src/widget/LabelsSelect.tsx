@@ -8,24 +8,23 @@ import jiraDataModel from 'src/model/jiraDataModel';
   Select docs: https://atlassian.design/components/select/examples
 */
 
-export type LabelSelectProps = {
+export type LabelsSelectProps = {
   label: string;
+  isDisabled?: boolean;
   allowMultiple: boolean;
   selectedLabel?: string;
   selectedLabels?: string[],
   onLabelsSelect: (selectedLabels: string[]) => Promise<void>;
 }
 
-const LabelSelect = (props: LabelSelectProps) => {
+const LabelsSelect = (props: LabelsSelectProps) => {
 
-  const [labelInfo, setLabelInfo] = useState<any>({
-    values: []
-  });
+  const [labels, setLabels] = useState<string[]>([]);
   const [labelInfoRetrievalTime, setLabelInfoRetrievalTime] = useState<number>(0);
 
   const refreshLabelInfo = async () => {
-    const labelInfo = await jiraDataModel.getLabelsInfo();
-    setLabelInfo(labelInfo);
+    const labels = await jiraDataModel.getAllLabels();
+    setLabels(labels);
     setLabelInfoRetrievalTime(Date.now());
   }
 
@@ -33,13 +32,13 @@ const LabelSelect = (props: LabelSelectProps) => {
     refreshLabelInfo();
   }, []);
 
-  const options = labelInfo.values.map((label: string) => ({
+  const options = labels.map((label: string) => ({
     label: label,
     value: label,
   }));
 
   const onSingleSelectChange = async (selectedOption: undefined | Option): Promise<void> => {
-    // console.log(`LabelSelect.onChange: `, selectedOption);
+    // console.log(`LabelsSelect.onChange: `, selectedOption);
     if (selectedOption) {
       await props.onLabelsSelect([selectedOption.value]);
     } else {
@@ -78,6 +77,7 @@ const LabelSelect = (props: LabelSelectProps) => {
         key={`single-label-select-${labelInfoRetrievalTime}`}
         inputId="radio-select-example"
         testId="react-select"
+        isDisabled={props.isDisabled}
         defaultValue={defaultValue}
         options={options}
         placeholder={props.label}
@@ -92,6 +92,7 @@ const LabelSelect = (props: LabelSelectProps) => {
         key={`multi-label-select-${labelInfoRetrievalTime}`}
         inputId="checkbox-select-example"
         testId="select"
+        isDisabled={props.isDisabled}
         defaultValue={defaultValue}
         options={options}
         placeholder={props.label}
@@ -108,4 +109,4 @@ const LabelSelect = (props: LabelSelectProps) => {
   );
 }
 
-export default LabelSelect;
+export default LabelsSelect;

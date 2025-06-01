@@ -1,24 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import Button from '@atlaskit/button/new';
-import LabelSelect from '../widget/LabelsSelect';
+import LabelsSelect from '../widget/LabelsSelect';
 import { Project } from '../types/Project';
 import { FormSection, Label } from '@atlaskit/form';
 import Toggle from '@atlaskit/toggle';
-import Lozenge from '@atlaskit/lozenge';
 import IssueTypesSelect from '../widget/IssueTypesSelect';
 import { IssueType } from '../types/IssueType';
 import { IssueSearchInfo } from '../types/IssueSearchInfo';
-// import { FlagOptions, showFlag } from '@forge/bridge';
 import { Issue } from '../types/Issue';
-// import { LinearProgress } from '@mui/material';
 import { LoadingState } from '../types/LoadingState';
 import { nilIssueSearchInfo } from '../model/nilIssueSearchInfo';
 import { TaskOutcome } from '../types/TaskOutcome';
-import issueMoveController from '../controller/issueMoveController';
 import { IssueSearchParameters } from '../types/IssueSearchParameters';
-import { IssueMoveRequestOutcome } from '../types/IssueMoveRequestOutcome';
 import jiraUtil from '../controller/jiraUtil';
-import { IssueMoveOutcomeResult } from '../types/IssueMoveOutcomeResult';
 import JQLInputPanel from '../widget/JQLInputPanel';
 import ProjectsSelect from '../widget/ProjectsSelect';
 import jiraDataModel from '../model/jiraDataModel';
@@ -28,7 +22,6 @@ import { ProjectFieldMappings } from '../types/ProjectFieldMappings';
 import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
 import targetMandatoryFieldsProvider from 'src/controller/TargetMandatoryFieldsProvider';
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
-import { TaskStatusLozenge } from '../widget/TaskStatusLozenge';
 import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
 import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects, taskStatusPollPeriodMillis } from 'src/model/config';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
@@ -60,9 +53,6 @@ type DebugInfo = {
 }
 
 type FilterMode = 'basic' | 'advanced';
-
-// type StepName =               'filter' | 'issue-selection' | 'target-project-selection' | 'issue-type-mapping' | 'field-mapping' | 'edit-fields' | 'move-or-edit';
-// const allSteps: StepName[] = ['filter',  'issue-selection',  'target-project-selection',  'issue-type-mapping',  'field-mapping',  'edit-fields',  'move-or-edit'];
 
 
 
@@ -639,7 +629,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const renderLabelsSelect = () => {
     return (
       <FormSection>
-        <LabelSelect 
+        <LabelsSelect
           label="Labels"
           allowMultiple={true}
           selectedLabels={selectedLabels}

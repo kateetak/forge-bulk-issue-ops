@@ -4,6 +4,9 @@ import jiraDataModel from "../model/jiraDataModel";
 import { InvocationResult } from "../types/InvocationResult";
 import { 
   BulkIssueEditRequestData,
+  JiraLabelsField,
+  JiraLabelsInput,
+  JiraMultipleSelectUserPickerField,
   JiraNumberField,
   JiraSelectedOptionField,
   JiraSingleSelectField,
@@ -13,6 +16,7 @@ import { BulkIssueEditRequestDataBuilder, JiraIssueFieldsBuilder } from "./BulkI
 import editedFieldsModel from "src/model/editedFieldsModel";
 import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 import { Issue } from "src/types/Issue";
+import { FieldEditValue } from "src/types/FieldEditValue";
 
 const issueEditPollPeriodMillis = 1000;
 
@@ -82,7 +86,7 @@ class IssueEditController {
     const sendBulkNotification = editedFieldsModel.getSendBulkNotification();
     const editedFieldsInputBuilder = new JiraIssueFieldsBuilder();
     const selectedActions: string[] = [];
-    const callback = (field: IssueBulkEditField, editedFieldValue: any) => {
+    const callback = (field: IssueBulkEditField, editedFieldValue: FieldEditValue) => {
       if (editedFieldValue === undefined || editedFieldValue === null) {
         // If the value is undefined or null, skip this field.
         return;
@@ -92,13 +96,13 @@ class IssueEditController {
         case 'com.atlassian.jira.plugin.system.customfieldtypes:float':
           const jiraNumberField: JiraNumberField = {
             fieldId: field.id,
-            value: editedFieldValue
+            value: editedFieldValue.value
           }
           editedFieldsInputBuilder.addClearableNumberField(jiraNumberField);
           break;
         case 'com.atlassian.jira.plugin.system.customfieldtypes:select':
           const option: JiraSelectedOptionField = {
-            optionId: editedFieldValue
+            optionId: editedFieldValue.value
           }
           const jiraSingleSelectField: JiraSingleSelectField = {
             fieldId: field.id,
@@ -111,11 +115,23 @@ class IssueEditController {
           const jiraSingleSelectUserPickerField: JiraSingleSelectUserPickerField = {
             fieldId: field.id,
             user: {
-              accountId: editedFieldValue
+              accountId: editedFieldValue.value
             }
           }
           editedFieldsInputBuilder.addSingleSelectClearableUserPickerField(jiraSingleSelectUserPickerField);
           break;
+        case 'labels':
+          const rawLabels: string[] = editedFieldValue.value as string[];
+          const bulkEditMultiSelectFieldOption = editedFieldValue.multiSelectFieldOption ?
+            editedFieldValue.multiSelectFieldOption : 'ADD';
+          const labels: JiraLabelsInput[] = bulkEditMultiSelectFieldOption === 'REMOVE_ALL' ?
+            [] : rawLabels.map(label => ({ name: label }));
+          const jiraLabelsField: JiraLabelsField = {
+            fieldId: field.id,
+            bulkEditMultiSelectFieldOption: bulkEditMultiSelectFieldOption,
+            labels: labels
+          }
+          editedFieldsInputBuilder.addLabelsField(jiraLabelsField);
         default:
           console.warn(` * Unsupported field type: "${field.type}" (field ID ${field.id}). Skipping.`);
           return;

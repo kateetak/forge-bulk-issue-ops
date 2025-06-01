@@ -90,6 +90,9 @@ Configuration options can be defined in [static/spa/src/model/config.ts](static/
 
 # Known issues
 
-* The move functionality does not allow the target issue type and status to be specified. It is assumed the target issue type and status exists in the target project and will therefore remain unchanged.
-* Using deprecated API https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
+Where possible, known issues are documented in the relevant locations in the code. To address the known issues, start by searching the code base for the known issue key.
+
+* KNOWN-1: Using deprecated API https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
+* KNOWN-2: The `REMOVE` option is not supported when bulk editing labels.
+* KNOWN-3: Labels can not be created within the bulk edit form.
 

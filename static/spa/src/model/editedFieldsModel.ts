@@ -4,8 +4,9 @@ import ListenerGroup from "src/model/ListenerGroup";
 import { Issue } from "src/types/Issue";
 import jiraDataModel from "./jiraDataModel";
 import moveRuleEnforcer from "src/controller/moveRuleEnforcer";
+import { FieldEditValue } from "src/types/FieldEditValue";
 
-export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, editedFieldValue: any) => void;
+export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, editedFieldValue: FieldEditValue) => void;
 
 export type EditState = 'no-change' | 'change';
 export const defaultEditState: EditState = 'no-change';
@@ -56,7 +57,7 @@ class EditedFieldsModel {
   }
 
   setIssues = async (issues: Issue[]) => {
-    console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
+    // console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
     const fields = await jiraDataModel.getAllIssueBulkEditFields(issues);
     // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
     const filteredFields = await moveRuleEnforcer.filterEditFields(fields);

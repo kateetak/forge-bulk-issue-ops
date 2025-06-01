@@ -28,6 +28,7 @@ import { Issue } from 'src/types/Issue';
 import { UserSearchInfo } from 'src/types/UserSearchInfo';
 import { User } from 'src/types/User';
 import { BulkIssueEditRequestData } from 'src/types/BulkIssueEditRequestData';
+import { ObjectMapping } from 'src/types/ObjectMapping';
 
 class JiraDataModel {
 
@@ -36,7 +37,8 @@ class JiraDataModel {
   private fieldAndContextIdsToCustomFieldContextOptions = new Map<string, CustomFieldContextOption[]>();
   private projectIdsToProjectCreateIssueMetadata = new Map<string, ProjectCreateIssueMetadata>();
   private issueIdsOrKeysToEditIssueMetadata = new Map<string, EditIssueMetadata>();
-
+  private labelPagesToLabels: ObjectMapping<string[]> = {};
+  
   // This cache could be changed to be on a per page basis, but for now, the requesting of IssueBulkEditFields
   // recursively fetches all fields for the project and issue type ids of the issues which might be prone to failure 
   // due to the possibility of Forge function timeouts.
@@ -129,19 +131,48 @@ class JiraDataModel {
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-labels/#api-rest-api-3-label-get
-  getLabelsInfo = async () => {
-    const response = await requestJira(`/rest/api/3/label`, {
-      headers: {
-        'Accept': 'application/json'
+  getAllLabels = async () => {
+    // const maxResultsPerPage = 1000;
+    const maxResultsPerPage = 1000;
+    let startAt = 0;
+    let allLabels: string[] = [];
+    let index = 0;
+    while (true && index < 3) {
+      const labelsPage = await this.pageOfLabels(startAt, maxResultsPerPage);
+      allLabels = allLabels.concat(labelsPage.values);
+      if (labelsPage.isLast) {
+        break;
       }
-    });
-    // console.log(`Response: ${response.status} ${response.statusText}`);
-    const labels = await response.json();
-    // console.log(`Labels: ${JSON.stringify(labels, null, 2)}`);
-    return labels;
+      startAt += maxResultsPerPage;
+      index++;
+    }
+    // console.log(`getAllLabels: All labels: ${JSON.stringify(allLabels, null, 2)}`);
+    return allLabels;
+  }
+
+  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-labels/#api-rest-api-3-label-get
+  private pageOfLabels = async (startAt: number, maxResults: number) => {
+    const cacheKey = `page-${startAt}-${maxResults}`;
+    const cachedLabels = this.labelPagesToLabels[cacheKey];
+    if (cachedLabels) {
+      return cachedLabels;
+    } else {
+      const response = await requestJira(`/rest/api/3/label?startAt=${startAt}&maxResults=${maxResults}`, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      // console.log(`Response: ${response.status} ${response.statusText}`);
+      const labelsPage = await response.json();
+      // console.log(`Labels: ${JSON.stringify(labels, null, 2)}`);
+      this.labelPagesToLabels[cacheKey] = labelsPage;
+      // console.log(`getAllLabels: Page labels: ${JSON.stringify(labelsPage, null, 2)}`);
+      return labelsPage;
+    }
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
+  // KNOWN-1: This API has been deprecated, however, there appears to be no follow through. See https://developer.atlassian.com/changelog/#CHANGE-1304.
   getCreateIssueMetadataForProject = async (projectId: string): Promise<ProjectCreateIssueMetadata> => {
     const cachedCreateIssueMetadata = this.projectIdsToProjectCreateIssueMetadata.get(projectId);
     if (cachedCreateIssueMetadata) {
@@ -598,7 +629,7 @@ class JiraDataModel {
       queryOptions += `&startingAfter=${startingAfter}`;
     }
     const path = `/rest/api/3/bulk/issues/fields?${queryOptions}`;
-    console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields for ${issues.length} issues.`);
+    // console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields for ${issues.length} issues.`);
     const response = await requestJira(path, {
       headers: {
         'Accept': 'application/json'

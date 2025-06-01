@@ -36,6 +36,22 @@ div.warning-message {
   color: #fff;
 }
 
+div.edit-options-panel {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  justify-content:left;
+  align-items: flex-start;
+}
+
+div.edit-options-panel > div.edit-options {
+  flex-grow: 1;
+}
+
+div.edit-options-panel > div.edit-value {
+  flex-grow: 100;
+}
+
 div.bulk-move-main-panel {
   margin-top: 20px;
   display: flex;
