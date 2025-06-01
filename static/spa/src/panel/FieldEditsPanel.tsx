@@ -106,6 +106,9 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     if (fields.length === 0 || editedFieldsModel.getIssues().length === 0) {
       return <div>No fields available.</div>;
     }
+    const filteredFields = fields.filter(field => {
+      return field.name.toLowerCase().includes(fieldNameFilter);
+    });
     const renderedTableHead = (
       <thead>
         <tr>
@@ -115,9 +118,6 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
         </tr>
       </thead>
     );
-    const filteredFields = fields.filter(field => {
-      return field.name.toLowerCase().includes(fieldNameFilter);
-    });
     const renderedTableRows = (
       filteredFields.map((field, index) => {
         const selectedForChange = isSelectedForChange(field.id);

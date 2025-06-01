@@ -24,6 +24,7 @@ import { TaskStatusLozenge } from 'src/widget/TaskStatusLozenge';
 import { formatProject } from 'src/controller/formatters';
 import issueEditController from 'src/controller/issueEditController';
 import { uuid } from 'src/model/util';
+import { FieldEditValue } from 'src/types/FieldEditValue';
 
 const showDebug = false;
 
@@ -165,7 +166,15 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       }
       return label;
     } else if (props.bulkOperationMode === 'Edit') {
-      return `Edit ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
+      const editedFieldsCount = editedFieldsModel.getEditCount();
+      let label = 'Edit';
+      if (editedFieldsCount > 0) {
+        label += ` ${editedFieldsCount} field${editedFieldsCount > 1 ? 's' : ''}`;
+      }
+      if (props.selectedIssues.length > 0) {
+        label += ` for ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
+      }
+      return label;
     }
     throw new Error(`Unsupported bulk operation mode: ${props.bulkOperationMode}`);
   }
@@ -185,6 +194,35 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       }]
     }
     const flag = showFlag(flagOptions);
+  }
+
+  const renderEditSummary = () => {
+    if (props.bulkOperationMode === 'Edit') {
+      const editCount = editedFieldsModel.getEditCount();
+      if (editCount > 0) {
+        let editFieldNames = '';
+        editedFieldsModel.iterateFields((field, value) => {
+          if (editFieldNames.length > 0) {
+            editFieldNames += ', ';
+          }
+          editFieldNames += field.name;
+        });
+        return (
+          <div>
+            <FormSection>
+              <Label htmlFor="edit-summary">Fields that will be edited: </Label>
+              <div>
+                {editFieldNames}
+              </div>
+            </FormSection>
+          </div>
+        );
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
   }
 
   const sendBulkNotificationToggle = () => {
@@ -218,7 +256,6 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
         .addCheck(!currentMoveActivity, 'Current move activity is not yet complete.')
         .build();
     } else if (props.bulkOperationMode === 'Edit') {
-      // const dd = fieldIdsToValues;
       const editValuesSpecified = editedFieldsModel.haveValuesBeenSpecified();
       waitingMessage = new WaitingMessageBuilder()
         // .addCheck(isStepComplete('edit-fields'), 'Waiting for edits to be specified.')
@@ -228,9 +265,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     }
     const buttonEnabled = waitingMessage === '';
     return (
-      <div 
-        // key={`field-mapping-panel-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}`}
-      >
+      <div>
         {renderPanelMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
         <Button
           // key={`move-edit-button-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}-${fieldIdsToValuesTime}`}
@@ -317,6 +352,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       <FormSection>
         {sendBulkNotificationToggle()}
       </FormSection>
+      {renderEditSummary()}
       <FormSection>
         {renderStartMoveOrEditButton()}
       </FormSection>
