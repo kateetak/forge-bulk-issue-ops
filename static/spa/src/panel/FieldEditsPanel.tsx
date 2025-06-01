@@ -5,7 +5,7 @@ import { IconButton } from '@atlaskit/button/new';
 import { Label } from '@atlaskit/form';
 import { Issue } from 'src/types/Issue';
 import { IssueBulkEditField } from 'src/types/IssueBulkEditFieldApiResponse';
-import { FieldEditor, isFieldTypeEditingSupported } from 'src/widget/FieldEditor';
+import { FieldEditor, isFieldTypeEditingSupported, renderUnsupportedFieldTypesDebug } from 'src/widget/FieldEditor';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
 import { FieldEditValue } from 'src/types/FieldEditValue';
@@ -118,10 +118,9 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
         </tr>
       </thead>
     );
-
     const renderedTableRows: any[] = [];
     editedFieldsModel.iterateAllFields((field: IssueBulkEditField, value: FieldEditValue) => {
-      const showRow = isFieldTypeEditingSupported(field.type) && field.name.toLowerCase().includes(fieldNameFilter);
+      const showRow = (renderUnsupportedFieldTypesDebug || isFieldTypeEditingSupported(field.type)) && field.name.toLowerCase().includes(fieldNameFilter);
       if (showRow) {
         const selectedForChange = isSelectedForChange(field.id);
         const renderedTableRow = (
@@ -151,37 +150,6 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
         renderedTableRows.push(renderedTableRow);
       }
     });
-
-    // const xxxrenderedTableRows = (
-    //   filteredFields.map((field, index) => {
-    //     const selectedForChange = isSelectedForChange(field.id);
-    //     return (
-    //       <tr key={`field-${field.id}`}>
-    //         <td style={{width: toggleColumnWidth}}>
-    //           <Toggle
-    //             id={`toggle-field-${field.id}`}
-    //             isChecked={selectedForChange}
-    //             onChange={(event: any) => {
-    //               onToggleEditState(field.id, event.currentTarget.checked);
-    //               // onRetainFieldValueSelection(targetIssueType, fieldId, fieldMetadata, event.currentTarget.checked);
-    //             }}
-    //           />
-    //         </td>
-    //         <td>{field.name}</td>
-    //         <td>
-    //           <FieldEditor
-    //             field={field}
-    //             enabled={selectedForChange}
-    //             maybeEditValue={fieldIdsToValues[field.id]}
-    //             onChange={(value: FieldEditValue) => {
-    //               onFieldChange(field, value)
-    //             }}
-    //           />
-    //         </td>
-    //       </tr>
-    //     )
-    //   })
-    // )
     return (
       <div>
         <table>

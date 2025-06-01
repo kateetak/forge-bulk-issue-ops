@@ -22,7 +22,12 @@ import { FieldEditValue, MultiSelectFieldEditOption } from 'src/types/FieldEditV
 import { adfToText, textToAdf } from 'src/controller/textToAdf';
 import { Label } from '@atlaskit/form';
 
-const renderUnsupportedFieldTypesDebug = true;
+// KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it. To extend
+//          support, start by setting the following constant to true since this will render the unsupported field types
+//          within the UI for debugging purposes. Then, for each new field type, (a) add a case statement to the renderFieldEditor
+//          function, (b) implement the new field edit render function, (c) include the new field type in the isFieldTypeEditingSupported
+//          function, and (d) add support for the new field type in issueEditController.ts.
+export const renderUnsupportedFieldTypesDebug = false;
 
 export interface FieldEditorProps {
   field: IssueBulkEditField;

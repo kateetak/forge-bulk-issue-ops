@@ -24,7 +24,6 @@ import { TaskStatusLozenge } from 'src/widget/TaskStatusLozenge';
 import { formatProject } from 'src/controller/formatters';
 import issueEditController from 'src/controller/issueEditController';
 import { uuid } from 'src/model/util';
-import { FieldEditValue } from 'src/types/FieldEditValue';
 
 const showDebug = false;
 

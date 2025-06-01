@@ -96,4 +96,5 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-2: The `REMOVE` option is not supported when bulk editing labels.
 * KNOWN-3: Labels can not be created within the bulk edit form.
 * KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
+* KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it.
 
