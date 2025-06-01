@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
   CommentField,
+  DueDateField,
   IssueBulkEditField,
   IssueTypeField,
   LabelsField,
@@ -12,6 +13,7 @@ import { Option } from '../types/Option'
 import Select from '@atlaskit/select';
 import TextArea from '@atlaskit/textarea';
 import Textfield from '@atlaskit/textfield';
+import { DatePicker } from '@atlaskit/datetime-picker';
 import UsersSelect from './UserSelect';
 import { User } from 'src/types/User';
 import LabelsSelect from './LabelsSelect';
@@ -286,6 +288,28 @@ export const FieldEditor = (props: FieldEditorProps) => {
     )
   }
 
+  const renderDateFieldEditor = () => {
+    // const dueDateField = field as DueDateField;
+    const initialValue = props.maybeEditValue?.value;
+    return (
+      <div style={{width: '200px'}}>
+        <DatePicker
+          id={`date-for-${field.id}`}
+          name={field.id}
+          isDisabled={!props.enabled}
+          shouldShowCalendarButton={true}
+          defaultValue={initialValue}
+          onChange={(isoTimeOrEmpty: string) => {
+            const newValue: FieldEditValue = {
+              value: isoTimeOrEmpty,
+            }
+            props.onChange(newValue);
+          }}
+        />
+      </div>
+    );
+  }
+
   const renderUnsupportedFieldEditor = () => {
     return <div>Unsupported field type: {field.type}</div>;
   }
@@ -310,6 +334,8 @@ export const FieldEditor = (props: FieldEditorProps) => {
         return renderTextFieldEditor();
       case 'comment':
         return renderCommentFieldEditor();
+      case 'duedate':
+        return renderDateFieldEditor();
       default:
         return renderUnsupportedFieldEditor();
     }

@@ -4,6 +4,8 @@ import jiraDataModel from "../model/jiraDataModel";
 import { InvocationResult } from "../types/InvocationResult";
 import { 
   BulkIssueEditRequestData,
+  JiraDateField,
+  JiraDateInput,
   JiraIssueTypeField,
   JiraLabelsField,
   JiraLabelsInput,
@@ -155,6 +157,15 @@ class IssueEditController {
             }
           }
           editedFieldsInputBuilder.addRichTextField(jiraCommentField);
+          break;
+        case 'duedate':
+          const jiraDueDateField: JiraDateField = {
+            fieldId: field.id,
+            date: {
+              formattedDate: editedFieldValue.value as string
+            }
+          }
+          editedFieldsInputBuilder.addDatePickerField(jiraDueDateField);
           break;
         default:
           console.warn(` * Unsupported field type: "${field.type}" (field ID ${field.id}). Skipping.`);
