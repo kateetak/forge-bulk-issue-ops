@@ -20,6 +20,29 @@ class EditedFieldsModel {
   private fieldIdsToFields: ObjectMapping<IssueBulkEditField> = {};
   private fieldIdsToValues: ObjectMapping<any> = {};
 
+  getEditedFields = (): ObjectMapping<FieldEditValue> => {
+    const editedFields: ObjectMapping<FieldEditValue> = {};
+    for (const fieldId in this.fieldIdsToValues) {
+      if (this.fieldIdsToValues.hasOwnProperty(fieldId)) {
+        const value = this.fieldIdsToValues[fieldId];
+        const fieldState = this.fieldIdsToEditStates[fieldId];
+        if (fieldState === 'change') {
+          // Only include fields that have been marked for change.
+          const field = this.fieldIdsToFields[fieldId];
+          if (field) {
+            editedFields[fieldId] = value;
+          }
+        }
+      }
+    }
+    return editedFields;
+  }
+
+  getEditCount = (): number => {
+    const editedFields = this.getEditedFields();
+    return Object.keys(editedFields).length;
+  }
+
   getIssues = (): Issue[] => {
     return this.issues;
   }

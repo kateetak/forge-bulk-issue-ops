@@ -205,6 +205,8 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       // const dd = fieldIdsToValues;
       const editValuesSpecified = editedFieldsModel.haveValuesBeenSpecified();
       waitingMessage = new WaitingMessageBuilder()
+        // .addCheck(isStepComplete('edit-fields'), 'Waiting for edits to be specified.')
+        .addCheck(editedFieldsModel.getEditCount() > 0, 'Waiting for at least one field edit to be specified.')
         .addCheck(editValuesSpecified, 'Waiting for at least one new field value.')
         .build();
     }

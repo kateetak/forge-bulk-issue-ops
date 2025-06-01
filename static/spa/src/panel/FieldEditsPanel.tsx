@@ -8,12 +8,14 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
 import { FieldEditValue } from 'src/types/FieldEditValue';
 
-const fieldInfoDebugEnabled = false;
+const editedFieldsDebugEnabled = true;
 const fieldValuesDebugEnabled = true;
+const fieldInfoDebugEnabled = false;
 
 export type FieldEditsPanelProps = {
   selectedIssues: Issue[];
   selectedIssuesTime: number;
+  onEditsValidityChange: (editsValid: boolean) => void;
 }
 
 export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
@@ -49,11 +51,15 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     }
     editedFieldsModel.setFieldEditState(fieldId, newState[fieldId]);
     setFieldIdsToEditStates(newState);
+    const valid = editedFieldsModel.getEditCount() > 0;
+    props.onEditsValidityChange(valid);
   }
 
   const onFieldChange = (field: IssueBulkEditField, value: any) => {
     const newState = editedFieldsModel.setFieldValue(field, value);
     setFieldIdsToValues(newState);
+    const valid = editedFieldsModel.getEditCount() > 0;
+    props.onEditsValidityChange(valid);
   }
 
   const renderFields = () => {
@@ -111,12 +117,12 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     );
   }
 
-  const renderFieldValuesDebug = () => {
+  const renderDataDebug = (label: string, data: any) => {
     if (fieldValuesDebugEnabled) {
       return (
         <div>
-          <h3>Field Values Debug</h3>
-          <pre>{JSON.stringify(fieldIdsToValues, null, 2)}</pre>
+          <h3>{label}</h3>
+          <pre>{JSON.stringify(data, null, 2)}</pre>
         </div>
       );
     } else {
@@ -124,23 +130,25 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     }
   }
 
+  const renderEditedFieldsDebug = () => {
+    const editedFields = editedFieldsModel.getEditedFields();
+    return renderDataDebug('Edited Fields Debug', editedFields);
+  }
+
+  const renderFieldValuesDebug = () => {
+    return renderDataDebug('Field Values Debug', fieldIdsToValues);
+  }
+
   const renderFieldInfoDebug = () => {
-    if (fieldInfoDebugEnabled) {
-      return (
-        <div>
-          <pre>{JSON.stringify(fields, null, 2)}</pre>
-        </div>
-      );
-    } else {
-      return null;
-    }
+    return renderDataDebug('Fields Debug', fields);
   }
 
   return (
     <div style={{marginTop:  '20px'}}>
       {renderFields()}
-      {renderFieldValuesDebug()}
-      {renderFieldInfoDebug()}
+      {editedFieldsDebugEnabled ? renderEditedFieldsDebug() : null}
+      {fieldValuesDebugEnabled ? renderFieldValuesDebug() : null}
+      {fieldInfoDebugEnabled ? renderFieldInfoDebug() : null}
     </div>
   );
 

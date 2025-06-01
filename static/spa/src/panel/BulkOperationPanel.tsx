@@ -157,8 +157,17 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     }));
   }
 
+  const onEditsValidityChange = (valid: boolean) => {
+    setStepCompletionState('edit-fields', valid ? 'complete' : 'incomplete');
+  }
+
   const getStepCompletionState = (stepName: StepName): CompletionState => {
     return stepNamesToCompletionState[stepName];
+  }
+
+  const isStepComplete = (stepName: StepName): boolean => {
+    const completionState = getStepCompletionState(stepName);
+    return completionState === 'complete';
   }
 
   const arePrerequisiteStepsComplete = (priorToStepName: StepName): boolean => {
@@ -996,6 +1005,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
           <FieldEditsPanel
             selectedIssues={selectedIssues}
             selectedIssuesTime={issueSearchInfoTime}
+            onEditsValidityChange={onEditsValidityChange}
           />
           {renderFlexboxEqualWidthGrowPanel()}
         </div>

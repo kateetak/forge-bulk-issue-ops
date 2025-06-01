@@ -4,6 +4,7 @@ import {
   IssueTypeField,
   LabelsField,
   NumberField,
+  PriorityField,
   SelectField
 } from "../types/IssueBulkEditFieldApiResponse";
 import { Option } from '../types/Option'
@@ -37,6 +38,36 @@ export const FieldEditor = (props: FieldEditorProps) => {
       const option: Option = {
         value: fieldOption.id,
         label: fieldOption.issueType,
+      };
+      options.push(option);
+
+    }
+    return (
+      <Select
+        inputId="checkbox-select-example"
+        testId="projects-select"
+        isMulti={false}
+        isRequired={true}
+        options={options}
+        cacheOptions
+        isDisabled={!props.enabled}
+        onChange={(selectedOption: Option) => {
+          const newValue: FieldEditValue = {
+            value: selectedOption.value,
+          }
+          props.onChange(newValue);
+        }}
+      />
+    );
+  }
+
+  const renderPriorityFieldEditor = () => {
+    const priorityField = field as PriorityField;
+    const options: Option[] = [];
+    for (const fieldOption of priorityField.fieldOptions) {
+      const option: Option = {
+        value: fieldOption.id,
+        label: fieldOption.priority,
       };
       options.push(option);
 
@@ -243,6 +274,8 @@ export const FieldEditor = (props: FieldEditorProps) => {
         return renderSingleUserSelectFieldEditor();
       case 'labels':
         return renderLabelsFieldEditor();
+      case 'priority':
+        return renderPriorityFieldEditor();
       case 'text':
         return renderTextFieldEditor();
       default:

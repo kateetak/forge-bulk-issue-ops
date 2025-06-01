@@ -9,6 +9,7 @@ import {
   JiraLabelsInput,
   JiraMultipleSelectUserPickerField,
   JiraNumberField,
+  JiraPriorityField,
   JiraSelectedOptionField,
   JiraSingleSelectField,
   JiraSingleSelectUserPickerField
@@ -99,6 +100,12 @@ class IssueEditController {
             issueTypeId: editedFieldValue.value
           }
           editedFieldsInputBuilder.setIssueType(jiraIssueTypeField);
+          break;
+        case 'priority':
+          const jiraPriorityField: JiraPriorityField = {
+            priorityId: editedFieldValue.value
+          }
+          editedFieldsInputBuilder.setPriority(jiraPriorityField);
           break;
         case 'com.atlassian.jira.plugin.system.customfieldtypes:float':
           const jiraNumberField: JiraNumberField = {
