@@ -8,7 +8,7 @@
 import { MultiSelectOption } from "./IssueBulkEditFieldApiResponse";
 
 export type MultiSelectFieldEditOption = MultiSelectOption; //'ADD' | 'REMOVE' | 'REPLACE' | 'REMOVE_ALL';
-export const multiSelectFieldEditOptions = ['ADD', 'REMOVE', 'REPLACE', 'REMOVE_ALL'] as MultiSelectFieldEditOption[];
+export const allMultiSelectFieldEditOptions = ['ADD', 'REMOVE', 'REPLACE', 'REMOVE_ALL'] as MultiSelectFieldEditOption[];
 
 export type FieldEditValue = {
   value: any;

@@ -4,6 +4,7 @@ import jiraDataModel from "../model/jiraDataModel";
 import { InvocationResult } from "../types/InvocationResult";
 import { 
   BulkIssueEditRequestData,
+  JiraIssueTypeField,
   JiraLabelsField,
   JiraLabelsInput,
   JiraMultipleSelectUserPickerField,
@@ -93,6 +94,12 @@ class IssueEditController {
       }
       selectedActions.push(field.id);
       switch (field.type) {
+        case 'issuetype':
+          const jiraIssueTypeField: JiraIssueTypeField = {
+            issueTypeId: editedFieldValue.value
+          }
+          editedFieldsInputBuilder.setIssueType(jiraIssueTypeField);
+          break;
         case 'com.atlassian.jira.plugin.system.customfieldtypes:float':
           const jiraNumberField: JiraNumberField = {
             fieldId: field.id,

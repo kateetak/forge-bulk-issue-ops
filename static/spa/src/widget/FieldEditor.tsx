@@ -13,7 +13,7 @@ import UsersSelect from './UserSelect';
 import { User } from 'src/types/User';
 import LabelsSelect from './LabelsSelect';
 import FixedOptionsSelect from './FixedOptionsSelect';
-import { FieldEditValue, MultiSelectFieldEditOption, multiSelectFieldEditOptions } from 'src/types/FieldEditValue';
+import { FieldEditValue, MultiSelectFieldEditOption } from 'src/types/FieldEditValue';
 
 export interface FieldEditorProps {
   field: IssueBulkEditField;
