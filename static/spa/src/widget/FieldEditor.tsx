@@ -22,11 +22,31 @@ import { FieldEditValue, MultiSelectFieldEditOption } from 'src/types/FieldEditV
 import { adfToText, textToAdf } from 'src/controller/textToAdf';
 import { Label } from '@atlaskit/form';
 
+const renderUnsupportedFieldTypesDebug = true;
+
 export interface FieldEditorProps {
   field: IssueBulkEditField;
   enabled: boolean;
   maybeEditValue?: FieldEditValue;
   onChange: (value: FieldEditValue) => void;
+}
+
+export const isFieldTypeEditingSupported = (fieldType: string): boolean => {
+  switch (fieldType) {
+    case 'issuetype':
+    case 'com.atlassian.jira.plugin.system.customfieldtypes:float':
+    case 'com.atlassian.jira.plugin.system.customfieldtypes:select':
+    case 'reporter':
+    case 'assignee':
+    case 'labels':
+    case 'priority':
+    case 'text':
+    case 'comment':
+    case 'duedate':
+    case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':
+      return true;
+  }
+  return false;
 }
 
 export const FieldEditor = (props: FieldEditorProps) => {
@@ -330,7 +350,11 @@ export const FieldEditor = (props: FieldEditorProps) => {
   }
 
   const renderUnsupportedFieldEditor = () => {
-    return <div>Unsupported field type: {field.type}</div>;
+    if (renderUnsupportedFieldTypesDebug) {
+      return <div>Unsupported field type: {field.type}</div>;
+    } else {
+      return null;
+    }
   }
 
   const renderFieldEditor = () => {

@@ -71,10 +71,18 @@ class EditedFieldsModel {
     this.sendBulkNotification = sendBulkNotification;
   }
 
-  iterateFields = (callback: EditedFieldsModelIteratorCallback): void => {
+  iterateAllFields = (callback: EditedFieldsModelIteratorCallback): void => {
+    this.iterateFields(false, callback);
+  }
+
+  iterateFieldsSelectedForChange = (callback: EditedFieldsModelIteratorCallback): void => {
+    this.iterateFields(true, callback);
+  }
+
+  private iterateFields = (onlyFieldsSelectedForChange: boolean, callback: EditedFieldsModelIteratorCallback): void => {
     for (const fieldId in this.fieldIdsToFields) {
       if (this.fieldIdsToFields.hasOwnProperty(fieldId)) {
-        if (this.fieldIdsToEditStates[fieldId] === 'change') {
+        if (!onlyFieldsSelectedForChange || this.fieldIdsToEditStates[fieldId] === 'change') {
           const field = this.fieldIdsToFields[fieldId];
           const value = this.fieldIdsToValues[fieldId];
           callback(field, value);

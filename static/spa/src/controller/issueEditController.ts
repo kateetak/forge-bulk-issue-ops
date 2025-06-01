@@ -185,7 +185,7 @@ class IssueEditController {
           return;
       }
     }
-    editedFieldsModel.iterateFields(callback);
+    editedFieldsModel.iterateFieldsSelectedForChange(callback);
     const issues: Issue[] = editedFieldsModel.getIssues();
     return new BulkIssueEditRequestDataBuilder()
       .setEditedFieldsInput(editedFieldsInputBuilder.build())

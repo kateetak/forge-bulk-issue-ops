@@ -169,10 +169,10 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       const editedFieldsCount = editedFieldsModel.getEditCount();
       let label = 'Edit';
       if (editedFieldsCount > 0) {
-        label += ` ${editedFieldsCount} field${editedFieldsCount > 1 ? 's' : ''}`;
+        label += ` ${editedFieldsCount} field${editedFieldsCount > 1 ? 's' : ''} for`;
       }
       if (props.selectedIssues.length > 0) {
-        label += ` for ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
+        label += ` ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
       }
       return label;
     }
@@ -201,7 +201,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       const editCount = editedFieldsModel.getEditCount();
       if (editCount > 0) {
         let editFieldNames = '';
-        editedFieldsModel.iterateFields((field, value) => {
+        editedFieldsModel.iterateFieldsSelectedForChange((field, value) => {
           if (editFieldNames.length > 0) {
             editFieldNames += ', ';
           }
@@ -325,8 +325,8 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       const moveResult: IssueMoveOutcomeResult | undefined = issueMoveOutcome.result;
       const movedCount = moveResult ? moveResult.successfulIssues.length : -1;
       const failedCount = moveResult ? moveResult.totalIssueCount - movedCount : -1;
-      const renderedIssuesMovedResult = issueMoveOutcome.result ? <span># issues moved: <Lozenge appearance="success">{movedCount}</Lozenge></span> : null;
-      const renderedIssuesNotMovedResult = issueMoveOutcome.result ? <span># issues not moved: <Lozenge appearance="removed">{failedCount}</Lozenge></span> : null;
+      const renderedIssuesMovedResult = issueMoveOutcome.result ? <span># issues {props.bulkOperationMode === 'Move' ? 'moved' : 'edited'}: <Lozenge appearance="success">{movedCount}</Lozenge></span> : null;
+      const renderedIssuesNotMovedResult = issueMoveOutcome.result ? <span># issues not {props.bulkOperationMode === 'Move' ? 'moved' : 'edited'}: <Lozenge appearance="removed">{failedCount}</Lozenge></span> : null;
       const renderedOutcomeDebugJson = showDebug ? <pre>{JSON.stringify(issueMoveOutcome, null, 2)}</pre> : null;
       const progressPercent = issueMoveOutcome.progress ?? 0;
       const renderedProgress = <div>Progress: {progressPercent}%</div>;
