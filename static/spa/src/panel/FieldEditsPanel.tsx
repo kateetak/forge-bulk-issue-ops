@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Toggle from '@atlaskit/toggle';
+import Textfield from '@atlaskit/textfield';
+import { IconButton } from '@atlaskit/button/new';
 import { Label } from '@atlaskit/form';
 import { Issue } from 'src/types/Issue';
 import { IssueBulkEditField } from 'src/types/IssueBulkEditFieldApiResponse';
@@ -7,11 +9,14 @@ import { FieldEditor } from 'src/widget/FieldEditor';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
 import { FieldEditValue } from 'src/types/FieldEditValue';
+import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 
 const currentIssuesDebugEnabled = false;
 const editedFieldsDebugEnabled = false;
 const fieldValuesDebugEnabled = false;
 const fieldInfoDebugEnabled = false;
+
+const toggleColumnWidth = '10px';
 
 export type FieldEditsPanelProps = {
   selectedIssues: Issue[];
@@ -21,9 +26,10 @@ export type FieldEditsPanelProps = {
 
 export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
-  const [fieldIdsToEditStates, setFieldIdsToEditStates] = React.useState<ObjectMapping<EditState>>({});
-  const [fieldIdsToValues, setFieldIdsToValues] = React.useState<ObjectMapping<FieldEditValue>>({});
-  const [fields, setFields] = React.useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
+  const [fieldNameFilter, setFieldNameFilter] = useState<string>('');
+  const [fieldIdsToEditStates, setFieldIdsToEditStates] = useState<ObjectMapping<EditState>>({});
+  const [fieldIdsToValues, setFieldIdsToValues] = useState<ObjectMapping<FieldEditValue>>({});
+  const [fields, setFields] = useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
   const initialiseStateFromIssues = async (issues: Issue[]): Promise<void> => {
     await editedFieldsModel.setIssues(issues);
@@ -63,6 +69,39 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     props.onEditsValidityChange(valid);
   }
 
+  const renderClearFilterControl = () => {
+    return (
+      <IconButton
+        label="Clear"
+        appearance="subtle"
+        value={fieldNameFilter}
+        isDisabled={fieldNameFilter === ''}
+        icon={CrossCircleIcon}
+        onClick={() => {
+          setFieldNameFilter('');
+        }}
+      />
+    );
+  }
+
+  const renderFieldNameFilterControl = () => {
+    return (
+      <div style={{marginBottom: '10px'}}>
+        <Textfield
+          name='fieldNameFilter'
+          placeholder='Filter by field name...'
+          value={fieldNameFilter}
+          isCompact={true}
+          elemAfterInput={renderClearFilterControl()}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            const filterValue = event.currentTarget.value.toLowerCase();
+            setFieldNameFilter(filterValue);
+          }}
+        />
+      </div>
+    );
+  }
+
   const renderFields = () => {
     if (fields.length === 0 || editedFieldsModel.getIssues().length === 0) {
       return <div>No fields available.</div>;
@@ -70,18 +109,21 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     const renderedTableHead = (
       <thead>
         <tr>
-          <th><Label htmlFor=''>Edit</Label></th>
-          <th><Label htmlFor=''>Field name</Label></th>
+          <th style={{ width: toggleColumnWidth }}></th>
+          <th><><Label htmlFor=''>Field name</Label><div>{renderFieldNameFilterControl()}</div></></th>
           <th><Label htmlFor=''>Field value</Label></th>
         </tr>
       </thead>
     );
+    const filteredFields = fields.filter(field => {
+      return field.name.toLowerCase().includes(fieldNameFilter);
+    });
     const renderedTableRows = (
-      fields.map((field, index) => {
+      filteredFields.map((field, index) => {
         const selectedForChange = isSelectedForChange(field.id);
         return (
           <tr key={`field-${field.id}`}>
-            <td>
+            <td style={{width: toggleColumnWidth}}>
               <Toggle
                 id={`toggle-field-${field.id}`}
                 isChecked={selectedForChange}
