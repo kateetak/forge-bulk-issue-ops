@@ -16,7 +16,8 @@ class IssueMoveController {
   initiateMove = async (
     destinationProjectId: string,
     issues: Issue[],
-    targetIssueTypeIdsToTargetMandatoryFields: Map<string, TargetMandatoryFields>
+    targetIssueTypeIdsToTargetMandatoryFields: Map<string, TargetMandatoryFields>,
+    sendBulkNotification: boolean,
   ): Promise<IssueMoveRequestOutcome> => {
     const allProjectsSearchInfo = await jiraDataModel.pageOfProjectSearchInfo('');
     const allIssueTypes: IssueType[] = await jiraDataModel.getissueTypes();
@@ -92,6 +93,7 @@ class IssueMoveController {
       }
 
       // Step 3: Build the bulk issue move request data
+      bulkIssueMoveRequestDataBuilder.setSendBulkNotification(sendBulkNotification);
       const bulkIssueMoveRequestData = bulkIssueMoveRequestDataBuilder.build();
       console.log(` * bulkIssueMoveRequestData: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
 

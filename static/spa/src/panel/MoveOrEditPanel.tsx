@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FormSection, Label } from '@atlaskit/form';
 import Button from '@atlaskit/button/new';
+import Toggle from '@atlaskit/toggle';
 import { FlagOptions, showFlag } from '@forge/bridge';
 import { LinearProgress } from '@mui/material';
 import issueMoveController from 'src/controller/issueMoveController';
@@ -95,10 +96,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
   }
 
   const onMoveIssues = async (): Promise<void> => {
-    // Step 1: Update the model with final inputs...
-    // xxxxxxxxxModel.setSendBulkNotification(sendBulkNotification);
-
-    // Step 2: Initiate the bulk move request...
+    // Step 1: Initiate the bulk move request...
     const destinationProjectId: string = props.selectedToProject.id;
     setIssueMoveRequestOutcome(undefined);
     setCurrentMoveActivity({taskId: 'non-jira-activity', description: 'Initiating bulk move request...'});
@@ -106,7 +104,8 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     const initiateOutcome: IssueMoveRequestOutcome = await issueMoveController.initiateMove(
       destinationProjectId,
       props.selectedIssues,
-      targetIssueTypeIdsToTargetMandatoryFields
+      targetIssueTypeIdsToTargetMandatoryFields,
+      sendBulkNotification
     );
     setCurrentMoveActivity(undefined);
     console.log(`BulkOperationPanel: bulk issue move request outcome: ${JSON.stringify(initiateOutcome, null, 2)}`);
@@ -119,7 +118,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       setCurrentMoveActivity(undefined);
       showBulkOperationErrorFlag(fullErrorMessage);
     } else {
-      // Step 3: Start polling for the outcome...
+      // Step 2: Start polling for the outcome...
       setCurrentMoveActivity({taskId: initiateOutcome.taskId, description: 'Polling for bulk move outcome...'});
       pollPollMoveOutcome(initiateOutcome.taskId);
     }
@@ -186,6 +185,23 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       }]
     }
     const flag = showFlag(flagOptions);
+  }
+
+  const sendBulkNotificationToggle = () => {
+    return (
+      <div style={{display: 'flex', alignItems: 'center', marginBottom: '10px'}}>
+        <Toggle
+          id={`send-bulk-notification-toggle`}
+          isChecked={sendBulkNotification}
+          onChange={(event: any) => {
+            setSendBulkNotification(event.target.checked);
+          }}
+        />
+        <div>
+          <Label htmlFor="send-bulk-notification-toggle">Send bulk notification</Label>
+        </div>
+      </div>
+    );
   }
 
   const renderStartMoveOrEditButton = () => {
@@ -298,6 +314,9 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
 
   return (
     <div >
+      <FormSection>
+        {sendBulkNotificationToggle()}
+      </FormSection>
       <FormSection>
         {renderStartMoveOrEditButton()}
       </FormSection>

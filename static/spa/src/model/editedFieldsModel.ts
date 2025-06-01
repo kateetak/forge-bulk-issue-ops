@@ -20,6 +20,10 @@ class EditedFieldsModel {
   private fieldIdsToFields: ObjectMapping<IssueBulkEditField> = {};
   private fieldIdsToValues: ObjectMapping<any> = {};
 
+  getCurrentIssues = (): Issue[] => {
+    return this.issues;
+  }
+
   getEditedFields = (): ObjectMapping<FieldEditValue> => {
     const editedFields: ObjectMapping<FieldEditValue> = {};
     for (const fieldId in this.fieldIdsToValues) {

@@ -8,8 +8,9 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
 import { FieldEditValue } from 'src/types/FieldEditValue';
 
-const editedFieldsDebugEnabled = true;
-const fieldValuesDebugEnabled = true;
+const currentIssuesDebugEnabled = false;
+const editedFieldsDebugEnabled = false;
+const fieldValuesDebugEnabled = false;
 const fieldInfoDebugEnabled = false;
 
 export type FieldEditsPanelProps = {
@@ -63,7 +64,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   }
 
   const renderFields = () => {
-    if (fields.length === 0) {
+    if (fields.length === 0 || editedFieldsModel.getIssues().length === 0) {
       return <div>No fields available.</div>;
     }
     const renderedTableHead = (
@@ -130,6 +131,11 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     }
   }
 
+  const renderCurrentIssuesDebug = () => {
+    const currentIssues = editedFieldsModel.getCurrentIssues();
+    return renderDataDebug('Current Issues Debug', currentIssues);
+  }
+
   const renderEditedFieldsDebug = () => {
     const editedFields = editedFieldsModel.getEditedFields();
     return renderDataDebug('Edited Fields Debug', editedFields);
@@ -146,6 +152,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   return (
     <div style={{marginTop:  '20px'}}>
       {renderFields()}
+      {currentIssuesDebugEnabled ? renderCurrentIssuesDebug() : null}
       {editedFieldsDebugEnabled ? renderEditedFieldsDebug() : null}
       {fieldValuesDebugEnabled ? renderFieldValuesDebug() : null}
       {fieldInfoDebugEnabled ? renderFieldInfoDebug() : null}

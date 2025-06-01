@@ -18,6 +18,11 @@ export class BulkIssueMoveRequestDataBuilder {
     return this;
   }
 
+  setSendBulkNotification = (sendBulkNotification: boolean): BulkIssueMoveRequestDataBuilder => {
+    this.bulkIssueMoveRequestData.sendBulkNotification = sendBulkNotification;
+    return this;
+  }
+
   build = (): BulkIssueMoveRequestData => {
     return this.bulkIssueMoveRequestData;
   }
