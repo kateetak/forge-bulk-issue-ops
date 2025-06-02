@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   CommentField,
   DueDateField,
@@ -21,6 +21,10 @@ import FixedOptionsSelect from './FixedOptionsSelect';
 import { FieldEditValue, MultiSelectFieldEditOption } from 'src/types/FieldEditValue';
 import { adfToText, textToAdf } from 'src/controller/textToAdf';
 import { Label } from '@atlaskit/form';
+import { OperationOutcome } from 'src/types/OperationOutcome';
+import { FlagOptions, showFlag } from '@forge/bridge';
+import { uuid } from 'src/model/util';
+import { requireFieldEditErrorAcknowledgement } from 'src/model/config';
 
 // KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it. To extend
 //          support, start by setting the following constant to true since this will render the unsupported field types
@@ -33,7 +37,7 @@ export interface FieldEditorProps {
   field: IssueBulkEditField;
   enabled: boolean;
   maybeEditValue?: FieldEditValue;
-  onChange: (value: FieldEditValue) => void;
+  onChange: (value: FieldEditValue) => Promise<OperationOutcome>;
 }
 
 export const isFieldTypeEditingSupported = (fieldType: string): boolean => {
@@ -56,10 +60,43 @@ export const isFieldTypeEditingSupported = (fieldType: string): boolean => {
 
 export const FieldEditor = (props: FieldEditorProps) => {
 
+  const [operationOutcome, setOperationOutcome] = useState<OperationOutcome>({success: true});
+
   const { field } = props;
 
+  /**
+   * @returns This can be used to render the field information for debugging purposes. It is not used 
+   *          in production. To enable this, set the renderUnsupportedFieldTypesDebug constant to true.
+   */
   const renderDebugFieldInfo = () => {
     return <pre>{JSON.stringify(field, null, 2)}</pre>;
+  }
+
+  const showFieldEditErrorFlag = (errorMessage: string): void => {
+    const actions = requireFieldEditErrorAcknowledgement ? [{
+        text: 'Acknowledge',
+        onClick: async () => {
+          flag.close();
+        },
+      }] : [];
+    const flagOptions: FlagOptions = {
+      id: uuid(),
+      type: 'error',
+      title: `Field edit error`,
+      description: errorMessage,
+      isAutoDismiss: false,
+      actions: actions
+    }
+    const flag = showFlag(flagOptions);
+  }
+
+  const onChange = async (value: FieldEditValue): Promise<OperationOutcome> => {
+    const operationOutcome: OperationOutcome = await props.onChange(value);
+    setOperationOutcome(operationOutcome);
+    if (!operationOutcome.success) {
+      showFieldEditErrorFlag(operationOutcome.errorMessage || `Failed to set field value for field ${field.name}.`);
+    }
+    return operationOutcome
   }
 
   const renderIssueTypeFieldEditor = () => {
@@ -79,6 +116,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         testId="projects-select"
         isMulti={false}
         isRequired={true}
+        isInvalid={!operationOutcome.success}
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
@@ -86,7 +124,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
           const newValue: FieldEditValue = {
             value: selectedOption.value,
           }
-          props.onChange(newValue);
+          onChange(newValue);
         }}
       />
     );
@@ -109,6 +147,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         testId="projects-select"
         isMulti={false}
         isRequired={true}
+        isInvalid={!operationOutcome.success}
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
@@ -116,7 +155,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
           const newValue: FieldEditValue = {
             value: selectedOption.value,
           }
-          props.onChange(newValue);
+          onChange(newValue);
         }}
       />
     );
@@ -140,6 +179,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         id={`number-for-${numberField.id}`}
         name={numberField.id}
         isDisabled={!props.enabled}
+        isInvalid={!operationOutcome.success}
         defaultValue={isNaN(defaultValue) ? '' : defaultValue.toString()}
         type="number"
         onChange={(event) => {
@@ -157,7 +197,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
           const newValue: FieldEditValue = {
             value: fieldValue,
           }
-          props.onChange(newValue);
+          onChange(newValue);
         }}
       />
     );
@@ -196,6 +236,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
             label="Edit type"
             allowMultiple={false}
             isDisabled={!props.enabled}
+            isInvalid={!operationOutcome.success}
             allOptionTexts={supportedMultiSelectFieldOptions}
             selectedOptionTexts={[selectedMultiSelectFieldOption]}
             onSelect={async (selectedOptionTexts: string[]): Promise<void> => {
@@ -204,7 +245,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
                 value: value,
                 multiSelectFieldOption: multiSelectFieldOption as MultiSelectFieldEditOption,
               }
-              props.onChange(newValue);
+              onChange(newValue);
             }}
           />
         </div>
@@ -213,13 +254,14 @@ export const FieldEditor = (props: FieldEditorProps) => {
             label="Labels"
             allowMultiple={true}
             isDisabled={!props.enabled || selectedMultiSelectFieldOption === 'REMOVE_ALL'}
+            isInvalid={!operationOutcome.success}
             selectedLabels={selectedLabels}
             onLabelsSelect={async (selectedLabels: string[]): Promise<void> => {
               const newValue: FieldEditValue = {
                 value: selectedLabels,
                 multiSelectFieldOption: props.maybeEditValue?.multiSelectFieldOption,
               }
-              props.onChange(newValue);
+              onChange(newValue);
             }}
           />
         </div>
@@ -238,13 +280,13 @@ export const FieldEditor = (props: FieldEditorProps) => {
       options.push(option);
 
     }
-    // return renderDebugFieldInfo();
     return (
       <Select
         inputId="checkbox-select-example"
         testId="projects-select"
         isMulti={false}
         isRequired={true}
+        isInvalid={!operationOutcome.success}
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
@@ -252,30 +294,30 @@ export const FieldEditor = (props: FieldEditorProps) => {
           const newValue: FieldEditValue = {
             value: selectedOption.value,
           }
-          props.onChange(newValue);
+          onChange(newValue);
         }}
       />
     );
   }
 
   const renderSingleUserSelectFieldEditor = () => {
-    // return renderDebugFieldInfo();
     return (
       <UsersSelect
         label=""
         isDisabled={!props.enabled}
+        isInvalid={!operationOutcome.success}
         isMulti={false}
         isClearable={true}
         includeAppUsers={false}
         selectedUsers={[]}
         onUsersSelect={async (selectedUsers: User[]) => {
           if (selectedUsers.length === 0) {
-            props.onChange(undefined);
+            onChange(undefined);
           } else {
             const newValue: FieldEditValue = {
               value: selectedUsers[0].accountId,
             }
-            props.onChange(newValue);
+            onChange(newValue);
           }
         }}
       />
@@ -300,13 +342,15 @@ export const FieldEditor = (props: FieldEditorProps) => {
           minimumRows={3}
           name="area"
           defaultValue={initialText}
+          isDisabled={!props.enabled}
+          isInvalid={!operationOutcome.success}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
             // KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
             const adf = textToAdf(event.target.value);
             const newValue: FieldEditValue = {
               value: adf
             }
-            props.onChange(newValue);
+            onChange(newValue);
           }}
         />
       </div>
@@ -321,13 +365,14 @@ export const FieldEditor = (props: FieldEditorProps) => {
           id={`date-for-${field.id}`}
           name={field.id}
           isDisabled={!props.enabled}
+          isInvalid={!operationOutcome.success}
           shouldShowCalendarButton={true}
           defaultValue={initialValue}
           onChange={(isoTimeOrEmpty: string) => {
             const newValue: FieldEditValue = {
               value: isoTimeOrEmpty,
             }
-            props.onChange(newValue);
+            onChange(newValue);
           }}
         />
       </div>
@@ -342,12 +387,13 @@ export const FieldEditor = (props: FieldEditorProps) => {
           id={`date-for-${field.id}`}
           name={field.id}
           isDisabled={!props.enabled}
+          isInvalid={!operationOutcome.success}
           defaultValue={initialValue}
           onChange={(isoTimeOrEmpty: string) => {
             const newValue: FieldEditValue = {
               value: isoTimeOrEmpty,
             }
-            props.onChange(newValue);
+            onChange(newValue);
           }}
         />
       </div>

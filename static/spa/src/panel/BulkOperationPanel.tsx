@@ -22,7 +22,7 @@ import { ProjectFieldMappings } from '../types/ProjectFieldMappings';
 import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
 import targetMandatoryFieldsProvider from 'src/controller/TargetMandatoryFieldsProvider';
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
-import moveRuleEnforcer from 'src/controller/moveRuleEnforcer';
+import bulkOperationRuleEnforcer from 'src/controller/bulkOperationRuleEnforcer';
 import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects } from 'src/model/config';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
@@ -96,9 +96,9 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   }
 
   useEffect(() => {
-    editedFieldsModel.registerListener(onEditedFieldsModelChange);
+    editedFieldsModel.registerValueEditsListener(onEditedFieldsModelChange);
     return () => {
-      editedFieldsModel.unregisterListener(onEditedFieldsModelChange);
+      editedFieldsModel.unregisterValueEditsListener(onEditedFieldsModelChange);
     };
   }, []);
 
@@ -226,12 +226,12 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   }, []);
 
   const filterProjectsForFromSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
-    const allowableToProjects = await moveRuleEnforcer.filterSourceProjects(projectsToFilter);
+    const allowableToProjects = await bulkOperationRuleEnforcer.filterSourceProjects(projectsToFilter);
     return allowableToProjects;
   }
 
   const filterProjectsForToSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
-    const allowableToProjects = await moveRuleEnforcer.filterTargetProjects(selectedIssues, projectsToFilter);
+    const allowableToProjects = await bulkOperationRuleEnforcer.filterTargetProjects(selectedIssues, projectsToFilter);
     return allowableToProjects;
   }
 

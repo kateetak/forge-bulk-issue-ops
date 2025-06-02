@@ -11,6 +11,7 @@ import jiraDataModel from 'src/model/jiraDataModel';
 export type LabelsSelectProps = {
   label: string;
   isDisabled?: boolean;
+  isInvalid?: boolean;
   allowMultiple: boolean;
   selectedLabel?: string;
   selectedLabels?: string[],
@@ -78,6 +79,7 @@ const LabelsSelect = (props: LabelsSelectProps) => {
         inputId="radio-select-example"
         testId="react-select"
         isDisabled={props.isDisabled}
+        isInvalid={props.isInvalid}
         defaultValue={defaultValue}
         options={options}
         placeholder={props.label}
@@ -93,6 +95,7 @@ const LabelsSelect = (props: LabelsSelectProps) => {
         inputId="checkbox-select-example"
         testId="select"
         isDisabled={props.isDisabled}
+        isInvalid={props.isInvalid}
         defaultValue={defaultValue}
         options={options}
         placeholder={props.label}

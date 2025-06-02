@@ -10,6 +10,7 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
 import { FieldEditValue } from 'src/types/FieldEditValue';
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
+import { OperationOutcome } from 'src/types/OperationOutcome';
 
 const currentIssuesDebugEnabled = false;
 const editedFieldsDebugEnabled = false;
@@ -62,8 +63,15 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     props.onEditsValidityChange(valid);
   }
 
-  const onFieldChange = (field: IssueBulkEditField, value: any) => {
-    const newState = editedFieldsModel.setFieldValue(field, value);
+  const onFieldChange = async (field: IssueBulkEditField, value: any): Promise<OperationOutcome> => {
+    const setFieldOutcome = await editedFieldsModel.setFieldValue(field, value);
+    if (!setFieldOutcome.success) {
+      console.log(`FieldEditsPanel.onFieldChange: Failed to set field value for field ${field.id}: ${setFieldOutcome.errorMessage}`);
+      // No need to show a flag here or otherwise as the field editor will show the error.
+      return setFieldOutcome;
+    }
+
+    const newState = editedFieldsModel.getFieldIdsToValues();
     setFieldIdsToValues(newState);
     const valid = editedFieldsModel.getEditCount() > 0;
     props.onEditsValidityChange(valid);
@@ -142,8 +150,9 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
                 field={field}
                 enabled={selectedForChange}
                 maybeEditValue={fieldIdsToValues[field.id]}
-                onChange={(value: FieldEditValue) => {
-                  onFieldChange(field, value)
+                onChange={ async (value: FieldEditValue): Promise<OperationOutcome> => {
+                  const operationOutcome = await onFieldChange(field, value)
+                  return operationOutcome;
                 }}
               />
             </td>

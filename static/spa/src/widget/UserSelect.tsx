@@ -15,6 +15,7 @@ export type UsersSelectProps = {
   selectedUsers: User[];
   isMulti: boolean;
   isDisabled?: boolean;
+  isInvalid?: boolean;
   includeAppUsers: boolean;
   isClearable: boolean;
   filterUsers?: (usersToFilter: User[]) => Promise<User[]>;
@@ -88,6 +89,7 @@ const UsersSelect = (props: UsersSelectProps) => {
         defaultOptions
         cacheOptions
         isDisabled={props.isDisabled}
+        isInvalid={props.isInvalid}
         isClearable={props.isClearable}
 				loadOptions={promiseOptions}
         placeholder={props.label}

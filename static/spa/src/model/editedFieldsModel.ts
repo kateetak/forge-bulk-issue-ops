@@ -3,8 +3,9 @@ import { ObjectMapping } from "src/types/ObjectMapping";
 import ListenerGroup from "src/model/ListenerGroup";
 import { Issue } from "src/types/Issue";
 import jiraDataModel from "./jiraDataModel";
-import moveRuleEnforcer from "src/controller/moveRuleEnforcer";
+import bulkOperationRuleEnforcer from "src/controller/bulkOperationRuleEnforcer";
 import { FieldEditValue } from "src/types/FieldEditValue";
+import { OperationOutcome } from "src/types/OperationOutcome";
 
 export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, editedFieldValue: FieldEditValue) => void;
 
@@ -13,7 +14,7 @@ export const defaultEditState: EditState = 'no-change';
 
 class EditedFieldsModel {
 
-  private listenerGroup = new ListenerGroup('EditedFieldsModel');
+  private valueEditsListenerGroup = new ListenerGroup('EditedFieldsModel-value-edits');
   private sendBulkNotification: boolean = false;
   private issues: Issue[] = [];
   private fieldIdsToEditStates: ObjectMapping<EditState> = {};
@@ -95,13 +96,20 @@ class EditedFieldsModel {
     // console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
     const fields = await jiraDataModel.getAllIssueBulkEditFields(issues);
     // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
-    const filteredFields = await moveRuleEnforcer.filterEditFields(fields);
+    const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields);
     const sortedFields = this.sortFields(filteredFields);
     this.setFields(sortedFields);
     this.issues = issues;
   }
 
-  setFieldValue = (field: IssueBulkEditField, value: any): ObjectMapping<any> => {
+  setFieldValue = async (field: IssueBulkEditField, value: any): Promise<OperationOutcome> => {
+
+    // Validate the field value against the field's validation rules.
+    const operationOutcome = await bulkOperationRuleEnforcer.validateFieldValue(field, value);
+    if (!operationOutcome.success) {
+      return operationOutcome;
+    }
+
     // Create a new copy of the object since this is designed to be used in a React context
     // where the state should not be mutated directly.
     const newFieldIdsToValues: ObjectMapping<any> = {
@@ -121,24 +129,24 @@ class EditedFieldsModel {
       }
     }
 
-    this.notifyListeners();
-    return newFieldIdsToValues;
+    this.notifyValueEditsListeners();
+    return operationOutcome;
   }
 
   haveValuesBeenSpecified = (): boolean => {
     return Object.keys(this.fieldIdsToValues).length > 0;
   }
 
-  registerListener = (listener: any) => {
-    this.listenerGroup.registerListener(listener);
+  registerValueEditsListener = (listener: any) => {
+    this.valueEditsListenerGroup.registerListener(listener);
   };
 
-  unregisterListener = (listener: any) => {
-    this.listenerGroup.unregisterListener(listener);
+  unregisterValueEditsListener = (listener: any) => {
+    this.valueEditsListenerGroup.unregisterListener(listener);
   };
 
-  private notifyListeners = () => {
-    this.listenerGroup.notifyListeners(undefined);
+  private notifyValueEditsListeners = () => {
+    this.valueEditsListenerGroup.notifyListeners(undefined);
   };
 
   private setFields = (fields: IssueBulkEditField[]): void => {
@@ -147,7 +155,7 @@ class EditedFieldsModel {
       this.fieldIdsToFields[field.id] = field;
     }
     this.fieldIdsToValues = newFieldIdsToValues;
-    this.notifyListeners();
+    this.notifyValueEditsListeners();
   }
 
   private sortFields = (fields: IssueBulkEditField[]) => {

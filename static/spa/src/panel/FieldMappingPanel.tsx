@@ -258,7 +258,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderDebug = () => {
-    const targetIssueTypeIdsToFieldIdsToFieldSettings = targetMandatoryFieldsProvider.targetIssueTypeIdsToFieldIdsToFieldSettings;
+    const targetIssueTypeIdsToFieldIdsToFieldSettings = targetMandatoryFieldsProvider.getTargetIssueTypeIdsToFieldIdsToFieldSettings();
     const targetIssueTypeIdsToFieldIdsToFieldSettingsObject: any = mapToObjectMap(targetIssueTypeIdsToFieldIdsToFieldSettings);
     const targetIssueTypeIds = Object.keys(targetIssueTypeIdsToFieldIdsToFieldSettingsObject);
     for (const targetIssueTypeId of targetIssueTypeIds) {

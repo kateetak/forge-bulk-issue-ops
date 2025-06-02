@@ -2,13 +2,32 @@ import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 import { allowTheTargetProjectToMatchAnyIssueSourceProject } from "../model/config";
 import { Issue } from "../types/Issue";
 import { Project } from "../types/Project";
+import { OperationOutcome } from "src/types/OperationOutcome";
 
-class MoveRuleEnforcer {
+class BulkOperationRuleEnforcer {
 
   private excludedProjectKeys = new Set<string>()
     // Just examples, you can add more project keys to exclude.
     .add('FIXED')
     .add('DUMMY');
+
+  /**
+   * This function validates the value of a field against its validation rules.
+   * @param field The field to validate.
+   * @param value The value to validate.
+   * @returns An OperationOutcome indicating the result of the validation.
+   */
+  validateFieldValue = async (field: IssueBulkEditField, value: any): Promise<OperationOutcome> => {
+    const operationOutcome: OperationOutcome = {
+      success: true,
+      errorMessage: undefined,
+    }
+    // const operationOutcome: OperationOutcome = {
+    //   success: false,
+    //   errorMessage: `Demo erroroneous field validation for field "${field.name}" with value ${value}`,
+    // }
+    return operationOutcome;
+  }
 
   /**
    * This function is invoked when the user selects a source project to move issues from. The users starts
@@ -83,4 +102,4 @@ class MoveRuleEnforcer {
 
 }
 
-export default new MoveRuleEnforcer();
+export default new BulkOperationRuleEnforcer();

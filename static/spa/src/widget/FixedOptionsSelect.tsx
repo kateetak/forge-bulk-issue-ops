@@ -11,6 +11,7 @@ export type FixedOptionsSelectProps = {
   label?: string;
   placeholder?: string;
   isDisabled?: boolean;
+  isInvalid?: boolean;
   allowMultiple: boolean;
   allOptionTexts: string[];
   selectedOptionTexts: string[],
@@ -73,6 +74,7 @@ const FixedOptionsSelect = (props: FixedOptionsSelectProps) => {
         label={props.label}
         isMulti={props.allowMultiple}
         isDisabled={props.isDisabled}
+        isInvalid={props.isInvalid}
         options={optionTextsToOptions(props.allOptionTexts)}
         value={determineDefaultOptions()}
         placeholder={props.placeholder}

@@ -6,6 +6,8 @@ export const allowBulkEditsAcrossMultipleProjects = true;
 // At this stage, changing this to false is not supported.
 export const invokeBulkOpsApisAsTheAppUser = true;
 
+export const requireFieldEditErrorAcknowledgement = false;
+
 export const allowTheTargetProjectToMatchAnyIssueSourceProject = false;
 
 export const taskStatusPollPeriodMillis = 1000;

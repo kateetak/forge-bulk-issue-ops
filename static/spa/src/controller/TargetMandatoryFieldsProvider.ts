@@ -16,9 +16,13 @@ const defaultRetainValueSetting = true;
 class TargetMandatoryFieldsProvider {
 
   private projectFieldMappings: undefined | ProjectFieldMappings = undefined;
-  /* private */ targetIssueTypeIdsToFieldIdsToFieldSettings = new Map<string, Map<string, FieldSettings>>();
+  private targetIssueTypeIdsToFieldIdsToFieldSettings = new Map<string, Map<string, FieldSettings>>();
   private selectedTargetIssueTypeIdsToTypes = new Map<string, IssueType>();
   private selectedIssueTypes: IssueType[] = [];
+
+  getTargetIssueTypeIdsToFieldIdsToFieldSettings = (): Map<string, Map<string, FieldSettings>> => {
+    return this.targetIssueTypeIdsToFieldIdsToFieldSettings;
+  }
 
   setSelectedIssues = (issues: Issue[], allIssueTypes: IssueType[]): void => {
     // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Setting selected issue types from selected issues (allIssueTypes.length = ${allIssueTypes.length})...`);
