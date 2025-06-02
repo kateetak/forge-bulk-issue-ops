@@ -3,7 +3,7 @@ import { ObjectMapping } from "src/types/ObjectMapping";
 import ListenerGroup from "src/model/ListenerGroup";
 import { Issue } from "src/types/Issue";
 import jiraDataModel from "./jiraDataModel";
-import bulkOperationRuleEnforcer from "src/controller/bulkOperationRuleEnforcer";
+import bulkOperationRuleEnforcer from "src/extension/bulkOperationRuleEnforcer";
 import { FieldEditValue } from "src/types/FieldEditValue";
 import { OperationOutcome } from "src/types/OperationOutcome";
 

@@ -4,7 +4,7 @@ import { Issue } from "../types/Issue";
 import { Project } from "../types/Project";
 import { OperationOutcome } from "src/types/OperationOutcome";
 import { ObjectMapping } from "src/types/ObjectMapping";
-import { buildErrorOutcome, buildSuccessOutcome } from "./OperationOutcomeBuilder";
+import { buildErrorOutcome, buildSuccessOutcome } from "../controller/OperationOutcomeBuilder";
 import { FieldEditValue } from "src/types/FieldEditValue";
 
 class BulkOperationRuleEnforcer {
@@ -25,7 +25,7 @@ class BulkOperationRuleEnforcer {
    * another field value (e.g. start date < end date).
    * @returns An OperationOutcome indicating the result of the validation.
    */
-  validateFieldValue = async (
+  public validateFieldValue = async (
       field: IssueBulkEditField,
       value: FieldEditValue,
       fieldIdsToFields: ObjectMapping<IssueBulkEditField>,
@@ -48,16 +48,13 @@ class BulkOperationRuleEnforcer {
    * @param selectedSourceProjects 
    * @returns 
    */
-  filterSourceProjects = async (
+  public filterSourceProjects = async (
     selectedSourceProjects: Project[],
   ): Promise<Project[]> => {
     const filteredProjects = selectedSourceProjects.filter((project: Project) => {
       return !this.excludedProjectKeys.has(project.key);
     });
     return filteredProjects;
-  }
-
-  filterIssueTypeMapping = async () => {
   }
 
   /**
@@ -68,7 +65,7 @@ class BulkOperationRuleEnforcer {
    * @param candidateProjects 
    * @returns 
    */
-  filterTargetProjects = async (
+  public filterTargetProjects = async (
     selectedIssuesToMove: Issue[],
     candidateProjects: Project[]
   ): Promise<Project[]> => {
@@ -78,7 +75,12 @@ class BulkOperationRuleEnforcer {
     return filteredProjects;
   }
 
-  filterEditFields = async (fields: IssueBulkEditField[]): Promise<IssueBulkEditField[]> => {
+  /**
+   * Filters the fields that are allowed to be edited in the bulk edit operation.
+   * @param fields The fields to filter.
+   * @returns the filtered fields that are allowed to be edited in the bulk edit operation.
+   */
+  public filterEditFields = async (fields: IssueBulkEditField[]): Promise<IssueBulkEditField[]> => {
     const filteredFields = fields.filter(field => {
       if (field.id === 'reporter') {
         // It is assummed that the reporter field is not editable.

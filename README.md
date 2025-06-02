@@ -75,18 +75,22 @@ In order for the app to be able to make bulk changes as the user requeting the c
 
 This optional step involves reviewing and tuning the access to Jira's built-in bulk operations. Visit the Jira administration global permissions section, and review the permissions corresponding to "Make bulk changes".
 
-
 ### Development Loop
+
 - Run all forge commands from the `[app-root-directory]`.
 - After making changes to the frontend, run `npm run start` from the `[app-root-directory]/static/spa` directory.
 - Use the `forge deploy` command when you want to persist code changes or after you make changes to the app manifest.
 - Use the `forge install` command when you want to install the app on a new site.
 - Once the app is installed on a site, the site picks up the new app changes you deploy without needing to rerun the install command.
 
+# Customisation
+
+The app is designed to be support tailoring to an organisation's specific needs, but this requires code changes. There are several functions in static/spa/extension/bulkOperationRuleEnforcer.ts that 
+
 
 # Additional configuration options
 
-Configuration options can be defined in [static/spa/src/model/config.ts](static/spa/src/model/config.ts).
+Configuration options can be defined in [static/spa/src/model/config.ts](static/spa/src/model/config.ts), but be careful modifying these options.
 
 # Known issues
 

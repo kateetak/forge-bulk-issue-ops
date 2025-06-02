@@ -22,7 +22,7 @@ import { ProjectFieldMappings } from '../types/ProjectFieldMappings';
 import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './FieldMappingPanel';
 import targetProjectFieldsModel from 'src/controller/TargetProjectFieldsModel';
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
-import bulkOperationRuleEnforcer from 'src/controller/bulkOperationRuleEnforcer';
+import bulkOperationRuleEnforcer from 'src/extension/bulkOperationRuleEnforcer';
 import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects } from 'src/model/config';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
