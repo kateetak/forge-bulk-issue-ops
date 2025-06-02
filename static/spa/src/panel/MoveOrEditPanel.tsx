@@ -15,7 +15,7 @@ import { CompletionState } from 'src/types/CompletionState';
 import { IssueMoveEditRequestOutcome } from 'src/types/IssueMoveRequestOutcome';
 import { TaskOutcome } from 'src/types/TaskOutcome';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
-import targetMandatoryFieldsProvider from '../controller/TargetMandatoryFieldsProvider';
+import targetProjectFieldsModel from '../controller/TargetProjectFieldsModel';
 import { Project } from 'src/types/Project';
 import { Issue } from 'src/types/Issue';
 import { IssueMoveEditOutcomeResult } from 'src/types/IssueMoveOutcomeResult';
@@ -100,7 +100,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     const destinationProjectId: string = props.selectedToProject.id;
     setIssueMoveEditRequestOutcome(undefined);
     setCurrentMoveEditActivity({taskId: 'non-jira-activity', description: 'Initiating bulk move request...'});
-    const targetIssueTypeIdsToTargetMandatoryFields = targetMandatoryFieldsProvider.buildIssueTypeIdsToTargetMandatoryFields();
+    const targetIssueTypeIdsToTargetMandatoryFields = targetProjectFieldsModel.buildIssueTypeIdsToTargetMandatoryFields();
     const initiateOutcome: IssueMoveEditRequestOutcome = await issueMoveController.initiateMove(
       destinationProjectId,
       props.selectedIssues,
@@ -245,7 +245,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     let waitingMessage = '';
     if (props.bulkOperationMode === 'Move') {
       const debugReasonForFieldMappingIncompleteness = false;
-      const fieldMappingIncompletenessReason = debugReasonForFieldMappingIncompleteness ? targetMandatoryFieldsProvider.getFieldMappingIncompletenessReason() : '';
+      const fieldMappingIncompletenessReason = debugReasonForFieldMappingIncompleteness ? targetProjectFieldsModel.getFieldMappingIncompletenessReason() : '';
       waitingMessage = new WaitingMessageBuilder()
         .addCheck(fieldMappingIncompletenessReason === '', fieldMappingIncompletenessReason)
         .addCheck(props.fieldMappingsComplete, 'Field value mapping is not yet complete.')
@@ -267,7 +267,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       <div>
         {renderPanelMessage(waitingMessage, {marginTop: '-6px', marginBottom: '20px'})}
         <Button
-          // key={`move-edit-button-${lastDataLoadTime}-${targetMandatoryFieldsProviderUpdateTime}-${allDefaultValuesProvided}-${fieldIdsToValuesTime}`}
+          // key={`move-edit-button-${lastDataLoadTime}-${targetProjectFieldsModelUpdateTime}-${allDefaultValuesProvided}-${fieldIdsToValuesTime}`}
           appearance={buttonEnabled ? 'primary' : 'default'}
           isDisabled={!buttonEnabled}
           onClick={() => {

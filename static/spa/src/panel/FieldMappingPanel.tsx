@@ -7,14 +7,14 @@ import { IssueType } from '../types/IssueType';
 import { Field } from 'src/types/Field';
 import jiraDataModel from 'src/model/jiraDataModel';
 import FieldValuesSelect from 'src/widget/FieldValuesSelect';
-import targetMandatoryFieldsProvider from 'src/controller/TargetMandatoryFieldsProvider';
+import targetProjectFieldsModel from 'src/controller/TargetProjectFieldsModel';
 import { FieldMetadata } from 'src/types/FieldMetadata';
 import { Project } from 'src/types/Project';
 import Textfield from '@atlaskit/textfield';
 import { DefaultFieldValue } from 'src/types/DefaultFieldValue';
 import { FieldMappingInfo } from 'src/types/FieldMappingInfo';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
-import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
+import bulkIssueTypeMappingModel from 'src/model/bulkIssueTypeMappingModel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { mapToObjectMap } from 'src/model/util';
 import { formatIssueType } from 'src/controller/formatters';
@@ -46,12 +46,15 @@ export type FieldMappingPanelProps = {
 
 const FieldMappingPanel = (props: FieldMappingPanelProps) => {
 
-  const determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped = (issues: Issue[], allIssueTypes: IssueType[]): Map<string, IssueType> => {
+  const determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped = (
+    issues: Issue[],
+    allIssueTypes: IssueType[]
+  ): Map<string, IssueType> => {
     const targetIssueTypeIdsToTargetIssueTypes = new Map<string, IssueType>();
     issues.forEach(issue => {
       const sourceProjectId = issue.fields.project.id;
       const sourceIssueTypeId = issue.fields.issuetype.id;
-      const targetIssuetypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
+      const targetIssuetypeId = bulkIssueTypeMappingModel.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
       const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssuetypeId);
       // console.log(` * FieldMappingPanel: ${sourceProjectId},${sourceIssueTypeId} maps to ${targetIssuetypeId}`);
       targetIssueTypeIdsToTargetIssueTypes.set(targetIssuetypeId, targetIssueType);
@@ -59,7 +62,8 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     return targetIssueTypeIdsToTargetIssueTypes;
   }
 
-  const [targetIssueTypeIdsToTargetIssueTypesBeingMapped, setTargetIssueTypeIdsToTargetIssueTypesBeingMapped] = useState<Map<string, IssueType>>(determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped(props.issues, props.allIssueTypes));
+  const [targetIssueTypeIdsToTargetIssueTypesBeingMapped, setTargetIssueTypeIdsToTargetIssueTypesBeingMapped] =
+    useState<Map<string, IssueType>>(determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped(props.issues, props.allIssueTypes));
   const [fieldIdsToFields, setFieldIdsToFields] = useState< Map<string, Field>>(new Map<string, Field>());
   const [allDefaultsProvided, setAllDefaultsProvided] = useState<boolean>(false);
 
@@ -72,35 +76,30 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     setFieldIdsToFields(fieldIdsToFields);
   }
 
-  // useEffect(() => {
-  //   const targetIssueTypeIdsToTargetIssueTypes = determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped(props.issues);
-  //   setTargetIssueTypeIdsToTargetIssueTypesBeingMapped(targetIssueTypeIdsToTargetIssueTypes);
-  // }, [props.issues]);
-
   useEffect(() => {
     loadFieldInfo();
   }, []);
 
   const onSelectDefaultFieldValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, defaultValue: DefaultFieldValue): void => {
-    targetMandatoryFieldsProvider.onSelectDefaultValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
-    const allDefaultValuesProvided = targetMandatoryFieldsProvider.areAllFieldValuesSet();
+    targetProjectFieldsModel.onSelectDefaultValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
+    const allDefaultValuesProvided = targetProjectFieldsModel.areAllFieldValuesSet();
     setAllDefaultsProvided(allDefaultValuesProvided);
     props.onAllDefaultValuesProvided(allDefaultValuesProvided);
   }
 
   const onDeselectDefaultFieldValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata): void => {
-    targetMandatoryFieldsProvider.onDeselectDefaultValue(targetIssueType, fieldId, fieldMetadata);
-    const allDefaultValuesProvided = targetMandatoryFieldsProvider.areAllFieldValuesSet();
+    targetProjectFieldsModel.onDeselectDefaultValue(targetIssueType, fieldId, fieldMetadata);
+    const allDefaultValuesProvided = targetProjectFieldsModel.areAllFieldValuesSet();
     setAllDefaultsProvided(allDefaultValuesProvided);
     props.onAllDefaultValuesProvided(allDefaultValuesProvided);
   }
 
   const onRetainFieldValueSelection = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, retainFieldValue: boolean): void => {
-    targetMandatoryFieldsProvider.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
+    targetProjectFieldsModel.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
   }
 
   const renderFieldValuesSelect = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
-    const selectedDefaultFieldValue = targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
+    const selectedDefaultFieldValue = targetProjectFieldsModel.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
     // console.log(`renderFieldValuesSelect: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     const selectableCustomFieldOptions: CustomFieldOption[] = [];
     let selectedCustomFieldOption: CustomFieldOption | undefined = undefined;
@@ -119,7 +118,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
         // console.log(`renderFieldValuesSelect: Skipping allowed value without a value: ${JSON.stringify(allowedValue)}`);
       }
     }
-    // const currentOption = targetMandatoryFieldsProvider.getDefaultFieldValue(targetIssueType.id, fieldId);
+    // const currentOption = targetProjectFieldsModel.getDefaultFieldValue(targetIssueType.id, fieldId);
     return (
       <FieldValuesSelect
         label={undefined}
@@ -138,7 +137,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderNumberFieldEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
-    const selectedDefaultFieldValue = targetMandatoryFieldsProvider.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
+    const selectedDefaultFieldValue = targetProjectFieldsModel.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
     // console.log(`renderNumberFieldEntryWidget: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     return (
       <Textfield
@@ -198,7 +197,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     fieldMappingInfo: FieldMappingInfo
   ): JSX.Element => {
     const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
-    const isChecked = targetMandatoryFieldsProvider.getRetainFieldValue(targetIssueType.id, fieldId);
+    const isChecked = targetProjectFieldsModel.getRetainFieldValue(targetIssueType.id, fieldId);
     return (
       <Toggle
         id={`toggle-filter-mode-advanced`}
@@ -217,7 +216,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
         <table >
           <thead>
             <tr>
-              <th className="no-break">Issue Type</th>
+              <th className="no-break">Work item Type</th>
               <th className="no-break">Field</th>
               <th className="no-break">Options</th>
               <th className="no-break">Retain</th>
@@ -258,7 +257,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderDebug = () => {
-    const targetIssueTypeIdsToFieldIdsToFieldSettings = targetMandatoryFieldsProvider.getTargetIssueTypeIdsToFieldIdsToFieldSettings();
+    const targetIssueTypeIdsToFieldIdsToFieldSettings = targetProjectFieldsModel.getTargetIssueTypeIdsToFieldIdsToFieldSettings();
     const targetIssueTypeIdsToFieldIdsToFieldSettingsObject: any = mapToObjectMap(targetIssueTypeIdsToFieldIdsToFieldSettings);
     const targetIssueTypeIds = Object.keys(targetIssueTypeIdsToFieldIdsToFieldSettingsObject);
     for (const targetIssueTypeId of targetIssueTypeIds) {

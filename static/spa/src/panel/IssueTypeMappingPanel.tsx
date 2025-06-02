@@ -5,7 +5,7 @@ import { Project } from 'src/types/Project';
 import Select from '@atlaskit/select';
 import { Option } from '../types/Option'
 import jiraDataModel from 'src/model/jiraDataModel';
-import bulkIssueTypeMapping from 'src/model/bulkIssueTypeMapping';
+import bulkIssueTypeMappingModel from '../model/bulkIssueTypeMappingModel';
 import { formatIssueType, formatProject } from 'src/controller/formatters';
 import { mapToObjectMap } from 'src/model/util';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
@@ -47,7 +47,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
   const [targetProjectIssueTypes, setTargetProjectIssueTypes] = useState<IssueType[]>([]);
   const [allRowData, setAllRowData] = useState<RowData[]>(buildAllRowData(props.selectedIssues));
   const [clonedSourceToTargetIssueTypeIds, setClonedSourceToTargetIssueTypeIds] = useState<Map<string, string>>(
-    bulkIssueTypeMapping.cloneSourceToTargetIssueTypeIds());
+    bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds());
 
   const autoSelectMatchingTargetIssueTypes = (): void => {
     // console.log('autoSelectMatchingTargetIssueTypes: Auto selecting matching target issue types for selected issues.');
@@ -55,7 +55,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     for (const issue of props.selectedIssues) {
       const sourceProject = issue.fields.project;
       const sourceIssueType = issue.fields.issuetype;
-      const existingTargetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProject.id, sourceIssueType.id);
+      const existingTargetIssueTypeId = bulkIssueTypeMappingModel.getTargetIssueTypeId(sourceProject.id, sourceIssueType.id);
       if (existingTargetIssueTypeId) {
         // Do nothing - don't override existing mappings.
       } else {
@@ -63,14 +63,14 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
         const matchingTargetIssueType = targetProjectIssueTypes.find(issueType => issueType.name === sourceIssueType.name);
         if (matchingTargetIssueType) {
           // console.log(`autoSelectMatchingTargetIssueTypes: Auto selecting target issue type: ${matchingTargetIssueType.name} (${matchingTargetIssueType.name}) for source project: ${sourceProject.key}, source issue type: ${sourceIssueType.name}`);
-          bulkIssueTypeMapping.addMapping(sourceProject.id, sourceIssueType.id, matchingTargetIssueType.id);
+          bulkIssueTypeMappingModel.addMapping(sourceProject.id, sourceIssueType.id, matchingTargetIssueType.id);
         } else {
           unmappedCount++;
           // console.log(`autoSelectMatchingTargetIssueTypes: No matching target issue type found for source project: ${sourceProject.id}, source issue type: ${sourceIssueType.id}.`);
         }
       }
     }
-    const clonedSourceToTargetIssueTypeIds = bulkIssueTypeMapping.cloneSourceToTargetIssueTypeIds();
+    const clonedSourceToTargetIssueTypeIds = bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds();
     setClonedSourceToTargetIssueTypeIds(clonedSourceToTargetIssueTypeIds);
     // console.log(`autoSelectMatchingTargetIssueTypes: clonedSourceToTargetIssueTypeIds = ${JSON.stringify(clonedSourceToTargetIssueTypeIds, null, 2)}.`);
     console.log(`autoSelectMatchingTargetIssueTypes: clonedSourceToTargetIssueTypeIds = ${JSON.stringify(mapToObjectMap(clonedSourceToTargetIssueTypeIds), null, 2)}.`);
@@ -93,8 +93,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
   }
 
   const onTargetIssueTypeChange = (sourceProjectId: string, sourceIssueTypeId: string, targetIssueTypeId: string) => {
-    bulkIssueTypeMapping.addMapping(sourceProjectId, sourceIssueTypeId, targetIssueTypeId);
-    const clonedSourceToTargetIssueTypeIds = bulkIssueTypeMapping.cloneSourceToTargetIssueTypeIds();
+    bulkIssueTypeMappingModel.addMapping(sourceProjectId, sourceIssueTypeId, targetIssueTypeId);
+    const clonedSourceToTargetIssueTypeIds = bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds();
     setClonedSourceToTargetIssueTypeIds(clonedSourceToTargetIssueTypeIds);
     props.onIssueTypeMappingChange();
   }
@@ -164,7 +164,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
   // }
  
   useEffect(() => {
-    setClonedSourceToTargetIssueTypeIds(bulkIssueTypeMapping.cloneSourceToTargetIssueTypeIds());
+    setClonedSourceToTargetIssueTypeIds(bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds());
     // bulkIssueTypeMapping.registerListener(onBulkIssueTypeMappingChange);
     return () => {
       // bulkIssueTypeMapping.unregisterListener(onBulkIssueTypeMappingChange);

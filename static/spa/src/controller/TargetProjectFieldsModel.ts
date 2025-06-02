@@ -4,7 +4,7 @@ import { ProjectFieldMappings } from "../types/ProjectFieldMappings";
 import { TargetMandatoryFields, FieldValue } from "../types/TargetMandatoryField";
 import { FieldMetadata } from "src/types/FieldMetadata";
 import { DefaultFieldValue } from "src/types/DefaultFieldValue";
-import bulkIssueTypeMapping from "src/model/bulkIssueTypeMapping";
+import bulkIssueTypeMappingModel from "src/model/bulkIssueTypeMappingModel";
 
 type FieldSettings = {
   defaultFieldValue?: DefaultFieldValue;
@@ -13,7 +13,7 @@ type FieldSettings = {
 
 const defaultRetainValueSetting = true;
 
-class TargetMandatoryFieldsProvider {
+class TargetProjectFieldsModel {
 
   private projectFieldMappings: undefined | ProjectFieldMappings = undefined;
   private targetIssueTypeIdsToFieldIdsToFieldSettings = new Map<string, Map<string, FieldSettings>>();
@@ -25,20 +25,20 @@ class TargetMandatoryFieldsProvider {
   }
 
   setSelectedIssues = (issues: Issue[], allIssueTypes: IssueType[]): void => {
-    // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Setting selected issue types from selected issues (allIssueTypes.length = ${allIssueTypes.length})...`);
+    // console.log(`TargetProjectFieldsModel.setSelectedIssues: Setting selected issue types from selected issues (allIssueTypes.length = ${allIssueTypes.length})...`);
     this.selectedTargetIssueTypeIdsToTypes.clear();
     issues.forEach(issue => {
       const sourceProjectId = issue.fields.project.id;
       const sourceIssueTypeId = issue.fields.issuetype.id;
-      const targetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
+      const targetIssueTypeId = bulkIssueTypeMappingModel.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
       this.selectedTargetIssueTypeIdsToTypes.set(targetIssueTypeId, issue.fields.issuetype);
       const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssueTypeId);
       if (targetIssueType) {
-        // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: Adding target issue type ${targetIssueType.name} (${targetIssueType.id}) for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
+        // console.log(`TargetProjectFieldsModel.setSelectedIssues: Adding target issue type ${targetIssueType.name} (${targetIssueType.id}) for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
         // Ensure the target issue type is in the selected issue types
         this.selectedTargetIssueTypeIdsToTypes.set(targetIssueTypeId, targetIssueType);
       } else {
-        // console.warn(`TargetMandatoryFieldsProvider.setSelectedIssues: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
+        // console.warn(`TargetProjectFieldsModel.setSelectedIssues: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
       }
     });
 
@@ -49,7 +49,7 @@ class TargetMandatoryFieldsProvider {
     // }
 
     this.selectedIssueTypes = newlySelectedIssueTypes;
-    // console.log(`TargetMandatoryFieldsProvider.setSelectedIssues: selectedIssueTypes: ${this.selectedIssueTypes.map(issue => `${issue.name} (${issue.id})`).join(', ')}`);
+    // console.log(`TargetProjectFieldsModel.setSelectedIssues: selectedIssueTypes: ${this.selectedIssueTypes.map(issue => `${issue.name} (${issue.id})`).join(', ')}`);
   }
 
   setProjectFieldMappings = (projectFieldMappings: ProjectFieldMappings): void => {
@@ -76,13 +76,13 @@ class TargetMandatoryFieldsProvider {
   }
 
   areAllFieldValuesSet = (): boolean => {
-    // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: checking if all field values are set...`);
+    // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: checking if all field values are set...`);
     if (!this.projectFieldMappings) {
-      // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: projectFieldMappings is not set.`);
+      // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: projectFieldMappings is not set.`);
       return false;
     }
     if (this.selectedIssueTypes.length === 0) {
-      // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no issue types are selected.`);
+      // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no issue types are selected.`);
       return false; // If no issue types are selected, return false
     }
     for (const selectedIssueType of this.selectedIssueTypes) {
@@ -92,26 +92,26 @@ class TargetMandatoryFieldsProvider {
         for (const fieldId of fieldIds) {
           const defaultValue = this.getSelectedDefaultFieldValue(selectedIssueType.id, fieldId);
           if (!defaultValue) {
-            // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`);
+            // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`);
             return false;
           }
         }
       } else {
-        // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yest mapped in the previous step.`);
+        // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yest mapped in the previous step.`);
         // return false;
       }
     }
-    // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: all field values are set.`);
+    // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: all field values are set.`);
     return true;
   }
 
   getFieldMappingIncompletenessReason = (): string => {
     if (!this.projectFieldMappings) {
-      // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: projectFieldMappings is not set.`);
+      // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: projectFieldMappings is not set.`);
       return `projectFieldMappings is not set`;
     }
     if (this.selectedIssueTypes.length === 0) {
-      // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no issue types are selected.`);
+      // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no issue types are selected.`);
       return `no issue types are selected`;
     }
     for (const selectedIssueType of this.selectedIssueTypes) {
@@ -121,16 +121,16 @@ class TargetMandatoryFieldsProvider {
         for (const fieldId of fieldIds) {
           const defaultValue = this.getSelectedDefaultFieldValue(selectedIssueType.id, fieldId);
           if (!defaultValue) {
-            // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`);
+            // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`);
             return `no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`;
           }
         }
       } else {
-        // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yest mapped in the previous step.`);
+        // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yest mapped in the previous step.`);
         // return `no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yet mapped in the previous step.`;
       }
     }
-    // console.log(`TargetMandatoryFieldsProvider.areAllFieldValuesSet: all field values are set.`);
+    // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: all field values are set.`);
     return '';
   }
 
@@ -210,4 +210,4 @@ class TargetMandatoryFieldsProvider {
 
 }
 
-export default new TargetMandatoryFieldsProvider();
+export default new TargetProjectFieldsModel();

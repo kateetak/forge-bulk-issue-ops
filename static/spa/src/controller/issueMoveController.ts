@@ -6,7 +6,7 @@ import { Issue } from "../types/Issue";
 import jiraDataModel from "../model/jiraDataModel";
 import { TargetMandatoryFields } from "../types/TargetMandatoryField";
 import { InvocationResult } from "../types/InvocationResult";
-import bulkIssueTypeMapping from "../model/bulkIssueTypeMapping";
+import bulkIssueTypeMappingModel from "../model/bulkIssueTypeMappingModel";
 
 const issueMovePollPeriodMillis = 1000;
 
@@ -32,7 +32,7 @@ class IssueMoveController {
       for (const issue of issues) {
         const sourceProjectId = issue.fields.project.id;
         const sourceIssueTypeId = issue.fields.issuetype.id;
-        const targetIssueTypeId = bulkIssueTypeMapping.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
+        const targetIssueTypeId = bulkIssueTypeMappingModel.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
         if (targetIssueTypeId) {
           const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssueTypeId);
           sourceIssueTypeIdsToTargetIssueTypes.set(sourceIssueTypeId, targetIssueType);
