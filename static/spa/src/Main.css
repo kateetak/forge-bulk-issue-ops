@@ -129,7 +129,7 @@ div.issue-selection-panel {
   white-space: nowrap;
 }
 
-.error-message {
+.inline-error-message {
   color: #BF2600;
   font-weight: bold;
 }

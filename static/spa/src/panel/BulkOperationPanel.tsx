@@ -374,8 +374,12 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     }
     setCurrentFieldMappingActivity({taskId: 'non-jira-activity', description: 'Checking for mandatory fields...'});
     try {
+      const onlyIncludeCustomFields = true;
+      const onlyIncludeRequiredFields = true;
       const projectFieldMappings: DataRetrievalResponse<ProjectFieldMappings> = await buildFieldMappingsForProject(
-        selectedToProject.id
+        selectedToProject.id,
+        onlyIncludeCustomFields,
+        onlyIncludeRequiredFields
       );
       if (projectFieldMappings.errorMessage) {
         console.warn(`BulkOperationPanel: validateMandatoryFieldsAreFilled: Error retrieving field options: ${projectFieldMappings.errorMessage}`);

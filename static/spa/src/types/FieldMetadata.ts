@@ -11,5 +11,4 @@ export interface FieldMetadata {
   operations: string[]; // Allowed operations on the field (e.g., ["set", "add"])
   allowedValues?: FieldAllowedValue[]; // Possible values for the field (if applicable)
   defaultValue?: any; // Default value of the field (if applicable)
-  configuration: any; // Additional configuration for the field (if applicable)
 }

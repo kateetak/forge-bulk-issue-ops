@@ -17,13 +17,14 @@ export const findProjectByKey = async (projectKey: string): Promise<DataRetrieva
 
 export const buildFieldMappingsForProject = async (
   targetProjectId: string,
-  onlyIncludeRequiredFields: boolean = true
+  onlyIncludeCustomFields: boolean,
+  onlyIncludeRequiredFields: boolean
 ): Promise<DataRetrievalResponse<ProjectFieldMappings>> => {
   const projectFieldMappings: ProjectFieldMappings = {
     targetIssueTypeIdsToMappings: new Map<string, IssueTypeFieldMappings>()
   }
   const projectCreateIssueMetadata = await jiraDataModel.getCreateIssueMetadataForProject(targetProjectId);
-  // console.log(`buildFieldMappingsForProject: projectCreateIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
+  console.log(`buildFieldMappingsForProject: projectCreateIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
   // const projectId = projectCreateIssueMetadata.id;
   // console.log(`Found ${projectCreateIssueMetadata.issuetypes.length} issue types for project ${targetProjectId}`);
   for (const targetIssueType of projectCreateIssueMetadata.issuetypes) {

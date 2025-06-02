@@ -304,7 +304,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     if (issueMoveEditRequestOutcome) {
       const renderedErrors = issueMoveEditRequestOutcome.errors ? issueMoveEditRequestOutcome.errors.map((error: Error, index: number) => {
         return (
-          <div key={`issue-move-request-error-${index}`} className="error-message">
+          <div key={`issue-move-request-error-${index}`} className="inline-error-message">
             {error.message}
           </div>
         );

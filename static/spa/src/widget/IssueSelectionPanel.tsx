@@ -140,7 +140,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const renderMultipleProjectsError = () => {
     return (
-      <div className="error-message">
+      <div className="inline-error-message">
         <p>The issues are in multiple projects but this is not supported. Please select issues from a single project or enable bulk moves from multiple projects in the app settings.</p>
       </div>
     );
