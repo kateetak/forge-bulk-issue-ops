@@ -24,7 +24,7 @@ export const buildFieldMappingsForProject = async (
     targetIssueTypeIdsToMappings: new Map<string, IssueTypeFieldMappings>()
   }
   const projectCreateIssueMetadata = await jiraDataModel.getCreateIssueMetadataForProject(targetProjectId);
-  console.log(`buildFieldMappingsForProject: projectCreateIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
+  // console.log(`buildFieldMappingsForProject: projectCreateIssueMetadata: ${JSON.stringify(projectCreateIssueMetadata, null, 2)}`);
   // const projectId = projectCreateIssueMetadata.id;
   // console.log(`Found ${projectCreateIssueMetadata.issuetypes.length} issue types for project ${targetProjectId}`);
   for (const targetIssueType of projectCreateIssueMetadata.issuetypes) {
@@ -40,7 +40,7 @@ export const buildFieldMappingsForProject = async (
       const field = targetIssueType.fields[fieldId];
       const includeField = !onlyIncludeRequiredFields || field.required;
       if (includeField) {
-        const isCustomField = field.schema && field.schema.customId;
+        const isCustomField = !onlyIncludeCustomFields || field.schema && field.schema.customId;
         if (isCustomField) {
           // console.log(`buildFieldMappingsForProject: Found custom field: ${fieldId} (required = ${field.required}, schema type = ${field.schema.type})`);
 

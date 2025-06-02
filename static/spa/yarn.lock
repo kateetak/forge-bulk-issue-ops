@@ -464,6 +464,18 @@
     bind-event-listener "^3.0.0"
     tiny-invariant "^1.2.0"
 
+"@atlaskit/link@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@atlaskit/link/-/link-3.2.0.tgz#bb4181410c1d9a7cae878047a3c17c06914230c6"
+  integrity sha512-j8NmZSkwASH5307HTzbIjfROaujbUYtSpHk6Ad3wi4Ip0IxinYQ6MUm66A8AUcLBbaDdIet2hgsI1YB8AcSdNg==
+  dependencies:
+    "@atlaskit/css" "^0.10.0"
+    "@atlaskit/platform-feature-flags" "^1.1.0"
+    "@atlaskit/primitives" "^14.8.0"
+    "@atlaskit/tokens" "^4.9.0"
+    "@babel/runtime" "^7.0.0"
+    "@compiled/react" "^0.18.3"
+
 "@atlaskit/locale@^3.0.0":
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/@atlaskit/locale/-/locale-3.0.1.tgz#4eef3e02dc27b196dd904caae7865adaa6f13d7a"
@@ -2406,6 +2418,11 @@
   integrity sha512-G4M8NTXbNR5HzpYNFQMczypUuxoItdtAMQmwIgUkzE2osrjPRKhFx/VniMGnnXoowgmDLoaMtMcllvxcm/YnVA==
   dependencies:
     lodash "^4.17.21"
+
+"@forge/jira-bridge@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@forge/jira-bridge/-/jira-bridge-0.38.0.tgz#add1762ef23fbb54270afb3ee7ec8f70ffad51f0"
+  integrity sha512-oJOABuyK7Iz8As4G4UnebWhlABUwyXJ3dyWlxBJw0qbKLSzoj8wO7zCDYCuw4RF3bh/nVblpLLI7mx/yf1OWVg==
 
 "@humanwhocodes/config-array@^0.13.0":
   version "0.13.0"

@@ -19,8 +19,10 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import { mapToObjectMap } from 'src/model/util';
 import { formatIssueType } from 'src/controller/formatters';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { textToAdf } from 'src/controller/textToAdf';
 
 const showDebug = false;
+const showUnsupportedFields = false;
 
 export type FieldMappingsState = {
   dataRetrieved: boolean;
@@ -40,9 +42,12 @@ export type FieldMappingPanelProps = {
   allIssueTypes: IssueType[];
   issues: Issue[];
   fieldMappingsState: FieldMappingsState;
+  targetProject: Project;
   showDebug?: boolean;
   onAllDefaultValuesProvided: (allDefaultsProvided: boolean) => void;
 }
+
+type FieldValueProviderRenderer = (fieldId: string, targetIssueType: IssueType, fieldMappingInfo: FieldMappingInfo) => JSX.Element;
 
 const FieldMappingPanel = (props: FieldMappingPanelProps) => {
 
@@ -74,11 +79,22 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       fieldIdsToFields.set(field.id, field);
     });
     setFieldIdsToFields(fieldIdsToFields);
+    fieldIdsToFields;
+  }
+
+  const refreshFromIssues = async (): Promise<void> => {
+    const targetIssueTypeIdsToTargetIssueTypes = determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped(
+      props.issues, props.allIssueTypes);
+    setTargetIssueTypeIdsToTargetIssueTypesBeingMapped(targetIssueTypeIdsToTargetIssueTypes);
   }
 
   useEffect(() => {
     loadFieldInfo();
   }, []);
+
+  useEffect(() => {
+    refreshFromIssues();
+  }, [props.issues, props.allIssueTypes, props.targetProject, props.fieldMappingsState]);
 
   const onSelectDefaultFieldValue = (targetIssueType: IssueType, fieldId: string, fieldMetadata: FieldMetadata, defaultValue: DefaultFieldValue): void => {
     targetProjectFieldsModel.onSelectDefaultValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
@@ -98,7 +114,24 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     targetProjectFieldsModel.onSelectRetainFieldValue(targetIssueType, fieldId, fieldMetadata, retainFieldValue);
   }
 
-  const renderFieldValuesSelect = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+  // KNOWN-8: Only a limited set of field types are supported for default values in bulk move operations.
+  const getFieldValueEditRenderer = (fieldMappingInfo: FieldMappingInfo): undefined | FieldValueProviderRenderer => {
+    const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
+    if (fieldMetadata.schema.type === 'option' || fieldMetadata.schema.type === 'options') {
+      return renderFieldValuesSelect;
+    } else if (fieldMetadata.schema.type === 'number') {
+      return renderNumberFieldEntryWidget;
+    } else if (fieldMetadata.schema.type === 'string') {
+      return renderStringFieldEntryWidget;
+    } else if (showUnsupportedFields) {
+      return renderFieldNotSupported;
+    } else {
+      return undefined;
+    }
+  }
+
+  const renderFieldValuesSelect = (fieldId: string, targetIssueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
+    const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
     const selectedDefaultFieldValue = targetProjectFieldsModel.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
     // console.log(`renderFieldValuesSelect: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     const selectableCustomFieldOptions: CustomFieldOption[] = [];
@@ -136,7 +169,8 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     );
   }
 
-  const renderNumberFieldEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMetadata: FieldMetadata): JSX.Element => {
+  const renderNumberFieldEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
+    const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
     const selectedDefaultFieldValue = targetProjectFieldsModel.getSelectedDefaultFieldValue(targetIssueType.id, fieldId);
     // console.log(`renderNumberFieldEntryWidget: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
     return (
@@ -170,25 +204,44 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     );
   }
 
-  const renderFieldValuesEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
+  const renderStringFieldEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
     const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
-    if (fieldMetadata.schema.type === 'option' || fieldMetadata.schema.type === 'options') {
-      if (fieldMetadata.allowedValues) {
-        return renderFieldValuesSelect(fieldId, targetIssueType, fieldMetadata);
-      } else {
-        <div>
-          <p><span style={{color:'#ff0000'}}>No options available for this field (type = {fieldMetadata.schema.type}).</span></p>
-        </div>
-      }
-    } else if (fieldMetadata.schema.type === 'number') {
-      return renderNumberFieldEntryWidget(fieldId, targetIssueType, fieldMetadata);
-    } else {
-      return (
-        <div>
-          <p><span style={{color:'#ff0000'}}>Unexpected field type: {fieldMetadata.schema.type}.</span></p>
-        </div>
-      );
-    }
+    // console.log(`renderNumberFieldEntryWidget: selectedDefaultFieldValue = ${JSON.stringify(selectedDefaultFieldValue)}`);
+    return (
+      <Textfield
+        id={`string--for-${fieldId}`}
+        name={fieldId}
+        // defaultValue={selectedDefaultFieldValue && selectedDefaultFieldValue.value.length > 0 ? selectedDefaultFieldValue.value[0] : ''}
+        type="text"
+        onChange={(event) => {
+          const enteredText = event.currentTarget.value;
+          // KNOWN-6: Rich text fields in bulk move operations only supports plain text where each new line is represented as a new paragraph.
+          const adf = textToAdf(enteredText);
+          console.log(`Setting default value for field ID ${fieldId} to ${JSON.stringify(adf, null, 2)}`);
+          const defaultValue: DefaultFieldValue = {
+            retain: false,
+            type: "adf",
+            value: adf as any
+          };
+          onSelectDefaultFieldValue(targetIssueType, fieldId, fieldMetadata, defaultValue);
+        }}
+      />
+    );
+  }
+
+  const renderFieldNotSupported = (fieldId: string, targetIssueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
+    const fieldMetadata: FieldMetadata = fieldMappingInfo.fieldMetadata;
+    return (
+      <div>
+        <p className="inline-error-message">Unexpected field type: {fieldMetadata.schema.type}.</p>
+        <pre style={{width: '300px'}}>{JSON.stringify(fieldMetadata, null, 2)}</pre>
+      </div>
+    );
+  }
+
+  const renderFieldValuesEntryWidget = (fieldId: string, targetIssueType: IssueType, fieldMappingInfo: FieldMappingInfo): JSX.Element => {
+    const renderer = getFieldValueEditRenderer(fieldMappingInfo);
+    return renderer ? renderer(fieldId, targetIssueType, fieldMappingInfo) : null;
   }
 
   const renderRetainFieldValueWidget = (
@@ -210,7 +263,31 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
   }
 
   const renderFieldMappingsState = () => {
-    let fieldCount = 0;
+    const renderedRows: JSX.Element[] = [];
+    const entries = Array.from(props.fieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings.entries());
+    entries.forEach(([targetIssueTypeId, fieldOptionMappings]) => {
+      const targetIssueType = targetIssueTypeIdsToTargetIssueTypesBeingMapped.get(targetIssueTypeId);
+      if (targetIssueType) {
+        return Array.from(fieldOptionMappings.fieldIdsToFieldMappingInfos.entries()).map(([fieldId, fieldMappingInfo]) => {
+          const renderer = getFieldValueEditRenderer(fieldMappingInfo);
+          if (renderer) {
+            const renderedRow = (
+              <tr key={`mapping-${targetIssueTypeId}-${fieldId}`}>
+                <td>{formatIssueType(targetIssueType)}</td>
+                <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
+                <td>
+                  {renderFieldValuesEntryWidget(fieldId, targetIssueType, fieldMappingInfo)}
+                </td>
+                <td>
+                  {renderRetainFieldValueWidget(fieldId, targetIssueType, fieldMappingInfo)}
+                </td>
+              </tr>
+            );
+            renderedRows.push(renderedRow);
+          }
+        });
+      }
+    });
     const renderedTable = (
       <div>
         <table >
@@ -218,38 +295,17 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
             <tr>
               <th className="no-break">Work item Type</th>
               <th className="no-break">Field</th>
-              <th className="no-break">Options</th>
+              <th className="no-break">Value</th>
               <th className="no-break">Retain</th>
             </tr>
           </thead>
           <tbody>
-            {Array.from(props.fieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings.entries()).map(([targetIssueTypeId, fieldOptionMappings]) => {
-              const targetIssueType = targetIssueTypeIdsToTargetIssueTypesBeingMapped.get(targetIssueTypeId);
-              if (targetIssueType) {
-                return Array.from(fieldOptionMappings.fieldIdsToFieldMappingInfos.entries()).map(([fieldId, fieldMappingInfo]) => {
-                  fieldCount++;
-                  return (
-                    <tr key={`mapping-${targetIssueTypeId}-${fieldId}`}>
-                      <td>{formatIssueType(targetIssueType)}</td>
-                      <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
-                      <td>
-                        {renderFieldValuesEntryWidget(fieldId, targetIssueType, fieldMappingInfo)}
-                      </td>
-                      <td>
-                        {renderRetainFieldValueWidget(fieldId, targetIssueType, fieldMappingInfo)}
-                      </td>
-                    </tr>
-                  );
-                });
-              } else {
-                return null;
-              }
-            })}
+            {renderedRows}
           </tbody>
         </table>
       </div>
     );
-    if (fieldCount > 0) {
+    if (renderedRows.length > 0) {
       return renderedTable;
     } else {
       return renderPanelMessage(`There are no fields that need default values to be set.`);      
@@ -271,7 +327,6 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       }
     }
 
-    // const clonedFieldMappingsState = props.fieldMappingsState;
     const clonedFieldMappingsState = JSON.parse(JSON.stringify(props.fieldMappingsState));
     const targetIssueTypeIdsToMappings = props.fieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings;
     // Replace the Map with and object so JSON.stringify includes it...

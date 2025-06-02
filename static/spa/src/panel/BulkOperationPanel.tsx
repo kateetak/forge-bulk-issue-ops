@@ -78,7 +78,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
   const [allIssueTypesMapped, setAllIssueTypesMapped] = useState<boolean>(false);
   const [fieldMappingsState, setFieldMappingsState] = useState<FieldMappingsState>(nilFieldMappingsState);
-  const [targetProjectFieldsModelUpdateTime, setTargetProjectFieldsModelUpdateTime] = useState<number>(0);
   const [allDefaultValuesProvided, setAllDefaultValuesProvided] = useState<boolean>(false);
   const [currentFieldMappingActivity, setCurrentFieldMappingActivity] = useState<undefined | Activity>(undefined);
   const [selectableIssueTypes, setSelectableIssueTypes] = useState<IssueType[]>([]);
@@ -188,7 +187,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const clearFieldMappingsState = () => {
     setFieldMappingsState(nilFieldMappingsState);
     targetProjectFieldsModel.setProjectFieldMappings(nilFieldMappingsState.projectFieldMappings);
-    setTargetProjectFieldsModelUpdateTime(Date.now());
   }
 
   const isFieldMappingsComplete = () => {
@@ -374,6 +372,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     }
     setCurrentFieldMappingActivity({taskId: 'non-jira-activity', description: 'Checking for mandatory fields...'});
     try {
+      // KNOWN-7: Bulk move operations only allow values to be specified for required custom fields.
       const onlyIncludeCustomFields = true;
       const onlyIncludeRequiredFields = true;
       const projectFieldMappings: DataRetrievalResponse<ProjectFieldMappings> = await buildFieldMappingsForProject(
@@ -403,7 +402,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     const fieldMappingsState = await buildFieldMappingsState(selectedToProject);
     setFieldMappingsState(fieldMappingsState);
     targetProjectFieldsModel.setProjectFieldMappings(fieldMappingsState.projectFieldMappings);
-    setTargetProjectFieldsModelUpdateTime(Date.now());
   }
 
   const updateFieldMappingsIfNeeded = async (selectedToProject: undefined | Project): Promise<void> => {
@@ -707,10 +705,10 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
           {renderStartFieldMappingButton()}
           {renderFieldMappingIndicator()}
           <FieldMappingPanel
-            key={`field-mapping-panel-${lastDataLoadTime}-${targetProjectFieldsModelUpdateTime}`}
             bulkOperationMode={bulkOperationMode}
             allIssueTypes={allIssueTypes}
             issues={selectedIssues}
+            targetProject={selectedToProject}
             fieldMappingsState={fieldMappingsState}
             showDebug={showDebug}
             onAllDefaultValuesProvided={onAllDefaultValuesProvided}

@@ -11,6 +11,7 @@ import SuccessIcon from '@atlaskit/icon/core/success';
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 import placeholderImage from './issue-filter-placeholder.png';
 import jiraUtil from "src/controller/jiraUtil";
+import { IssueLink } from "./IssueLink";
 
 export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
@@ -146,29 +147,35 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     );
   }
 
+  const renderIssueRow = (issue: Issue) => {
+    return (
+      <tr>
+        <td>
+          {renderIssueSelectionWidget(issue)}
+        </td>
+        <td className={`issue-summary-panel ${issue.fields.issuetype.id ? '' : 'disabled-text'}`}>
+          <Lozenge appearance="inprogress">{issue.fields.issuetype.name}</Lozenge>
+        </td>
+        <td className={`issue-summary-panel clip-text-300 ${issue.fields.issuetype.id ? '' : 'disabled-text'}`}>
+          <IssueLink
+            issueKey={issue.key}
+            issueSummary={issue.fields.summary}
+          />
+        </td>
+      </tr>
+    );
+  }
+
   const renderIssuesPanel = () => {
     const hasIssues = props.issueSearchInfo.issues.length > 0;
-    const renderedIssues = hasIssues ? props.issueSearchInfo.issues.map((issue: Issue) => {
-      const issueIsInSelectedFromProject = true;
-      return (
-        <div key={`issue-key-${issue.key}`}>
-          <div 
-            key={`issue-select-${issue.key}`}
-            className="issue-selection-panel"
-          >
-            <div>
-              {renderIssueSelectionWidget(issue)}
-            </div>
-            <div key={`issue-id-type-${issue.key}-${issue.fields.issuetype.id}`} className={`issue-summary-panel ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
-              <Lozenge appearance="inprogress">{issue.fields.issuetype.name}</Lozenge>
-            </div>
-            <div key={`issue-${issue.key}`} className={`issue-summary-panel clip-text-300 ${issueIsInSelectedFromProject ? '' : 'disabled-text'}`}> 
-              {issue.key}: {issue.fields.summary}
-            </div>
-          </div>
-        </div>
-      );
-    }) : null;
+    const renderedIssueRows = hasIssues ? props.issueSearchInfo.issues.map(renderIssueRow) : null;
+    const renderedIssuesTable = hasIssues ? (
+      <table className="issue-selection-table">
+        <tbody>
+          {renderedIssueRows}
+        </tbody>
+      </table>
+    ) : null;
     return (
       <>
         <div style={{marginTop: '20px', marginBottom: '-20px'}}>
@@ -177,7 +184,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
         {renderIssueLoading()}
         <FormSection>
           {renderGlobalSelectionControls()}
-          {renderedIssues}
+          {renderedIssuesTable}
         </FormSection>
       </>
     );

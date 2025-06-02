@@ -271,6 +271,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
           appearance={buttonEnabled ? 'primary' : 'default'}
           isDisabled={!buttonEnabled}
           onClick={() => {
+            setIssueMoveEditOutcome(undefined);
             if (props.bulkOperationMode === 'Move') {
               onMoveIssues();
             } else if (props.bulkOperationMode === 'Edit') {
@@ -324,8 +325,8 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       const moveResult: IssueMoveEditOutcomeResult | undefined = issueMoveEditOutcome.result;
       const movedCount = moveResult ? moveResult.successfulIssues.length : -1;
       const failedCount = moveResult ? moveResult.totalIssueCount - movedCount : -1;
-      const renderedIssuesMovedResult = issueMoveEditOutcome.result ? <span># issues {props.bulkOperationMode === 'Move' ? 'moved' : 'edited'}: <Lozenge appearance="success">{movedCount}</Lozenge></span> : null;
-      const renderedIssuesNotMovedResult = issueMoveEditOutcome.result ? <span># issues not {props.bulkOperationMode === 'Move' ? 'moved' : 'edited'}: <Lozenge appearance="removed">{failedCount}</Lozenge></span> : null;
+      const renderedIssuesMovedResult = issueMoveEditOutcome.result ? <span># work items {props.bulkOperationMode === 'Move' ? 'moved' : 'edited'}: <Lozenge appearance="success">{movedCount}</Lozenge></span> : null;
+      const renderedIssuesNotMovedResult = issueMoveEditOutcome.result ? <span># work items not {props.bulkOperationMode === 'Move' ? 'moved' : 'edited'}: <Lozenge appearance="removed">{failedCount}</Lozenge></span> : null;
       const renderedOutcomeDebugJson = showDebug ? <pre>{JSON.stringify(issueMoveEditOutcome, null, 2)}</pre> : null;
       const progressPercent = issueMoveEditOutcome.progress ?? 0;
       const renderedProgress = <div>Progress: {progressPercent}%</div>;

@@ -92,9 +92,11 @@ Configuration options can be defined in [static/spa/src/model/config.ts](static/
 
 Where possible, known issues are documented in the relevant locations in the code. To address the known issues, start by searching the code base for the known issue key.
 
-* KNOWN-1: Using deprecated API https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
+* KNOWN-1: The deprecated [Get create issue metadata API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get) is being used, however, there seems to be no follow through of this deprecation.
 * KNOWN-2: The `REMOVE` option is not supported when bulk editing labels.
 * KNOWN-3: Labels can not be created within the bulk edit form.
 * KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
 * KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it.
-
+* KNOWN-6: Rich text fields in bulk move operations only supports plain text where each new line is represented as a new paragraph.
+* KNOWN-7: Bulk move operations only allow values to be specified for required custom fields.
+* KNOWN-8: Only a limited set of field types are supported for default values in bulk move operations.

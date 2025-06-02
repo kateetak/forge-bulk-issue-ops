@@ -17,6 +17,15 @@ body {
   white-space: nowrap;
 }
 
+span.button-link {
+  cursor: pointer !important;
+}
+
+span.button-link:hover {
+  color: #005A9E;
+  text-decoration: underline;
+}
+
 .clip-text-300 {
   /* This is used to clip text to a maximum of 200 pixels */
   max-width: 300px !important;
@@ -106,6 +115,14 @@ div.padding-panel:hover {
 div.content-panel {
   min-width: 300px;
   /* max-width: 400px; */
+}
+
+table.issue-selection-table {
+  width: fit-content;
+}
+
+table.issue-selection-table > tbody {
+  border-bottom-width: 0px;
 }
 
 div.issue-selection-panel {

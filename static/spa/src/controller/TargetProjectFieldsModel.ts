@@ -76,33 +76,13 @@ class TargetProjectFieldsModel {
   }
 
   areAllFieldValuesSet = (): boolean => {
-    // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: checking if all field values are set...`);
-    if (!this.projectFieldMappings) {
-      // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: projectFieldMappings is not set.`);
+    const fieldMappingIncompletenessReason = this.getFieldMappingIncompletenessReason();
+    if (fieldMappingIncompletenessReason) {
+      // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: Field mapping incompleteness reason: ${fieldMappingIncompletenessReason}`);
       return false;
+    } else {
+      return true;
     }
-    if (this.selectedIssueTypes.length === 0) {
-      // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no issue types are selected.`);
-      return false; // If no issue types are selected, return false
-    }
-    for (const selectedIssueType of this.selectedIssueTypes) {
-      const issueTypeFieldMappings = this.projectFieldMappings.targetIssueTypeIdsToMappings.get(selectedIssueType.id);
-      if (issueTypeFieldMappings) {
-        const fieldIds = Array.from(issueTypeFieldMappings.fieldIdsToFieldMappingInfos.keys());
-        for (const fieldId of fieldIds) {
-          const defaultValue = this.getSelectedDefaultFieldValue(selectedIssueType.id, fieldId);
-          if (!defaultValue) {
-            // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`);
-            return false;
-          }
-        }
-      } else {
-        // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no field mappings found for issue type ${selectedIssueType.id}. Maybe the issue type is not yest mapped in the previous step.`);
-        // return false;
-      }
-    }
-    // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: all field values are set.`);
-    return true;
   }
 
   getFieldMappingIncompletenessReason = (): string => {
@@ -122,7 +102,18 @@ class TargetProjectFieldsModel {
           const defaultValue = this.getSelectedDefaultFieldValue(selectedIssueType.id, fieldId);
           if (!defaultValue) {
             // console.log(`TargetProjectFieldsModel.areAllFieldValuesSet: no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`);
-            return `no default value found for issue type ${selectedIssueType.id} and field ${fieldId}.`;
+            // return `no default value found for work item type ${selectedIssueType.id} and field ${fieldId}.`;
+
+
+
+
+            const fieldMappingInfo = this.projectFieldMappings.targetIssueTypeIdsToMappings.get(selectedIssueType.id)?.fieldIdsToFieldMappingInfos.get(fieldId);
+            if (fieldMappingInfo && fieldMappingInfo.fieldMetadata.required) {
+              return `no default value found for work item type ${selectedIssueType.id} and mandatory field ${fieldId}: ${JSON.stringify(fieldMappingInfo)}`; 
+            }
+
+
+
           }
         }
       } else {
