@@ -4,15 +4,15 @@ modules:
       resource: main
       resolver:
         function: my-resolver
-      title: Bulk Issues Operations
+      title: Bulk Work Items Operations
       pages:
-        - title: About Bulk Issue Operations
+        - title: About Bulk Work Items Operations
           route: /
-        - title: Bulk Move Issues
+        - title: Bulk Move Work Items
           route: move
-        - title: Bulk Edit Issues
+        - title: Bulk Edit Work Items
           route: edit
-        - title: Bulk Import Issues
+        - title: Bulk Import Work Items
           route: import
   function:
     - key: my-resolver
