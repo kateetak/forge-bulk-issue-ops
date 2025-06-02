@@ -183,8 +183,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
           <thead>
             <tr>
               <th className="no-break">Project</th>
-              <th className="no-break">Issue type</th>
-              <th className="no-break">New issue type</th>
+              <th className="no-break">Work item type</th>
+              <th className="no-break">New work item type</th>
             </tr>
           </thead>
           <tbody>

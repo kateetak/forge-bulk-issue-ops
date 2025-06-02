@@ -497,7 +497,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
       <FormSection>
         <IssueTypesSelect 
           key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
-          label="Issue types"
+          label="Work item types"
           selectedIssueTypeIds={selectedIssueTypeIds}
           selectableIssueTypes={selectableIssueTypes}
           onIssueTypesSelect={onIssueTypesSelect}
@@ -570,7 +570,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label="Select issue filter options"
+            label={`Find work items to ${bulkOperationMode.toLowerCase()}`}
             completionState={getStepCompletionState('filter')}
           />
           {renderFilterModeSelect()}
@@ -595,7 +595,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label={`Confirm issues to ${bulkOperationMode.toLowerCase()}`}
+            label={`Confirm work items to ${bulkOperationMode.toLowerCase()}`}
             completionState={getStepCompletionState('issue-selection')}
           />
           {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
@@ -631,7 +631,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const renderTargetProjectPanel = (stepNumber: number) => {
     const waitingMessage = new WaitingMessageBuilder()
       .addCheck(arePrerequisiteStepsComplete('target-project-selection'), 'Waiting for previous steps to be completed.')
-      .addCheck(selectedIssues.length > 0, 'Issues are yet to be selected.')
+      .addCheck(selectedIssues.length > 0, 'Work items are yet to be selected.')
       .build();
     return (
       <div className="padding-panel">
@@ -669,7 +669,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label="Issue Type Mapping"
+            label="Work item type mapping"
             // completionState={'incomplete'}
             completionState={getStepCompletionState('issue-type-mapping')}
           />
@@ -696,7 +696,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label="Map field values"
+            label="Map work item field values"
             completionState={getStepCompletionState('field-mapping')}
           />
           {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
@@ -722,7 +722,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label={`Set field values`}
+            label={`Set work item field values`}
             completionState={getStepCompletionState('edit-fields')}
           />
           <FieldEditsPanel
@@ -741,7 +741,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label={`${bulkOperationMode} issues`}
+            label={`${bulkOperationMode} work items`}
             completionState={getStepCompletionState('move-or-edit')}
           />
           <MoveOrEditPanel
@@ -810,7 +810,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
             {JSON.stringify(debugInfo.projects, null, 2)}
           </pre>
 
-          <h4>Issue types</h4>
+          <h4>Work item types</h4>
           <pre>
             {JSON.stringify(debugInfo.issueTypes, null, 2)}
           </pre>
