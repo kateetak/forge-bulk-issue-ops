@@ -449,7 +449,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
       <FormSection>
         <ProjectsSelect 
           // key={`from-project=${allProjectSearchInfoTime}`}
-          label="From projects"
+          label={props.bulkOperationMode === 'Move' ? "From projects" : "Projects"}
           isMulti={isMulti}
           isClearable={false}
           selectedProjects={selectedFromProjects}

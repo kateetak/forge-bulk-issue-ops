@@ -63,7 +63,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     props.onEditsValidityChange(valid);
   }
 
-  const onFieldChange = async (field: IssueBulkEditField, value: any): Promise<OperationOutcome> => {
+  const onFieldChange = async (field: IssueBulkEditField, value: FieldEditValue): Promise<OperationOutcome> => {
     const setFieldOutcome = await editedFieldsModel.setFieldValue(field, value);
     if (!setFieldOutcome.success) {
       console.log(`FieldEditsPanel.onFieldChange: Failed to set field value for field ${field.id}: ${setFieldOutcome.errorMessage}`);

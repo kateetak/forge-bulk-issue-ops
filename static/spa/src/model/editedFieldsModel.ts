@@ -19,7 +19,7 @@ class EditedFieldsModel {
   private issues: Issue[] = [];
   private fieldIdsToEditStates: ObjectMapping<EditState> = {};
   private fieldIdsToFields: ObjectMapping<IssueBulkEditField> = {};
-  private fieldIdsToValues: ObjectMapping<any> = {};
+  private fieldIdsToValues: ObjectMapping<FieldEditValue> = {};
 
   getCurrentIssues = (): Issue[] => {
     return this.issues;
@@ -56,7 +56,7 @@ class EditedFieldsModel {
     return Object.values(this.fieldIdsToFields);
   }
 
-  getFieldIdsToValues = (): ObjectMapping<any> => {
+  getFieldIdsToValues = (): ObjectMapping<FieldEditValue> => {
     return this.fieldIdsToValues;
   }
 
@@ -102,10 +102,19 @@ class EditedFieldsModel {
     this.issues = issues;
   }
 
-  setFieldValue = async (field: IssueBulkEditField, value: any): Promise<OperationOutcome> => {
+  setFieldValue = async (field: IssueBulkEditField, value: FieldEditValue): Promise<OperationOutcome> => {
+    const otherEditedFieldIdsToValues: ObjectMapping<FieldEditValue> = {
+      ...this.fieldIdsToValues,
+      [field.id]: value,
+    };
+    delete otherEditedFieldIdsToValues[field.id];
 
     // Validate the field value against the field's validation rules.
-    const operationOutcome = await bulkOperationRuleEnforcer.validateFieldValue(field, value);
+    const operationOutcome = await bulkOperationRuleEnforcer.validateFieldValue(
+      field,
+      value,
+      this.fieldIdsToFields,
+      otherEditedFieldIdsToValues);
     if (!operationOutcome.success) {
       return operationOutcome;
     }
