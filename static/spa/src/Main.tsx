@@ -28,9 +28,9 @@ const Home = (props: HomeProps) => {
   return (
     <Fragment>
       <div className="bulk-move-main-panel clickable">
-        {renderMainPanel('move', 'Bulk Move Issues', `Use this functionality to move a large number of issues from one or more projects to another project.`)}
-        {renderMainPanel('edit', 'Bulk Edit Issues', `Use this functionality to edit a large number of issues in a similar way to each other.`)}
-        {renderMainPanel('import', 'Bulk Import Issues', `Using this functionality to import a large number of issues.`)}
+        {renderMainPanel('move', 'Bulk Move Work Items', `Use this functionality to move a large number of work items from one or more projects to another project.`)}
+        {renderMainPanel('edit', 'Bulk Edit Work Items', `Use this functionality to edit a large number of work items in a similar way to each other.`)}
+        {renderMainPanel('import', 'Bulk Import Work Items', `Using this functionality to import a large number of work items.`)}
       </div>
     </Fragment>
   );

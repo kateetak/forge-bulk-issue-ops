@@ -4,7 +4,7 @@ modules:
       resource: main
       resolver:
         function: my-resolver
-      title: Bulk Work Items Operations
+      title: Bulk Work Item Operations
       pages:
         - title: About Bulk Work Items Operations
           route: /
