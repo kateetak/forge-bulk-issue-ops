@@ -68,13 +68,13 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     if (!setFieldOutcome.success) {
       console.log(`FieldEditsPanel.onFieldChange: Failed to set field value for field ${field.id}: ${setFieldOutcome.errorMessage}`);
       // No need to show a flag here or otherwise as the field editor will show the error.
-      return setFieldOutcome;
     }
 
     const newState = editedFieldsModel.getFieldIdsToValues();
     setFieldIdsToValues(newState);
     const valid = editedFieldsModel.getEditCount() > 0;
     props.onEditsValidityChange(valid);
+    return setFieldOutcome;
   }
 
   const renderClearFilterControl = () => {

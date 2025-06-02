@@ -84,7 +84,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
       type: 'error',
       title: `Field edit error`,
       description: errorMessage,
-      isAutoDismiss: false,
+      isAutoDismiss: requireFieldEditErrorAcknowledgement,
       actions: actions
     }
     const flag = showFlag(flagOptions);
@@ -92,6 +92,9 @@ export const FieldEditor = (props: FieldEditorProps) => {
 
   const onChange = async (value: FieldEditValue): Promise<OperationOutcome> => {
     const operationOutcome: OperationOutcome = await props.onChange(value);
+    if (!operationOutcome) {
+      throw new Error(`No operation outcome returned from onChange for field ${field.name}.`);
+    }
     setOperationOutcome(operationOutcome);
     if (!operationOutcome.success) {
       showFieldEditErrorFlag(operationOutcome.errorMessage || `Failed to set field value for field ${field.name}.`);
