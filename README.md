@@ -6,8 +6,9 @@ This is a [Forge](https://developer.atlassian.com/platform/forge) app that provi
 
 The motivation behind the creation of the app was to constrain bulk work item operations to ensure an organisations practices are adhered to. Specific features of the app include:
 
-* Ability to control whether work items can be moved across project category boundaries; and
-* Ability to restrict which work item fields are editable.
+* Policy level configuration controlling whether work items can be moved across project category boundaries;
+* Ability to include logic specifying the allow target rojects of a move operation based on the selected work items; and
+* Ability to include logic to restrict which work item fields are editable.
 
 
 ## Setup
@@ -74,8 +75,11 @@ Once this is done, you should see the "bulk-ops-app" appear alongside the "Make 
 
 ### Setup step 3: Configure environment variables
 
-In order for the app to be able to make bulk changes as the user requeting the changes, the app needs to add the requesting user into the "bulk-ops-app" group before the request is submitted and then remove the user from the group afterwards. To configure these environment variables, see the commands in the comments above the various operations in [src/userManagementConfig.ts](./src/userManagementConfig.ts). 
+In order for the app to be able to make bulk changes as the user requeting the changes, the app needs to add the requesting user into the "bulk-ops-app" group before the request is submitted and then remove the user from the group afterwards. Details about these environment variables are provided in [src/userManagementConfig.ts](./src/userManagementConfig.ts). To configure them:
 
+1. Copy `scripts/setup-forge-environment-template` to `setup-forge-[env]-environment-private.sh` where `[env]` refers to one of your environments. An example would be `setup-forge-development-environment-private.sh`. Note that the `-private` part of the file name is necessary to prevent the file being checked into GIT and consequently disclosing private information.
+2. Replace the values within `setup-forge-[env]-environment-private.sh` within square brackets with values for your configuration.
+3. Run `./scripts/setup-forge-[env]-environment-private.sh`.
 
 ### Stepup step 4: Optionally prevent regular users from using Jira's built-in bulk operations
 
@@ -88,6 +92,13 @@ This optional step involves reviewing and tuning the access to Jira's built-in b
 - Use the `forge deploy` command when you want to persist code changes or after you make changes to the app manifest.
 - Use the `forge install` command when you want to install the app on a new site.
 - Once the app is installed on a site, the site picks up the new app changes you deploy without needing to rerun the install command.
+
+You can use the `./scripts/build-and-deploy.sh` to build and deploy the app as per the following examples:
+
+```
+./scripts/build-and-deploy.sh
+./scripts/build-and-deploy.sh production
+```
 
 # Customisation
 
