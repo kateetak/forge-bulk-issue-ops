@@ -118,7 +118,77 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-2: The `REMOVE` option is not supported when bulk editing labels.
 * KNOWN-3: Labels can not be created within the bulk edit form.
 * KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
-* KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it.
+* KNOWN-5: Not all fields types are supported since each type of field requires custom UI to edit it.
 * KNOWN-6: Rich text fields in bulk move operations only supports plain text where each new line is represented as a new paragraph.
 * KNOWN-7: Bulk move operations only allow values to be specified for required custom fields.
 * KNOWN-8: Only a limited set of field types are supported for default values in bulk move operations.
+* KNOWN-9: During move/edit operations a 401 response is returned when removing users from the bulk-ops-group.
+* KNOWN-10: Add the ability for issue type mappings to be restricted.
+* KNOWN-11: In bulk move, when multiple projects are selected, subsequent steps are still passing.
+* KNOWN-12: No monitoring of users accidentally left in the bulk-ops group
+
+
+# Edit field support
+
+The following identifies the support for bulk editing different types of fields:
+
+Supported:
+* issuetype
+* com.atlassian.jira.plugin.system.customfieldtypes:float
+* com.atlassian.jira.plugin.system.customfieldtypes:select
+* reporter
+* assignee
+* labels
+* priority
+* text
+* comment
+* duedate
+* com.atlassian.jira.plugin.system.customfieldtypes:datetime
+
+Not supported:
+* com.atlassian.jira.ext.charting:firstresponsedate
+* com.atlassian.jira.ext.charting:timeinstatus
+* com.atlassian.jira.plugins.service-entity:service-entity-field-cftype
+* versions
+* com.atlassian.servicedesk.approvals-plugin:sd-approvals
+* com.atlassian.jira.plugin.system.customfieldtypes:multigrouppicker
+* com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker
+* com.atlassian.jira.plugin.system.customfieldtypes:textarea
+* components
+* com.atlassian.jira.plugins.jira-development-integration-plugin:designcf
+* com.atlassian.jira.plugins.jira-development-integration-plugin:devsummarycf
+* environment
+* com.pyxis.greenhopper.jira:gh-epic-link
+* fixVersions
+* com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes
+* com.atlassian.jira.plugin.system.customfieldtypes:goals
+* com.pyxis.greenhopper.jira:jsw-issue-color
+* issuelinks
+* com.atlassian.jira.plugins.proforma-managed-fields:forms-locked-field-cftype
+* com.atlassian.jira.plugin.system.customfieldtypes:textfield
+* com.atlassian.jira.plugins.proforma-managed-fields:forms-open-field-cftype
+* com.atlassian.servicedesk:sd-customer-organizations
+* timeoriginalestimate
+* com.atlassian.jpo:jpo-custom-field-parent
+* com.atlassian.plugins.atlassian-connect-plugin:com.atlassian.atlas.jira__project-key
+* com.atlassian.plugins.atlassian-connect-plugin:com.atlassian.atlas.jira__project-status
+* com.pyxis.greenhopper.jira:gh-lexo-rank
+* com.atlassian.servicedesk.servicedesk-lingo-integration-plugin:sd-request-language
+* com.atlassian.servicedesk:sd-request-participants
+* com.atlassian.servicedesk:vp-origin
+* com.atlassian.servicedesk:sd-request-feedback
+* com.atlassian.servicedesk:sd-request-feedback-date
+* com.atlassian.servicedesk.sentiment:sd-sentiment
+* com.atlassian.jira.plugin.system.customfieldtypes:datepicker
+* com.pyxis.greenhopper.jira:jsw-story-points
+* com.atlassian.jira.plugins.proforma-managed-fields:forms-submitted-field-cftype
+* com.atlassian.jpo:jpo-custom-field-baseline-end
+* com.atlassian.jpo:jpo-custom-field-baseline-start
+* com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team
+* com.atlassian.servicedesk:sd-sla-field
+* timetracking
+* com.atlassian.jira.plugins.proforma-managed-fields:forms-total-field-cftype
+* com.atlassian.jira.plugins.jira-development-integration-plugin:vulnerabilitycf
+* com.atlassian.jira.plugins.work-category-field:work-category-field-cftype
+
+
