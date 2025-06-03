@@ -2,7 +2,13 @@
 
 # Introduction
 
-This is a [Forge](https://developer.atlassian.com/platform/forge) app that provides alternate experiences to Jira's built-in functionality to bulk move and edit issues.
+This is a [Forge](https://developer.atlassian.com/platform/forge) app that provides alternate experiences to Jira's built-in functionality to bulk move and edit issues. 
+
+The motivation behind the creation of the app was to constrain bulk work item operations to ensure an organisations practices are adhered to. Specific features of the app include:
+
+* Ability to control whether work items can be moved across project category boundaries; and
+* Ability to restrict which work item fields are editable.
+
 
 ## Setup
 
