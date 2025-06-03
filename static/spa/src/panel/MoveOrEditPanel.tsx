@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormSection, Label } from '@atlaskit/form';
 import Button from '@atlaskit/button/new';
 import Toggle from '@atlaskit/toggle';
@@ -33,8 +33,9 @@ export type MoveOrEditPanelProps = {
   selectedIssues: Issue[];
   selectedToProject: Project | undefined;
   allDefaultValuesProvided: boolean;
-  setStepCompletionState: (stepName: StepName, completionState: CompletionState) => void;
-  setMainWarningMessage: (message: string) => void;
+  lastInputConditionsChangeTime: number;
+  onSetStepCompletionState: (stepName: StepName, completionState: CompletionState) => void;
+  onSetMainWarningMessage: (message: string) => void;
 }
 
 export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
@@ -43,7 +44,19 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
   const [currentMoveEditActivity, setCurrentMoveEditActivity] = useState<undefined | Activity>(undefined);
   const [issueMoveEditRequestOutcome, setIssueMoveEditRequestOutcome] = useState<undefined | IssueMoveEditRequestOutcome>(undefined);
   const [issueMoveEditOutcome, setIssueMoveEditOutcome] = useState<undefined | TaskOutcome>(undefined);
+  const [issueMoveEditCompletionTime, setIssueMoveEditCompletionTime] = useState<number>(0);
   const [lastMoveEditCompletionTaskId, setLastMoveEditCompletionTaskId] = useState<string>('none');
+
+  useEffect(() => {
+    if (issueMoveEditCompletionTime < props.lastInputConditionsChangeTime) {
+      // Reset the completion time if the last input conditions change time is greater than the current completion time.
+      setIssueMoveEditCompletionTime(0);
+      setIssueMoveEditOutcome(undefined);
+      setIssueMoveEditRequestOutcome(undefined);
+      setCurrentMoveEditActivity(undefined);
+      props.onSetStepCompletionState('move-or-edit', 'incomplete');
+    }
+  }, [props.lastInputConditionsChangeTime]);
 
   const buildTaskOutcomeErrorMessage = (taskOutcome: IssueMoveEditRequestOutcome): string => {
     if (taskOutcome.errors && taskOutcome.errors.length) {
@@ -63,6 +76,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       const outcome: TaskOutcome = await issueMoveController.pollMoveProgress(taskId);
       setIssueMoveEditOutcome(outcome);
       if (issueMoveController.isDone(outcome.status)) {
+        setIssueMoveEditCompletionTime(Date.now());
         if (taskId !== lastMoveEditCompletionTaskId) {
           setLastMoveEditCompletionTaskId(taskId);
           // console.log(`BulkOperationPanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
@@ -82,16 +96,16 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
           const flag = showFlag(flagOptions);
         }
         setCurrentMoveEditActivity(undefined);
-        props.setStepCompletionState('move-or-edit', 'complete');
+        props.onSetStepCompletionState('move-or-edit', 'complete');
       } else {
         asyncPollMoveOutcome(taskId);
-        props.setStepCompletionState('move-or-edit', 'incomplete');
+        props.onSetStepCompletionState('move-or-edit', 'incomplete');
       }
     } else {
-      props.setMainWarningMessage(`No taskId provided for polling move outcome.`);
+      props.onSetMainWarningMessage(`No taskId provided for polling move outcome.`);
       console.warn(`BulkOperationPanel: pollPollMoveOutcome: No taskId provided, cannot poll for move outcome.`);
       setCurrentMoveEditActivity(undefined);
-      props.setStepCompletionState('move-or-edit', 'incomplete');
+      props.onSetStepCompletionState('move-or-edit', 'incomplete');
     }
   }
 
@@ -112,7 +126,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
     if (taskOutcomeErrorMessage) {
       const fullErrorMessage = `Failed to initiate bulk move request: ${taskOutcomeErrorMessage}`;
-      props.setMainWarningMessage(fullErrorMessage);
+      props.onSetMainWarningMessage(fullErrorMessage);
       console.warn(fullErrorMessage);
       setIssueMoveEditRequestOutcome(undefined);
       setCurrentMoveEditActivity(undefined);
@@ -137,7 +151,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     const taskOutcomeErrorMessage = buildTaskOutcomeErrorMessage(initiateOutcome);
     if (taskOutcomeErrorMessage) {
       const fullErrorMessage = `Failed to initiate bulk edit request: ${taskOutcomeErrorMessage}`;
-      props.setMainWarningMessage(fullErrorMessage);
+      props.onSetMainWarningMessage(fullErrorMessage);
       console.warn(fullErrorMessage);
       setIssueMoveEditRequestOutcome(undefined);
       setCurrentMoveEditActivity(undefined);

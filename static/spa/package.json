@@ -2,6 +2,7 @@
   "name": "jira-global-page-custom-ui-static",
   "version": "0.1.45",
   "private": true,
+  "license": "Apache-2.0",
   "homepage": ".",
   "dependencies": {
     "@atlaskit/button": "20.3.2",

@@ -1,11 +1,14 @@
 import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
-import { allowTheTargetProjectToMatchAnyIssueSourceProject } from "../model/config";
+import { allowBulkMovesAcrossProjectCategories, allowTheTargetProjectToMatchAnyIssueSourceProject } from "../extension/bulkOperationStaticRules";
 import { Issue } from "../types/Issue";
 import { Project } from "../types/Project";
 import { OperationOutcome } from "src/types/OperationOutcome";
 import { ObjectMapping } from "src/types/ObjectMapping";
 import { buildErrorOutcome, buildSuccessOutcome } from "../controller/OperationOutcomeBuilder";
 import { FieldEditValue } from "src/types/FieldEditValue";
+import { ProjectCategory } from "src/types/ProjectCategory";
+import jiraDataModel from "src/model/jiraDataModel";
+import jiraUtil from "src/controller/jiraUtil";
 
 class BulkOperationRuleEnforcer {
 
@@ -58,24 +61,6 @@ class BulkOperationRuleEnforcer {
   }
 
   /**
-   * This function is invoked when the user selects a target project to moving issues to. The users starts
-   * typing the name or key of the target project which results in a Jira API call to retrieve a set of matching
-   * projects which is then passed to this function for filtering.
-   * @param selectedIssuesToMove 
-   * @param candidateProjects 
-   * @returns 
-   */
-  public filterTargetProjects = async (
-    selectedIssuesToMove: Issue[],
-    candidateProjects: Project[]
-  ): Promise<Project[]> => {
-    const filteredProjects = allowTheTargetProjectToMatchAnyIssueSourceProject ?
-      candidateProjects :
-      this.filterIssuesToMoveProjectsFromTargetProjects(selectedIssuesToMove, candidateProjects);
-    return filteredProjects;
-  }
-
-  /**
    * Filters the fields that are allowed to be edited in the bulk edit operation.
    * @param fields The fields to filter.
    * @returns the filtered fields that are allowed to be edited in the bulk edit operation.
@@ -91,27 +76,121 @@ class BulkOperationRuleEnforcer {
     return filteredFields;
   }
 
-  private filterIssuesToMoveProjectsFromTargetProjects = (
+  /**
+   * This function is invoked when the user selects a target project to moving issues to. The users starts
+   * typing the name or key of the target project which results in a Jira API call to retrieve a set of matching
+   * projects which is then passed to this function for filtering.
+   * @param selectedIssuesToMove 
+   * @param candidateTargetProjects 
+   * @returns 
+   */
+  public filterTargetProjects = async (
     issuesToMove: Issue[],
     candidateProjects: Project[]
-  ): Project[] => {
-    const filteredProjectKeysToProjects = new Map<string, Project>();
-    for (const candidateProject of candidateProjects) {
-      filteredProjectKeysToProjects.set(candidateProject.key, candidateProject);
+  ): Promise<Project[]> => {
+    // console.log(`bulkOperationRuleEnforcer: filterTargetProjects: issuesToMove = ${issuesToMove.map(issue => issue.key).join(', ')}, candidateProjects = ${candidateProjects.map(project => project.key).join(', ')}`);
+    let filteredProjects: Project[] = candidateProjects;
+    if (!allowBulkMovesAcrossProjectCategories) {
+      filteredProjects = await this.filterCrossCategoryMoves(issuesToMove, filteredProjects);
     }
+    if (!allowTheTargetProjectToMatchAnyIssueSourceProject) {
+      filteredProjects = this.filterIssuesToMoveProjectsFromTargetProjects(issuesToMove, filteredProjects);
+    }
+    // console.log(` * returning filteredProjects = ${filteredProjects.map(project => project.key).join(', ')}`);
+    return filteredProjects;
+  }
+
+  private filterCrossCategoryMoves = async (
+    issuesToMove: Issue[],
+    candidateTargetProjects: Project[]
+  ): Promise<Project[]> => {
+    console.log(`bulkOperationRuleEnforcer: filterCrossCategoryMoves...`);
+    const filteredProjectKeysToProjects = new Map<string, Project>();
+    for (const candidateTargetProject of candidateTargetProjects) {
+      filteredProjectKeysToProjects.set(candidateTargetProject.key, candidateTargetProject);
+    }
+    const issueProjectCategoryIdsToCategories = new Map<string, ProjectCategory>();
     for (const issueToMove of issuesToMove) {
-
-
-      const candidateProject: Project = candidateProjects.find((project: Project) => {
+      const candidateProject: Project = candidateTargetProjects.find((project: Project) => {
         return issueToMove.key.startsWith(`${project.key}-`);
       });
       if (candidateProject) {
-        // The issue to move is in the set of candidate projects, so don't add it to the filtered projects.
+        const issueProject = await jiraDataModel.getProjectByKey(issueToMove.fields.project.key);
+        if (issueProject) {
+          const issueProjectCategory = issueProject.projectCategory;
+          if (issueProjectCategory) {
+            issueProjectCategoryIdsToCategories.set(issueProjectCategory.id, issueProjectCategory);
+          } else {
+
+          }
+          const sameProjectCategories = jiraUtil.areSameProjectCategories(issueProjectCategory, candidateProject.projectCategory);
+          console.log(` * sameProjectCategories ${sameProjectCategories} for issue ${issueToMove.key}.`);
+          if (sameProjectCategories) {
+            // Do nothing
+          } else {
+            // The issue to move is not in the same project category as the candidate project, so remove the 
+            // project from the filter set.
+            filteredProjectKeysToProjects.delete(issueToMove.fields.project.key);
+          }
+        } else {
+          console.warn(` * project with key ${issueToMove.fields.project.key} not found.`);
+        }
+      } else {
+        // console.log(` * no candidate project found for issue ${issueToMove.key}.`);
+      }
+    }
+
+    if (issueProjectCategoryIdsToCategories.size === 0) {
+      console.log(` * no issue project categories found, returning no target projects.`);
+      // return [];
+    } else if (issueProjectCategoryIdsToCategories.size === 1) {
+      issueProjectCategoryIdsToCategories.forEach((issueProjectCategory: ProjectCategory, issueProjectCategoryId: string) => {
+        for (const candidateTargetProject of candidateTargetProjects) {
+          const sameProjectCategories = jiraUtil.areSameProjectCategories(issueProjectCategory, candidateTargetProject.projectCategory);
+          console.log(` * sameProjectCategories ${sameProjectCategories} for issueProjectCategory ${issueProjectCategory.name}.`);
+          if (sameProjectCategories) {
+            // Do nothing
+          } else {
+            // The issue to move is not in the same project category as the candidate project, so remove the 
+            // project from the filter set.
+            filteredProjectKeysToProjects.delete(candidateTargetProject.key);
+          }
+        }
+      });
+    } else {
+      // console.log(` * multiple issue project categories found, returning no target projects.`);
+      return [];
+    }
+
+    const issueProjectCategories = Array.from(issueProjectCategoryIdsToCategories.values());
+
+    const filteredProjects: Project[] = Array.from(filteredProjectKeysToProjects.values());
+    return filteredProjects;
+  }
+
+  private filterIssuesToMoveProjectsFromTargetProjects = (
+    issuesToMove: Issue[],
+    candidateTargetProjects: Project[]
+  ): Project[] => {
+    const filteredProjectKeysToProjects = new Map<string, Project>();
+    for (const candidateTargetProject of candidateTargetProjects) {
+      filteredProjectKeysToProjects.set(candidateTargetProject.key, candidateTargetProject);
+    }
+    for (const issueToMove of issuesToMove) {
+      const candidateTargetProject: Project = candidateTargetProjects.find((project: Project) => {
+        return issueToMove.key.startsWith(`${project.key}-`);
+      });
+      if (candidateTargetProject) {
+        // The issue to move is in the set of candidate projects, so remove the project from the filter set.
         filteredProjectKeysToProjects.delete(issueToMove.key.split('-')[0]);
       }
     }
     const filteredProjects: Project[] = Array.from(filteredProjectKeysToProjects.values());
     return filteredProjects;
+  }
+
+  private isIssueInProjectCategory = (issue: Issue, projectCategory: ProjectCategory): boolean => {
+    return issue.fields.project.projectCategory?.id === projectCategory.id;
   }
 
   private exampleValidateEndDateFieldValue = async (

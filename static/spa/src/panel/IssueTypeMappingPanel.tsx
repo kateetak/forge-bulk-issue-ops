@@ -73,9 +73,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     const clonedSourceToTargetIssueTypeIds = bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds();
     setClonedSourceToTargetIssueTypeIds(clonedSourceToTargetIssueTypeIds);
     // console.log(`autoSelectMatchingTargetIssueTypes: clonedSourceToTargetIssueTypeIds = ${JSON.stringify(clonedSourceToTargetIssueTypeIds, null, 2)}.`);
-    console.log(`autoSelectMatchingTargetIssueTypes: clonedSourceToTargetIssueTypeIds = ${JSON.stringify(mapToObjectMap(clonedSourceToTargetIssueTypeIds), null, 2)}.`);
-    console.log(`autoSelectMatchingTargetIssueTypes: Finished auto selecting - unmappedCount = ${unmappedCount}.`);
-
+    // console.log(`autoSelectMatchingTargetIssueTypes: clonedSourceToTargetIssueTypeIds = ${JSON.stringify(mapToObjectMap(clonedSourceToTargetIssueTypeIds), null, 2)}.`);
+    // console.log(`autoSelectMatchingTargetIssueTypes: Finished auto selecting - unmappedCount = ${unmappedCount}.`);
     props.onIssueTypeMappingChange();
   }
 
@@ -121,7 +120,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
       options.push(option);
     }
     const defaultValue = determineInitiallySelectedOption(sourceProjectId, sourceIssueTypeId, options);
-    console.log(`renderTargetProjectIssueTypeSelect: defaultValue for source project ${sourceProjectId}, source issue type ${sourceIssueTypeId} is "${defaultValue ? defaultValue.label : 'none'}" (${defaultValue ? defaultValue.value : 'none'})`);
+    // console.log(`renderTargetProjectIssueTypeSelect: defaultValue for source project ${sourceProjectId}, source issue type ${sourceIssueTypeId} is "${defaultValue ? defaultValue.label : 'none'}" (${defaultValue ? defaultValue.value : 'none'})`);
     return (
       <div>
         <Select
@@ -142,7 +141,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
   }
 
   const loadTargetProjectIssueTypes = async () => {
-    console.log(`loadTargetProjectIssueTypes: Loading issue types for target project: ${props.targetProject ? props.targetProject.id : 'none'}`);
+    // console.log(`loadTargetProjectIssueTypes: Loading issue types for target project: ${props.targetProject ? props.targetProject.id : 'none'}`);
     if (props.targetProject) {
       const projectInvocationResult = await jiraDataModel.getProjectById(props.targetProject.id);
       if (projectInvocationResult.data) {

@@ -87,6 +87,8 @@ This optional step involves reviewing and tuning the access to Jira's built-in b
 
 The app is designed to be support tailoring to an organisation's specific needs, but this requires code changes. There are several public functions in `static/spa/extension/bulkOperationRuleEnforcer.ts` that are designed for orgaisations to inject their own logic. When adding custom logic, it is recommended to keep code within the `static/spa/extension` directory to keep it isolated from the rest of the code.
 
+Static configuration rules are defined as constants in `static/spa/extension/bulkOperationStaticRules.ts`.
+
 # Additional configuration options
 
 Configuration options can be defined in [static/spa/src/model/config.ts](static/spa/src/model/config.ts), but be careful modifying these options.

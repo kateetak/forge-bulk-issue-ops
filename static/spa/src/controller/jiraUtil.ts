@@ -1,8 +1,19 @@
 import { Issue } from "src/types/Issue";
 import { IssueType } from "../types/IssueType";
 import { Project } from "../types/Project";
+import { ProjectCategory } from "src/types/ProjectCategory";
 
 class JiraUtil {
+
+  areSameProjectCategories = (projectCategoryA: undefined | ProjectCategory, projectCategoryB: undefined | ProjectCategory) => {
+    if (projectCategoryA && projectCategoryB) {
+      return projectCategoryA.id === projectCategoryB.id;
+    } else {
+      // If either project category is undefined, they are deemed not the same since they are effectively in unique 
+      // undefined project categories.
+      return false;
+    }
+  }
 
   countProjectsByIssues(issues: Issue[]) {
     const projectKeys = new Set<string>();

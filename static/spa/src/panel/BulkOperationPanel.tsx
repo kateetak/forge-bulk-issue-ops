@@ -23,7 +23,7 @@ import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './
 import targetProjectFieldsModel from 'src/controller/TargetProjectFieldsModel';
 import { IssueSelectionPanel } from '../widget/IssueSelectionPanel';
 import bulkOperationRuleEnforcer from 'src/extension/bulkOperationRuleEnforcer';
-import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects } from 'src/model/config';
+import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects } from '../extension/bulkOperationStaticRules';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
@@ -74,6 +74,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const [issueSearchInfo, setIssueSearchInfo] = useState<IssueSearchInfo>(nilIssueSearchInfo);
   const [issueSearchInfoTime, setIssueSearchInfoTime] = useState<number>(0);
   const [selectedIssues, setSelectedIssues] = useState<Issue[]>([]);
+  const [selectedIssuesTime, setSelectedIssuesTime] = useState<number>(0);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [selectedLabelsTime, setSelectedLabelsTime] = useState<number>(0);
   const [allIssueTypesMapped, setAllIssueTypesMapped] = useState<boolean>(false);
@@ -240,6 +241,8 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const onIssuesLoaded = (allSelected: boolean, newIssueSearchInfo: IssueSearchInfo) => {
     const newlySelectedIssues = newIssueSearchInfo.issues;
     setSelectedIssues(newlySelectedIssues);
+    setSelectedIssuesTime(Date.now());
+    // console.log(`BulkOperationPanel: onIssuesLoaded: newlySelectedIssues = ${newlySelectedIssues.map(issue => issue.key).join(', ')}`);
     targetProjectFieldsModel.setSelectedIssues(newlySelectedIssues, allIssueTypes);
     setIssueSearchInfo(newIssueSearchInfo);
     setIssueSearchInfoTime(Date.now());
@@ -258,6 +261,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   const onIssuesSelectionChange = async (selectedIssues: Issue[]): Promise<void> => {
     // console.log(`BulkOperationPanel: onIssuesSelectionChange: selected issues = ${selectedIssues.map(issue => issue.key).join(', ')}`);
     setSelectedIssues(selectedIssues);
+    setSelectedIssuesTime(Date.now());
     targetProjectFieldsModel.setSelectedIssues(selectedIssues, allIssueTypes);
     updateFieldMappingsIfNeeded(selectedToProject);
     updateMappingsCompletionStates();
@@ -464,16 +468,18 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
 
   const renderToProjectSelect = () => {
     const allowSelection = selectedIssues.length > 0;
+    const targetProjectsFilterConditionsChangeTime = selectedIssuesTime;
     return (
       <FormSection>
         <ProjectsSelect 
-          key={`to-project`}
+          key={`to-project-${selectedIssuesTime}`}
           label="To project"
           isMulti={false}
           isClearable={false}
           isDisabled={!allowSelection}
           selectedProjects={[selectedToProject]}
           filterProjects={filterProjectsForToSelection}
+          targetProjectsFilterConditionsChangeTime={targetProjectsFilterConditionsChangeTime}
           onProjectsSelect={async (selected: Project[]): Promise<void> => {
             // console.log(`Selected to projects: ${JSON.stringify(selected, null, 2)}`);
             const selectedToProject: undefined | Project = selected.length > 0 ? selected[0] : undefined;
@@ -738,6 +744,13 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   }
 
   const renderMoveOrEditPanel = (stepNumber: number) => {
+    const lastInputConditionsChangeTime = Math.max(
+      selectedFromProjectsTime,
+      selectedToProjectTime,
+      selectedIssueTypesTime,
+      selectedIssuesTime,
+      fieldIdsToValuesTime
+    );
     return (
       <div className="padding-panel">
         <div className="content-panel">
@@ -752,8 +765,9 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
             selectedIssues={selectedIssues}
             selectedToProject={selectedToProject}
             allDefaultValuesProvided={allDefaultValuesProvided}
-            setStepCompletionState={setStepCompletionState}
-            setMainWarningMessage={setMainWarningMessage}
+            lastInputConditionsChangeTime={lastInputConditionsChangeTime}
+            onSetStepCompletionState={setStepCompletionState}
+            onSetMainWarningMessage={setMainWarningMessage}
           />
         </div>
       </div>

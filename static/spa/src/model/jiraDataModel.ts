@@ -29,15 +29,26 @@ import { UserSearchInfo } from 'src/types/UserSearchInfo';
 import { User } from 'src/types/User';
 import { BulkIssueEditRequestData } from 'src/types/BulkIssueEditRequestData';
 import { ObjectMapping } from 'src/types/ObjectMapping';
+import { ProjectCategory } from 'src/types/ProjectCategory';
 
 class JiraDataModel {
 
+  private cachedProjectKeysToProjects = new Map<string, Project>();
   private cachedIssueTypes: IssueType[] = [];
   private cachedFields: Field[] = [];
   private fieldAndContextIdsToCustomFieldContextOptions = new Map<string, CustomFieldContextOption[]>();
   private projectIdsToProjectCreateIssueMetadata = new Map<string, ProjectCreateIssueMetadata>();
   private issueIdsOrKeysToEditIssueMetadata = new Map<string, EditIssueMetadata>();
   private labelPagesToLabels: ObjectMapping<string[]> = {};
+
+  // It is assumed project categories will not change during the a user session of using the app.
+  private cachedProjectCategoriesResponse: InvocationResult<ProjectCategory[]> = {
+    ok: false,
+    status: 0,
+    data: [],
+    errorMessage: 'Not yet fetched'
+  };
+
   
   // This cache could be changed to be on a per page basis, but for now, the requesting of IssueBulkEditFields
   // recursively fetches all fields for the project and issue type ids of the issues which might be prone to failure 
@@ -52,7 +63,7 @@ class JiraDataModel {
   }
 
   // TODO: Implement memoization
-  getissueTypes = async (): Promise<IssueType[]> => {
+  public getissueTypes = async (): Promise<IssueType[]> => {
     if (this.cachedIssueTypes.length === 0) {
       // this.cachedIssueTypes = await invoke('getIssueTypes');
       this.cachedIssueTypes = await this.fetchIssueTypes();
@@ -61,7 +72,7 @@ class JiraDataModel {
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get
-  getAllFields = async (): Promise<Field[]> => {
+  public getAllFields = async (): Promise<Field[]> => {
     if (this.cachedFields.length === 0) {
       const path = `/rest/api/3/field`;
       const response = await requestJira(path, {
@@ -76,7 +87,7 @@ class JiraDataModel {
     return this.cachedFields;
   }
 
-  getIssueSearchInfo = async (issueSearchParameters: IssueSearchParameters): Promise<IssueSearchInfo> => {
+  public getIssueSearchInfo = async (issueSearchParameters: IssueSearchParameters): Promise<IssueSearchInfo> => {
     // console.log(`getIssueSearchInfo: building JQL from ${JSON.stringify(issueSearchParameters, null, 2)}`);
     let jql = '';
     if (issueSearchParameters.projects.length) {
@@ -96,7 +107,7 @@ class JiraDataModel {
     return await this.getIssueSearchInfoByJql(jql);
   }
   
-  getIssueSearchInfoByJql = async (jql: string): Promise<IssueSearchInfo> => {
+  public getIssueSearchInfoByJql = async (jql: string): Promise<IssueSearchInfo> => {
     const maxResults = 100;
     // Note that the following limits the amount of fields to be returned for performance reasons, but
     // also could result in certain fields in the Issue type not being populated if these fields do 
@@ -118,20 +129,19 @@ class JiraDataModel {
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get
-  fetchIssueTypes = async () => {
+  public fetchIssueTypes = async () => {
     const response = await requestJira(`/rest/api/3/issuetype`, {
       headers: {
         'Accept': 'application/json'
       }
     });
-    
     const issueTypes = await response.json();
     // console.log(`Issue Types: ${JSON.stringify(issueTypes, null, 2)}`);
     return issueTypes;
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-labels/#api-rest-api-3-label-get
-  getAllLabels = async () => {
+  public getAllLabels = async () => {
     // const maxResultsPerPage = 1000;
     const maxResultsPerPage = 1000;
     let startAt = 0;
@@ -171,9 +181,27 @@ class JiraDataModel {
     }
   }
 
+  public getAllProjectCategories = async (): Promise<InvocationResult<ProjectCategory[]>> => {
+    if (this.cachedProjectCategoriesResponse.ok) {
+      return this.cachedProjectCategoriesResponse;
+    } else {
+      const response = await requestJira(`/rest/api/3/projectCategory`, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      const invocationResult = await this.readResponse<ProjectCategory[]>(response);
+      if (invocationResult.ok) {
+        this.cachedProjectCategoriesResponse = invocationResult;
+      }
+      // console.log(`Project Categories: ${JSON.stringify(invocationResult, null, 2)}`);
+      return invocationResult;
+    }
+  }
+
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-createmeta-get
   // KNOWN-1: This API has been deprecated, however, there appears to be no follow through. See https://developer.atlassian.com/changelog/#CHANGE-1304.
-  getCreateIssueMetadataForProject = async (projectId: string): Promise<ProjectCreateIssueMetadata> => {
+  public getCreateIssueMetadataForProject = async (projectId: string): Promise<ProjectCreateIssueMetadata> => {
     const cachedCreateIssueMetadata = this.projectIdsToProjectCreateIssueMetadata.get(projectId);
     if (cachedCreateIssueMetadata) {
       return cachedCreateIssueMetadata;
@@ -197,7 +225,7 @@ class JiraDataModel {
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-editmeta-get
-  getEditIssueMetadata = async (issueIdOrKey: string): Promise<EditIssueMetadata> => {
+  public getEditIssueMetadata = async (issueIdOrKey: string): Promise<EditIssueMetadata> => {
     const cachedEditIssueMetadata = this.issueIdsOrKeysToEditIssueMetadata.get(issueIdOrKey);
     if (cachedEditIssueMetadata) {
       return cachedEditIssueMetadata;
@@ -214,17 +242,20 @@ class JiraDataModel {
       return editIssueMetadata;
     }
   }
-  
-  getProjectByKey = async (targetProjectKey: string): Promise<undefined | Project> => {
+
+  public getProjectByKey = async (targetProjectKey: string): Promise<undefined | Project> => {
+    const cachedProject = this.cachedProjectKeysToProjects.get(targetProjectKey);
+    if (cachedProject) {
+      return cachedProject;
+    }
     let loadMoreItems = true;
     let startAt = 0;
     let maxResultsPerPage = 50;
     while (loadMoreItems) {
       const projectSearchInfo = await this.pageOfProjectSearchInfo(targetProjectKey, startAt, maxResultsPerPage);
-      for (const project of projectSearchInfo.values) {
-        if (project.key === targetProjectKey) {
-          return project;
-        }
+      const cachedProject = this.cachedProjectKeysToProjects.get(targetProjectKey);
+      if (cachedProject) {
+        return cachedProject;
       }
       loadMoreItems = !projectSearchInfo.isLast;
       startAt += maxResultsPerPage;
@@ -232,8 +263,18 @@ class JiraDataModel {
     return undefined;
   }
 
+  private cacheProjects = (projects: Project[]) => {
+    for (const project of projects) {
+      this.cachedProjectKeysToProjects.set(project.key, project);
+    }
+  }
+
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get
-  pageOfProjectSearchInfo = async (query: string = '', startAt: number = 0, maxResults: number = 100): Promise<ProjectSearchInfo> => {
+  public pageOfProjectSearchInfo = async (
+    query: string = '',
+    startAt: number = 0,
+    maxResults: number = 100
+  ): Promise<ProjectSearchInfo> => {
     if (mockGetProjects) {
       return await getMockProjectSearchInfo(query, maxResults);
     } else {
@@ -243,14 +284,15 @@ class JiraDataModel {
         }
       });
       // console.log(`Response: ${response.status} ${response.statusText}`);
-      const projects = await response.json();
+      const projectSearchInfo = await response.json();
+      this.cacheProjects(projectSearchInfo.values);
       // console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
-      return projects;
+      return projectSearchInfo;
     }
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-user-search/#api-rest-api-3-user-search-get
-  searchUsers = async (query: string, includeAppUsers: boolean = false, startAt: number = 0, maxResults: number = 100): Promise<User[]> => {
+  public searchUsers = async (query: string, includeAppUsers: boolean = false, startAt: number = 0, maxResults: number = 100): Promise<User[]> => {
     // console.log(`JiraDataModel.searchUsers: Searching for users with query "${query}" starting at ${startAt} with max results ${maxResults}`);
     const path = `/rest/api/3/user/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`;
     // console.log(`JiraDataModel.searchUsers: path = ${path}`);
@@ -272,7 +314,7 @@ class JiraDataModel {
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get
-  getProjectById = async (projectIdOrKey: string): Promise<InvocationResult<ProjectWithIssueTypes>> => {
+  public getProjectById = async (projectIdOrKey: string): Promise<InvocationResult<ProjectWithIssueTypes>> => {
     const response = await requestJira(`/rest/api/3/project/${projectIdOrKey}?expand=issueTypes`, {
       headers: {
         'Accept': 'application/json'
@@ -282,7 +324,7 @@ class JiraDataModel {
     return invocationResult;
   }
   
-  initiateBulkIssuesMove = async (
+  public initiateBulkIssuesMove = async (
     bulkIssueMoveRequestData: BulkIssueMoveRequestData
   ): Promise<InvocationResult<IssueMoveEditRequestOutcome>> => {
     let invocationResult: InvocationResult<IssueMoveEditRequestOutcome>;
@@ -303,7 +345,7 @@ class JiraDataModel {
     return invocationResult;
   }
 
-  initiateBulkIssuesEdit = async (
+  public initiateBulkIssuesEdit = async (
     bulkIssueEditRequestData: BulkIssueEditRequestData
   ): Promise<InvocationResult<IssueMoveEditRequestOutcome>> => {
     let invocationResult: InvocationResult<IssueMoveEditRequestOutcome>;
@@ -324,7 +366,7 @@ class JiraDataModel {
     return invocationResult;
   }
 
-  readResponse = async <T>(response: any): Promise<InvocationResult<T>> => {
+  public readResponse = async <T>(response: any): Promise<InvocationResult<T>> => {
     const invocationResult: InvocationResult<T> = {
       ok: response.ok,
       status: response.status
@@ -341,7 +383,7 @@ class JiraDataModel {
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-tasks/#api-rest-api-3-task-taskid-get
-  getTaskOutcome = async (taskId: string): Promise<any> => {
+  public getTaskOutcome = async (taskId: string): Promise<any> => {
     const response = await requestJira(`/rest/api/3/task/${taskId}`, {
       headers: {
         'Accept': 'application/json'
@@ -380,7 +422,7 @@ class JiraDataModel {
   //   return allFieldConfigurationItems;
   // }
   
-  getFieldConfigurationSchemeForProject = async (
+  public getFieldConfigurationSchemeForProject = async (
     projectId: string):
   Promise<undefined | FieldConfigurationScheme> => {
     let loadMoreItems = true;
@@ -402,7 +444,7 @@ class JiraDataModel {
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-field-configurations/#api-rest-api-3-fieldconfigurationscheme-project-get
-  pageOfFieldConfigurationSchemesForProjects = async (
+  public pageOfFieldConfigurationSchemesForProjects = async (
       projectIds: string[],
       startAt: number = 0,
       maxResults: number = 50
@@ -428,7 +470,7 @@ class JiraDataModel {
     }
   }
   
-  getAllFieldConfigurationItems = async (
+  public getAllFieldConfigurationItems = async (
     fieldConfigurationId: string):
   Promise<FieldConfigurationItem[]> => {
     const allItems: FieldConfigurationItem[] = [];
@@ -467,7 +509,7 @@ class JiraDataModel {
     }
   }
   
-  getAllCustomFieldContextProjectMappings = async (
+  public getAllCustomFieldContextProjectMappings = async (
     fieldId: string,
     contextIds: string[]):
   Promise<ProjectCustomFieldContextMappings[]> => {
@@ -508,7 +550,7 @@ class JiraDataModel {
     return outcome;
   }
   
-  getAllCustomFieldContexts = async (
+  public getAllCustomFieldContexts = async (
     fieldId: string,
     isGlobalContext: boolean):
   Promise<CustomFieldsContextItem[]> => {
@@ -545,7 +587,7 @@ class JiraDataModel {
     return outcome;
   }
   
-  getAllCustomFieldOptions = async (
+  public getAllCustomFieldOptions = async (
     fieldId: string,
     contextId: string,
     onlyOptions: boolean = false
@@ -573,7 +615,7 @@ class JiraDataModel {
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-custom-field-options/#api-rest-api-3-field-fieldid-context-contextid-option-get
-  pageOfCustomFieldOptions = async (
+  public pageOfCustomFieldOptions = async (
     fieldId: string,
     contextId: string,
     onlyOptions: boolean = false,
@@ -589,7 +631,7 @@ class JiraDataModel {
     return outcome;
   }
 
-  getAllIssueBulkEditFields = async (issues: Issue[]): Promise<IssueBulkEditField[]> => {
+  public getAllIssueBulkEditFields = async (issues: Issue[]): Promise<IssueBulkEditField[]> => {
     const key = this.buildProjectAndIssueTypeIdsKey(issues);
     const cachedIssueBulkEditFields = this.projectAndIssueTypeIdsToIssueBulkEditFields.get(key);
     if (cachedIssueBulkEditFields) {

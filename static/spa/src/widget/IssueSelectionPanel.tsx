@@ -149,7 +149,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const renderIssueRow = (issue: Issue) => {
     return (
-      <tr>
+      <tr key={`issue-roe-${issue.key}`}>
         <td>
           {renderIssueSelectionWidget(issue)}
         </td>
