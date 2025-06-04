@@ -122,10 +122,10 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-6: Rich text fields in bulk move operations only supports plain text where each new line is represented as a new paragraph.
 * KNOWN-7: Bulk move operations only allow values to be specified for required custom fields.
 * KNOWN-8: Only a limited set of field types are supported for default values in bulk move operations.
-* KNOWN-9: During move/edit operations a 401 response is returned when removing users from the bulk-ops-group.
-* KNOWN-10: Add the ability for issue type mappings to be restricted.
-* KNOWN-11: In bulk move, when multiple projects are selected, subsequent steps are still passing.
-* KNOWN-12: No monitoring of users accidentally left in the bulk-ops group
+* KNOWN-9: Add the ability for issue type mappings to be restricted.
+* KNOWN-10: In bulk move, when multiple projects are selected, subsequent steps are still passing.
+* KNOWN-11: No monitoring of users accidentally left in the bulk-ops group.
+* KNOWN-12: The app does not provide a dark mode view.
 
 
 # Edit field support
