@@ -1,9 +1,24 @@
 modules:
+  # https://developer.atlassian.com/platform/forge/manifest-reference/modules/web-trigger/
+  webtrigger:
+    - key: file-upload-webtrigger
+      function: upload-csv-fn
+      response:
+        type: static
+        outputs:
+          - key: status-ok
+            statusCode: 200
+            contentType: application/json
+            body: '{"body": "Upload successful"}'
+          - key: status-error
+            statusCode: 400
+            contentType: text/plain
+            body: 'Error: Bad request'
   jira:globalPage:
     - key: forge-custom-bulk-move-issues-page
       resource: main
       resolver:
-        function: my-resolver
+        function: global-resolver-fn
       title: Bulk Work Item Operations
       pages:
         - title: About Bulk Work Items Operations
@@ -15,8 +30,10 @@ modules:
         - title: Bulk Import Work Items
           route: import
   function:
-    - key: my-resolver
-      handler: index.handler
+    - key: upload-csv-fn
+      handler: fileUploadHandler.onFileUpload
+    - key: global-resolver-fn
+      handler: resolver.handler
 resources:
   - key: main
     path: static/spa/build
@@ -37,6 +54,9 @@ permissions:
       backend:
         - "*.public.atlastunnel.com"
         - "*.atlassian.net"
+        - "*.hello.atlassian-dev.net"
+      client:
+        - "*.hello.atlassian-dev.net"
     scripts:
       - cdn.jsdelivr.net
     styles:

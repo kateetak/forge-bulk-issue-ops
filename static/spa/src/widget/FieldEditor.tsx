@@ -111,7 +111,6 @@ export const FieldEditor = (props: FieldEditorProps) => {
         label: fieldOption.issueType,
       };
       options.push(option);
-
     }
     return (
       <Select

@@ -65,7 +65,6 @@ class JiraDataModel {
   // TODO: Implement memoization
   public getissueTypes = async (): Promise<IssueType[]> => {
     if (this.cachedIssueTypes.length === 0) {
-      // this.cachedIssueTypes = await invoke('getIssueTypes');
       this.cachedIssueTypes = await this.fetchIssueTypes();
     }
     return this.cachedIssueTypes;

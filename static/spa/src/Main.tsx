@@ -3,6 +3,9 @@ import { view } from '@forge/bridge';
 import { Router, Route, Routes } from "react-router";
 import BulkOperationPanel from "./panel/BulkOperationPanel";
 import BulkImportPanel from "./panel/BulkImportPanel";
+import importModel from "./model/importModel";
+import moveModel from "./model/moveModel";
+import editModel from "./model/editModel";
 
 export type HomeProps = {
   history: any;
@@ -71,6 +74,16 @@ const Main = () => {
     }
   }, [history]);
 
+  const importEnabled = false;
+
+  const renderImportPanel = () => {
+    if (importEnabled) {
+      return <BulkOperationPanel key="Import" bulkOperationMode="Import" bulkOpsModel={importModel} />;
+    } else {
+      return <BulkImportPanel key="Import" />;
+    }
+  };
+
   return (
     <div>
       {history && historyState ? (
@@ -81,9 +94,9 @@ const Main = () => {
         >
           <Routes>
             <Route path="/" element={<Home history={history} />}></Route>
-            <Route path="/move" element={<BulkOperationPanel key="Move" bulkOperationMode="Move" />}></Route>
-            <Route path="/edit" element={<BulkOperationPanel key="Edit" bulkOperationMode="Edit" />}></Route>
-            <Route path="/import" element={<BulkImportPanel />}></Route>
+            <Route path="/move" element={<BulkOperationPanel key="Move" bulkOperationMode="Move" bulkOpsModel={moveModel} />}></Route>
+            <Route path="/edit" element={<BulkOperationPanel key="Edit" bulkOperationMode="Edit" bulkOpsModel={editModel} />}></Route>
+            <Route path="/import" element={renderImportPanel()}></Route>
           </Routes>
         </Router>
       ) : (

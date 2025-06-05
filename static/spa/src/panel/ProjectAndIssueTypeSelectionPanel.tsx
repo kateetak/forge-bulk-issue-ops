@@ -1,0 +1,130 @@
+import { FormSection } from '@atlaskit/form';
+import React, { useEffect } from 'react';
+import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
+import importModel from 'src/model/importModel';
+import { CompletionState } from 'src/types/CompletionState';
+import { ImportColumnValueType } from 'src/types/ImportColumnValueType';
+import { IssueType } from 'src/types/IssueType';
+import { ObjectMapping } from 'src/types/ObjectMapping';
+import { Project } from 'src/types/Project';
+import IssueTypeSelect from 'src/widget/IssueTypeSelect';
+import ProjectsSelect from 'src/widget/ProjectsSelect';
+
+const showDebug = false;
+
+export type ProjectAndIssueTypeSelectionPanelProps = {
+  fileUploadCompletionState: CompletionState,
+  projectAndIssueTypeSelectionCompletionState: CompletionState
+}
+
+const ProjectAndIssueTypeSelectionPanel = (props: ProjectAndIssueTypeSelectionPanelProps) => {
+
+  const getSelectProjectFromProps = (): Project[] => {
+    const selectedProjectAndIssueType = importModel.getSelectedProject();
+    if (selectedProjectAndIssueType) {
+      return [selectedProjectAndIssueType];
+    } else {
+      return [];
+    }
+  }
+
+  const [waitingMessage, setWaitingMessage] = React.useState<string>('');
+  const [selectedProjectAndIssueType, setSelectedProjectAndIssueType] = React.useState<undefined | Project>(importModel.getSelectedProject());
+  const [columnNamesToValueTypes, setColumnNamesToValueTypes] = React.useState<ObjectMapping<ImportColumnValueType>>({});
+
+  const updateState = async (): Promise<void> => {
+    console.log('ProjectAndIssueTypeSelectionPanel.updateState called');
+    console.log(' * fileUploadCompletionState:', props.fileUploadCompletionState);
+    console.log(' * projectAndIssueTypeSelectionCompletionState:', props.projectAndIssueTypeSelectionCompletionState);
+    const waitingMessage = new WaitingMessageBuilder()
+      .addCheck(props.fileUploadCompletionState === 'complete', 'Waiting for file upload.')
+      .build();
+    setWaitingMessage(waitingMessage);
+    // setColumnIndexesToColumnNames(importModel.getColumnIndexesToColumnNames());
+    // setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
+  }
+
+  useEffect(() => {
+    console.log('ProjectAndIssueTypeSelectionPanel mounted');
+  }, []);
+
+  useEffect(() => {
+    updateState();
+  }, [props.fileUploadCompletionState, props.projectAndIssueTypeSelectionCompletionState]);
+
+  const onProjectsSelect = async (selectedProjects: Project[]): Promise<void> => {
+    await importModel.setSelectedProject(selectedProjects[0]);
+  }
+
+  const onIssueTypeSelect = async (selectedIssueType: undefined | any): Promise<void> => {
+    await importModel.setSelectedIssueType(selectedIssueType);
+  }
+
+  const renderProjectSelect = () => {
+    return (
+      <FormSection>
+        <ProjectsSelect 
+          label={"Project to import work items to"}
+          isMulti={false}
+          isClearable={true}
+          isDisabled={props.fileUploadCompletionState !== 'complete'}
+          selectedProjects={selectedProjectAndIssueType ? [selectedProjectAndIssueType] : []}
+          onProjectsSelect={onProjectsSelect}
+        />
+      </FormSection>
+    );
+  }
+
+  const renderIssueTypeSelect = () => {
+    const selectedProject = importModel.getSelectedProject();
+    const selectedProjectCreateIssueMetadata = importModel.getSelectedProjectCreateIssueMetadata();
+    if (selectedProject && selectedProjectCreateIssueMetadata) {
+      const selectedIssueype = importModel.getSelectedIssueType();
+      const selectableIssueTypes: IssueType[] = [];
+      for (const issueTypeMetadata of selectedProjectCreateIssueMetadata.issuetypes) {
+        const issueType: IssueType = {
+          id: issueTypeMetadata.id,
+          name: issueTypeMetadata.name,
+          description: issueTypeMetadata.description,
+          iconUrl: '',
+          untranslatedName: '',
+          subtask: false,
+          hierarchyLevel: 0
+        };
+        selectableIssueTypes.push(issueType);
+      }
+      return (
+        <FormSection>
+          <IssueTypeSelect 
+            label={"Issue type"}
+            isDisabled={selectedProjectCreateIssueMetadata === undefined}
+            selectedIssueType={selectedIssueype}
+            selectableIssueTypes={selectableIssueTypes}
+            onIssueTypeSelect={onIssueTypeSelect} 
+          />
+        </FormSection>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  const renderCompletionState = () => {
+    return (
+      <div>
+        <p>{waitingMessage}</p>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {renderCompletionState()}
+      {renderProjectSelect()}
+      {renderIssueTypeSelect()}
+    </div>
+  )
+
+}
+
+export default ProjectAndIssueTypeSelectionPanel;

@@ -126,6 +126,7 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-10: In bulk move, when multiple projects are selected, subsequent steps are still passing.
 * KNOWN-11: No monitoring of users accidentally left in the bulk-ops group.
 * KNOWN-12: The app does not provide a dark mode view.
+* KNOWN-13: No import field filtering.
 
 
 # Edit field support

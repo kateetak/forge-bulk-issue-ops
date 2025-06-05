@@ -36,15 +36,23 @@ import { FieldEditsPanel } from './FieldEditsPanel';
 import editedFieldsModel from 'src/model/editedFieldsModel';
 import { MoveOrEditPanel } from './MoveOrEditPanel';
 import { Activity } from 'src/types/Activity';
-import { allSteps, StepName } from 'src/model/BulkOperationsWorkflow';
+import { StepName } from 'src/model/BulkOperationsWorkflow';
+import FileUploadPanel from './FileUploadPanel';
+import { BulkOpsModel } from 'src/model/BulkOpsModel';
+import ColumnMappingPanel from './ColumnMappingPanel';
+import ImportIssuesPanel from './ImportIssuesPanel';
+import ProjectAndIssueTypeSelectionPanel from './ProjectAndIssueTypeSelectionPanel';
+import ImportProjectSelectionPanel from './ProjectAndIssueTypeSelectionPanel';
+import importModel from 'src/model/importModel';
 
 const showDebug = false;
-const showCompletionStateDebug = false;
+const showCompletionStateDebug = true;
 const implyAllIssueTypesWhenNoneAreSelected = true;
 const autoShowFieldMappings = true;
 
-export type BulkOperationPanelProps = {
+export type BulkOperationPanelProps<StepNameSubtype extends StepName> = {
   bulkOperationMode: BulkOperationMode;
+  bulkOpsModel: BulkOpsModel<StepNameSubtype>;
 }
 
 type DebugInfo = {
@@ -54,10 +62,10 @@ type DebugInfo = {
 
 type FilterMode = 'basic' | 'advanced';
 
-const BulkOperationPanel = (props: BulkOperationPanelProps) => {
+const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
 
-  const [stepNamesToCompletionState, setStepNamesToCompletionState] = useState<ObjectMapping<CompletionState>>({});
-  const [stepOrder, setStepOrder] = useState<StepName[]>([])
+  const [stepNamesToCompletionStates, setStepNamesToCompletionStates] = useState<ObjectMapping<CompletionState>>({});
+  const [stepSequence, setStepSequence] = useState<StepName[]>([])
   const [bulkOperationMode, setBulkOperationMode] = useState<BulkOperationMode>(props.bulkOperationMode);
   const [mainWarningMessage, setMainWarningMessage] = useState<string>('');
   const [lastDataLoadTime, setLastDataLoadTime] = useState<number>(0);
@@ -95,10 +103,20 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     setFieldIdsToValuesTime(Date.now());
   }
 
+  const onImportModelStepCompletionStateChange = (stepName: StepName, completionState: CompletionState) => {
+    console.log(`BulkOperationPanel.onImportModelStepCompletionStateChange: step "${stepName}" is now "${completionState}"`);
+    setStepNamesToCompletionStates(prevState => ({
+      ...prevState,
+      [stepName]: completionState
+    }));
+  }
+
   useEffect(() => {
     editedFieldsModel.registerValueEditsListener(onEditedFieldsModelChange);
+    props.bulkOpsModel.registerStepCompletionStateChangeListener(onImportModelStepCompletionStateChange);
     return () => {
       editedFieldsModel.unregisterValueEditsListener(onEditedFieldsModelChange);
+      props.bulkOpsModel.unregisterStepCompletionStateChangeListener(onImportModelStepCompletionStateChange);
     };
   }, []);
 
@@ -107,30 +125,23 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   }
 
   const isStepApplicableToBulkOperationMode = (stepName: StepName): boolean => {
-    if (bulkOperationMode === 'Move') {
-      if (stepName === 'edit-fields') {
-        return false;
-      }
-    } else if (bulkOperationMode === 'Edit') {
-      if (stepName === 'issue-type-mapping' || stepName === 'field-mapping' || stepName === 'target-project-selection') {
-        return false;
-      }
+    const bulkOperationMode = props.bulkOperationMode;
+    const stepSequence = props.bulkOpsModel.getStepSequence();
+    if (!stepSequence) {
+      console.warn(`BulkOperationPanel: isStepApplicableToBulkOperationMode: No step sequence defined for bulk operation mode "${bulkOperationMode}".`);
+      return false;
     }
-    return true;
+    const stepIndex = stepSequence.indexOf(stepName);
+    return stepIndex >= 0;
   }
 
   const defineSteps = () => {
-    const steps: StepName[] = [];
-    for (const step of allSteps) {
-      if (isStepApplicableToBulkOperationMode(step)) {
-        steps.push(step);
-      }
-    }
-    setStepOrder(steps);
+    const stepSequence = props.bulkOpsModel.getStepSequence();
+    setStepSequence(stepSequence);
   }
 
   const setStepCompletionState = (stepName: StepName, completionState: CompletionState) => {
-    setStepNamesToCompletionState(prevState => ({
+    setStepNamesToCompletionStates(prevState => ({
       ...prevState,
       [stepName]: completionState
     }));
@@ -141,7 +152,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   }
 
   const getStepCompletionState = (stepName: StepName): CompletionState => {
-    return stepNamesToCompletionState[stepName];
+    return stepNamesToCompletionStates[stepName];
   }
 
   const isStepComplete = (stepName: StepName): boolean => {
@@ -151,11 +162,11 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
 
   const arePrerequisiteStepsComplete = (priorToStepName: StepName): boolean => {
     let complete = true;
-    for (const stepName of stepOrder) {
+    for (const stepName of stepSequence) {
       if (stepName === priorToStepName) {
         break; // Stop checking once we reach the step we're interested in
       }
-      const completionState = stepNamesToCompletionState[stepName];
+      const completionState = stepNamesToCompletionStates[stepName];
       if (isStepApplicableToBulkOperationMode(stepName)) {
         if (completionState !== 'complete') {
           complete = false;
@@ -167,8 +178,8 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
   }
 
   const renderStepCompletionState = (): JSX.Element => {
-    const renderedStates = stepOrder.map((stepName: StepName) => {
-      const completionState = stepNamesToCompletionState[stepName];
+    const renderedStates = stepSequence.map((stepName: StepName) => {
+      const completionState = stepNamesToCompletionStates[stepName];
       return (
         <li key={stepName}>
           {`${stepName}: `} 
@@ -572,6 +583,86 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
     }
   }
 
+  const renderFileUploadPanel = (stepNumber: number) => {
+    const completionState = getStepCompletionState('file-upload');
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <PanelHeader
+            stepNumber={stepNumber}
+            label={`File upload`}
+            completionState={completionState}
+          />
+          <FileUploadPanel
+            completionState={completionState}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const renderProjectAndIssueTypeSelectionPanel = (stepNumber: number) => {
+    const fileUploadCompletionState = getStepCompletionState('file-upload');
+    const projectAndIssueTypeSelectionCompletionState = getStepCompletionState('project-and-issue-type-selection');
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <PanelHeader
+            stepNumber={stepNumber}
+            label={`Target project selection`}
+            completionState={projectAndIssueTypeSelectionCompletionState}
+          />
+          <ProjectAndIssueTypeSelectionPanel
+            fileUploadCompletionState={fileUploadCompletionState}
+            projectAndIssueTypeSelectionCompletionState={projectAndIssueTypeSelectionCompletionState}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const renderColumnMappingPanel = (stepNumber: number) => {
+    const importProjectCompletionState = getStepCompletionState('project-and-issue-type-selection');
+    const columnMappingCompletionState = getStepCompletionState('column-mapping');
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <PanelHeader
+            stepNumber={stepNumber}
+            label={`Column mapping`}
+            completionState={columnMappingCompletionState}
+          />
+          <ColumnMappingPanel
+            importProjectCompletionState={importProjectCompletionState}
+            columnMappingCompletionState={columnMappingCompletionState}
+            selectedIssueType={importModel.getSelectedIssueType()}
+            createIssueMetadata={importModel.getSelectedProjectCreateIssueMetadata()}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const renderImportIssuesPanel = (stepNumber: number) => {
+    const columnMappingCompletionState = getStepCompletionState('column-mapping');
+    const importIssuesCompletionState = getStepCompletionState('import-issues');
+    return (
+      <div className="padding-panel">
+        <div className="content-panel">
+          <PanelHeader
+            stepNumber={stepNumber}
+            label={`Import issues`}
+            completionState={importIssuesCompletionState}
+          />
+          <ImportIssuesPanel
+            columnMappingCompletionState={columnMappingCompletionState}
+            importIssuesCompletionState={importIssuesCompletionState}
+          />
+        </div>
+      </div>
+    );
+  }
+
   const renderFilterPanel = (stepNumber: number) => {
     return (
       <div className="padding-panel">
@@ -868,6 +959,10 @@ const BulkOperationPanel = (props: BulkOperationPanelProps) => {
       {showCompletionStateDebug ? renderStepCompletionState() : null}
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
+        {isStepApplicableToBulkOperationMode('file-upload') ? renderFileUploadPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('project-and-issue-type-selection') ? renderProjectAndIssueTypeSelectionPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('column-mapping') ? renderColumnMappingPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('import-issues') ? renderImportIssuesPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('filter') ? renderFilterPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('issue-selection') ? renderIssuesPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('issue-type-mapping') ? renderTargetProjectPanel(lastStepNumber++) : null}

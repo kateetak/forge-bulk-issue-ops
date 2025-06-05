@@ -1,2 +1,2 @@
 
-export type BulkOperationMode = 'Move' | 'Edit';
+export type BulkOperationMode = 'Move' | 'Edit' | 'Import';
