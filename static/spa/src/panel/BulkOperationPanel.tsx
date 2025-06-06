@@ -42,7 +42,6 @@ import { BulkOpsModel } from 'src/model/BulkOpsModel';
 import ColumnMappingPanel from './ColumnMappingPanel';
 import ImportIssuesPanel from './ImportIssuesPanel';
 import ProjectAndIssueTypeSelectionPanel from './ProjectAndIssueTypeSelectionPanel';
-import ImportProjectSelectionPanel from './ProjectAndIssueTypeSelectionPanel';
 import importModel from 'src/model/importModel';
 
 const showDebug = false;
@@ -593,9 +592,11 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             label={`File upload`}
             completionState={completionState}
           />
-          <FileUploadPanel
-            completionState={completionState}
-          />
+          <div className="step-panel-content-container">
+            <FileUploadPanel
+              completionState={completionState}
+            />
+          </div>
         </div>
       </div>
     );
@@ -612,10 +613,12 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             label={`Target project selection`}
             completionState={projectAndIssueTypeSelectionCompletionState}
           />
-          <ProjectAndIssueTypeSelectionPanel
-            fileUploadCompletionState={fileUploadCompletionState}
-            projectAndIssueTypeSelectionCompletionState={projectAndIssueTypeSelectionCompletionState}
-          />
+          <div className="step-panel-content-container">
+            <ProjectAndIssueTypeSelectionPanel
+              fileUploadCompletionState={fileUploadCompletionState}
+              projectAndIssueTypeSelectionCompletionState={projectAndIssueTypeSelectionCompletionState}
+            />
+          </div>
         </div>
       </div>
     );
@@ -632,12 +635,14 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             label={`Column mapping`}
             completionState={columnMappingCompletionState}
           />
-          <ColumnMappingPanel
-            importProjectCompletionState={importProjectCompletionState}
-            columnMappingCompletionState={columnMappingCompletionState}
-            selectedIssueType={importModel.getSelectedIssueType()}
-            createIssueMetadata={importModel.getSelectedProjectCreateIssueMetadata()}
-          />
+          <div className="step-panel-content-container">
+            <ColumnMappingPanel
+              importProjectCompletionState={importProjectCompletionState}
+              columnMappingCompletionState={columnMappingCompletionState}
+              selectedIssueType={importModel.getSelectedIssueType()}
+              createIssueMetadata={importModel.getSelectedProjectCreateIssueMetadata()}
+            />
+          </div>
         </div>
       </div>
     );
@@ -654,10 +659,12 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             label={`Import issues`}
             completionState={importIssuesCompletionState}
           />
-          <ImportIssuesPanel
-            columnMappingCompletionState={columnMappingCompletionState}
-            importIssuesCompletionState={importIssuesCompletionState}
-          />
+          <div className="step-panel-content-container">
+            <ImportIssuesPanel
+              columnMappingCompletionState={columnMappingCompletionState}
+              importIssuesCompletionState={importIssuesCompletionState}
+            />
+          </div>
         </div>
       </div>
     );

@@ -127,6 +127,7 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-11: No monitoring of users accidentally left in the bulk-ops group.
 * KNOWN-12: The app does not provide a dark mode view.
 * KNOWN-13: No import field filtering.
+* KNOWN-14: Import functionality does not surface file format warnings to the user.
 
 
 # Edit field support

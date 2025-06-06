@@ -9,6 +9,7 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import { Project } from 'src/types/Project';
 import IssueTypeSelect from 'src/widget/IssueTypeSelect';
 import ProjectsSelect from 'src/widget/ProjectsSelect';
+import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
 const showDebug = false;
 
@@ -109,17 +110,9 @@ const ProjectAndIssueTypeSelectionPanel = (props: ProjectAndIssueTypeSelectionPa
     }
   }
 
-  const renderCompletionState = () => {
-    return (
-      <div>
-        <p>{waitingMessage}</p>
-      </div>
-    );
-  };
-
   return (
     <div>
-      {renderCompletionState()}
+      {renderPanelMessage(waitingMessage)}
       {renderProjectSelect()}
       {renderIssueTypeSelect()}
     </div>

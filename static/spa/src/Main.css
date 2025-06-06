@@ -96,6 +96,10 @@ div.panel-header {
   align-items: stretch;
 }
 
+div.step-panel-content-container {
+  margin: 20px 0px 10px 0px;
+}
+
 div.filter-panel {
   min-width: 300px;
   /* max-width: 400px; */

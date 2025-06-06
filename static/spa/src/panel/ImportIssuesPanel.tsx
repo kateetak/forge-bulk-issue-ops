@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
+import Button from '@atlaskit/button/new';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
 import importModel from 'src/model/importModel';
 import { CompletionState } from 'src/types/CompletionState';
 import { ImportColumnValueType } from 'src/types/ImportColumnValueType';
 import { ObjectMapping } from 'src/types/ObjectMapping';
+import { on } from 'events';
+import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
 const showDebug = false;
 
@@ -34,17 +37,28 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
     updateState();
   }, [props.columnMappingCompletionState, props.importIssuesCompletionState]);
 
-  const renderCompletionState = () => {
+  const onImportIssuesButtonClick = async () => {
+
+  }
+
+  const renderImportButton = () => {
+    const issueCount = importModel.getIssueCount();
+    const buttonLabel = issueCount === 0 ? 'Import issues' : `Import ${issueCount} ${issueCount === 1 ? 'issue' : 'issues'}`;
     return (
-      <div>
-        <p>{waitingMessage}</p>
-      </div>
+      <Button
+        appearance="primary"
+        isDisabled={props.columnMappingCompletionState !== 'complete'}
+        onClick={onImportIssuesButtonClick}
+      >
+        {buttonLabel}
+      </Button>
     );
   };
 
   return (
-    <div>
-      {renderCompletionState()}
+    <div className="step-panel-content-container">
+      {renderPanelMessage(waitingMessage)}
+      {renderImportButton()}
     </div>
   )
 

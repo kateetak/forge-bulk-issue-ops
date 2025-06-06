@@ -74,7 +74,7 @@ const Main = () => {
     }
   }, [history]);
 
-  const importEnabled = false;
+  const importEnabled = true;
 
   const renderImportPanel = () => {
     if (importEnabled) {

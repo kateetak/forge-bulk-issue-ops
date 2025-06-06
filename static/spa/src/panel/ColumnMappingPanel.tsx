@@ -9,8 +9,9 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import { Option } from '../types/Option';
 import Select from '@atlaskit/select';
 import { IssueType } from 'src/types/IssueType';
+import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
-const showDebug = true;
+const showDebug = false;
 
 const mandatoryIndicatorWidth = '10px';
 
@@ -297,14 +298,6 @@ const ColumnMappingPanel = (props: ColumnMappingPanelProps) => {
     return renderColumnMappingTable(createIssueMetadata, issueTypeCreateMetadata);
   }
 
-  const renderCompletionState = () => {
-    return (
-      <div>
-        <p>{waitingMessage}</p>
-      </div>
-    );
-  };
-
   const renderDebug = () => {
     console.log('ColumnMappingPanel.renderDebug: fieldKeysToMappedColumnNames = ', fieldKeysToMappedColumnNames);
     return (
@@ -324,7 +317,7 @@ const ColumnMappingPanel = (props: ColumnMappingPanelProps) => {
 
   return (
     <div>
-      {renderCompletionState()}
+      {renderPanelMessage(waitingMessage)}
       {waitingMessage ? null : renderColumnMapping()}
       {showDebug ? renderDebug() : null}
     </div>

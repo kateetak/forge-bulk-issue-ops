@@ -9,6 +9,9 @@ import jiraDataModel from "./jiraDataModel";
 import { ProjectCreateIssueMetadata } from "src/types/CreateIssueMetadata";
 import { IssueType } from "src/types/IssueType";
 
+export const MAX_ISSUES_TO_IMPORT = 1000;
+const MAX_FILE_LINES_TO_READ = 1 + 1.1 * MAX_ISSUES_TO_IMPORT; // Account for the header line and allow some blank lines
+
 export const importStepSequence: ImportStepName[] = ['file-upload', 'project-and-issue-type-selection', 'column-mapping', 'import-issues'];
 
 class ImportModel extends BulkOpsModel<ImportStepName> {
@@ -17,6 +20,7 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
   // private stepNamesToCompletionStates: Record<ImportStepName, CompletionState> = {
   //   'file-upload': 'incomplete',
   // };
+  private issueCount: number = 0;
   private columnIndexesToColumnNames: any = {};
   private columnNamesToValueTypes: Record<string, ImportColumnValueType> = {};
   private selectedProject: undefined | Project = undefined;
@@ -40,6 +44,10 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     } else {
       await this.setFileLines([]);
     }
+  }
+
+  getIssueCount = (): number => {
+    return this.issueCount;
   }
 
   setAllMandatoryFieldsHaveColumnMappings = (newAllMandatoryFieldsHaveColumnMappings: boolean): void => {
@@ -102,7 +110,7 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
 
   private setFileLines = async (fileLines: string[]): Promise<void> => {
     await this.startFileMapping(fileLines);
-    this.setStepCompletionState('file-upload', 'complete');
+    this.setStepCompletionState('file-upload', this.issueCount > 0 ? 'complete' : 'incomplete');
   }
 
   public getColumnIndexesToColumnNames = (): any => {
@@ -114,8 +122,10 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
   }
   
   private startFileMapping = async (fileLines: string[]): Promise<void> => {
+    let columnCount = 0;
     let columnIndexesToColumnNames: any = {};
     const columnNamesToValueTypes: ObjectMapping<ImportColumnValueType> = {};
+    let issueCount = 0;
     for (let lineIndex = 0; lineIndex < fileLines.length; lineIndex++) {
       const line = fileLines[lineIndex].trim();
       if (!line) {
@@ -124,6 +134,7 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
       const columns = line.split(',');
       if (lineIndex === 0) {
         // This is the header line.
+        columnCount = columns.length;
         columns.forEach((column, index) => {
           const trimmedColumn = column.trim();
           if (trimmedColumn) {
@@ -131,6 +142,12 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
           }
         });
       } else {
+        if (columns.length !== columnCount) {
+          // KNOWN-14: Import functionality does not surface file format warnings to the user.
+          console.warn(`Line ${lineIndex} has ${columns.length} columns, expected ${columnCount}. Skipping this line.`);
+          continue;
+        }
+        issueCount++;
         for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
           const columnName = columnIndexesToColumnNames[columnIndex];
           if (columnName) {
@@ -153,11 +170,16 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
           }
         }
       }
-      if (lineIndex > 1000) {
+      if (lineIndex >= MAX_FILE_LINES_TO_READ) {
         console.warn('Too many lines, stopping processing to avoid performance issues');
-        break; // Stop after processing 1000 lines
+        break;
+      }
+      if (issueCount >= MAX_ISSUES_TO_IMPORT) {
+        console.warn('Too many issues, stopping processing to avoid performance issues');
+        break;
       }
     }
+    this.issueCount = issueCount;
     this.columnIndexesToColumnNames = columnIndexesToColumnNames;
     this.columnNamesToValueTypes = columnNamesToValueTypes;
   }
