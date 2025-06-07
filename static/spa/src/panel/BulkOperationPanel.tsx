@@ -39,9 +39,9 @@ import { Activity } from 'src/types/Activity';
 import { StepName } from 'src/model/BulkOperationsWorkflow';
 import FileUploadPanel from './FileUploadPanel';
 import { BulkOpsModel } from 'src/model/BulkOpsModel';
-import ColumnMappingPanel from './ColumnMappingPanel';
+import ImportColumnMappingPanel from './ImportColumnMappingPanel';
 import ImportIssuesPanel from './ImportIssuesPanel';
-import ProjectAndIssueTypeSelectionPanel from './ProjectAndIssueTypeSelectionPanel';
+import ImportProjectAndIssueTypeSelectionPanel from './ImportProjectAndIssueTypeSelectionPanel';
 import importModel from 'src/model/importModel';
 
 const showDebug = false;
@@ -614,7 +614,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             completionState={projectAndIssueTypeSelectionCompletionState}
           />
           <div className="step-panel-content-container">
-            <ProjectAndIssueTypeSelectionPanel
+            <ImportProjectAndIssueTypeSelectionPanel
               fileUploadCompletionState={fileUploadCompletionState}
               projectAndIssueTypeSelectionCompletionState={projectAndIssueTypeSelectionCompletionState}
             />
@@ -636,7 +636,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             completionState={columnMappingCompletionState}
           />
           <div className="step-panel-content-container">
-            <ColumnMappingPanel
+            <ImportColumnMappingPanel
               importProjectCompletionState={importProjectCompletionState}
               columnMappingCompletionState={columnMappingCompletionState}
               selectedIssueType={importModel.getSelectedIssueType()}

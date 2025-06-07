@@ -1,28 +1,36 @@
 import { ImportColumnValueType } from "src/types/ImportColumnValueType";
 import { ObjectMapping } from "src/types/ObjectMapping";
 import { ImportStepName, StepName } from "./BulkOperationsWorkflow";
-// import { CompletionState } from "src/types/CompletionState";
-// import ListenerGroup from "./ListenerGroup";
 import { BulkOpsModel } from "./BulkOpsModel";
 import { Project } from "src/types/Project";
 import jiraDataModel from "./jiraDataModel";
 import { ProjectCreateIssueMetadata } from "src/types/CreateIssueMetadata";
 import { IssueType } from "src/types/IssueType";
+import { FieldMetadata } from "src/types/FieldMetadata";
 
 export const MAX_ISSUES_TO_IMPORT = 1000;
 const MAX_FILE_LINES_TO_READ = 1 + 1.1 * MAX_ISSUES_TO_IMPORT; // Account for the header line and allow some blank lines
 
 export const importStepSequence: ImportStepName[] = ['file-upload', 'project-and-issue-type-selection', 'column-mapping', 'import-issues'];
 
+export type ImportColumnMatchInfo = {
+  columnName: string;
+  fieldMetadata: FieldMetadata;
+}
+
+export type FileParseResult = {
+  success: boolean;
+  errorMessage?: string;
+}
+
 class ImportModel extends BulkOpsModel<ImportStepName> {
 
-  // private stepCompletionStateChangeListenerGroup = new ListenerGroup('ImportModel-step-completion');
-  // private stepNamesToCompletionStates: Record<ImportStepName, CompletionState> = {
-  //   'file-upload': 'incomplete',
-  // };
   private issueCount: number = 0;
-  private columnIndexesToColumnNames: any = {};
+  private fileLines: string[] = [];
+  private columnIndexesToColumnNames: Record<number, string> = {};
+  private columnNamesToIndexes: Record<string, number> = {};
   private columnNamesToValueTypes: Record<string, ImportColumnValueType> = {};
+  private fieldKeysToMatchInfos: Record<string, ImportColumnMatchInfo> = {};
   private selectedProject: undefined | Project = undefined;
   private selectedProjectCreateIssueMetadata: undefined | ProjectCreateIssueMetadata = undefined;
   private selectedIssueType: undefined | IssueType = undefined;
@@ -32,17 +40,24 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     super('ImportModel', importStepSequence);
   }
 
-  public onFileSelection = async (file: any): Promise<void> => {
+  public onFileSelection = async (file: any): Promise<FileParseResult> => {
     this.setStepCompletionState('file-upload', 'incomplete');
     console.log('ImportModel.onFileSelection: onFileSelected called');
     console.log(`ImportModel.onFileSelection... selected file: ${file ? file.name : 'none'}`); 
     console.log(`ImportModel.onFileSelection: file: `, file);
     if (file) {
       const fileContent = await this.readFileContent(file);
-      const fileLines = fileContent.split('\n');
-      await this.setFileLines(fileLines);
+      this.fileLines = fileContent.split('\n');
+      const fileParseResult = await this.setFileLines(this.fileLines);
+      return fileParseResult;
     } else {
-      await this.setFileLines([]);
+      this.fileLines = [];
+      await this.setFileLines(this.fileLines);
+      const fileParseResult = {
+        success: false,
+        errorMessage: 'No file selected.'
+      }
+      return fileParseResult;
     }
   }
 
@@ -82,6 +97,22 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     return this.selectedIssueType;
   }
 
+  getColumnNamesToIndexes = (): Record<string, number> => {
+    return this.columnNamesToIndexes;
+  }
+
+  setFieldKeysToMatchInfos = (fieldKeysToMatchInfos: Record<string, ImportColumnMatchInfo>): void => {
+    this.fieldKeysToMatchInfos = fieldKeysToMatchInfos;
+  }
+
+  getFieldKeysToMatchInfos = (): Record<string, ImportColumnMatchInfo> => {
+    return this.fieldKeysToMatchInfos;
+  }
+
+  getCsvLines = (): string[] => {
+    return this.fileLines;
+  }
+
   setSelectedIssueType = async (issueType: undefined | IssueType): Promise<void> => {
     this.selectedIssueType = issueType;
     const stepComplete = this.isStepComplete();
@@ -108,9 +139,10 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     });
   }
 
-  private setFileLines = async (fileLines: string[]): Promise<void> => {
-    await this.startFileMapping(fileLines);
-    this.setStepCompletionState('file-upload', this.issueCount > 0 ? 'complete' : 'incomplete');
+  private setFileLines = async (fileLines: string[]): Promise<FileParseResult> => {
+    const fileParseResult =  await this.startFileMapping(fileLines);
+    this.setStepCompletionState('file-upload', fileParseResult.success && this.issueCount > 0 ? 'complete' : 'incomplete');
+    return fileParseResult;
   }
 
   public getColumnIndexesToColumnNames = (): any => {
@@ -120,10 +152,11 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
   public getColumnNamesToValueTypes = (): Record<string, ImportColumnValueType> => {
     return this.columnNamesToValueTypes;
   }
-  
-  private startFileMapping = async (fileLines: string[]): Promise<void> => {
+
+  private startFileMapping = async (fileLines: string[]): Promise<FileParseResult> => {
     let columnCount = 0;
-    let columnIndexesToColumnNames: any = {};
+    const columnIndexesToColumnNames: Record<number, string> = {};
+    const columnNamesToIndexes: Record<string, number> = {};
     const columnNamesToValueTypes: ObjectMapping<ImportColumnValueType> = {};
     let issueCount = 0;
     for (let lineIndex = 0; lineIndex < fileLines.length; lineIndex++) {
@@ -139,6 +172,7 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
           const trimmedColumn = column.trim();
           if (trimmedColumn) {
             columnIndexesToColumnNames[index] = trimmedColumn;
+            columnNamesToIndexes[trimmedColumn] = index;
           }
         });
       } else {
@@ -150,6 +184,14 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
         issueCount++;
         for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
           const columnName = columnIndexesToColumnNames[columnIndex];
+          if (columnNamesToValueTypes[columnName] !== undefined) {
+            // This column has already been processed, skip it.
+            const fileParseResult = {
+              success: false,
+              errorMessage: `Column ${columnIndex} with name "${columnName}" in line ${lineIndex} has already been processed.`
+            };
+            return fileParseResult;
+          }
           if (columnName) {
             const columnValue = columns[columnIndex].trim();
             const valueType = this.interpretColumnType(columnValue);
@@ -181,7 +223,12 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     }
     this.issueCount = issueCount;
     this.columnIndexesToColumnNames = columnIndexesToColumnNames;
+    this.columnNamesToIndexes = columnNamesToIndexes;
     this.columnNamesToValueTypes = columnNamesToValueTypes;
+    const fileParseResult = {
+      success: true
+    };
+    return fileParseResult;
   }
 
   private interpretColumnType = (columnValue: string): ImportColumnValueType => {
@@ -220,18 +267,6 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
       return 'string'; 
     }
   }
-
-  // registerStepCompletionStateChangeListener = (listener: any) => {
-  //   this.stepCompletionStateChangeListenerGroup.registerListener(listener);
-  // };
-
-  // unregisterStepCompletionStateChangeListener = (listener: any) => {
-  //   this.stepCompletionStateChangeListenerGroup.unregisterListener(listener);
-  // };
-
-  // private notifyStepCompletionStateChangeListeners = () => {
-  //   this.stepCompletionStateChangeListenerGroup.notifyListeners(undefined);
-  // };
 
 }
 

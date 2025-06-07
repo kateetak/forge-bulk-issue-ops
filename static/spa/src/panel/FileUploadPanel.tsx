@@ -31,22 +31,16 @@ const FileUploadPanel = (props: FileUploadPanelProps) => {
     // determineWebtriggerUrl();
   }, []);
 
-  const onImportIssues = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    const uploadResponse = await invoke('onFileUpload', { fileLines: fileLines }) as Response;
-    if (uploadResponse.ok) {
-      console.log('File uploaded successfully');
-      const responseData = await uploadResponse.json();
-      console.log('Response data:', responseData);
-    } else {
-      console.error('File upload failed:', uploadResponse.statusText);
-    }
-  }
-
   const onFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('onFileSelected called');
     console.log('event:', event);
     const file = event.target.files[0];
-    await importModel.onFileSelection(file);
+    const fileParseResult = await importModel.onFileSelection(file);
+
+    if (!fileParseResult.success) {
+      // TODO: Handle failure
+    }
+
     setColumnIndexesToColumnNames(importModel.getColumnIndexesToColumnNames());
     setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
   }

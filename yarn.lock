@@ -2665,13 +2665,13 @@
   dependencies:
     tslib "^2.6.2"
 
-"@forge/bridge@4.5.2", "@forge/bridge@^4.5.2":
-  version "4.5.2"
-  resolved "https://registry.yarnpkg.com/@forge/bridge/-/bridge-4.5.2.tgz#747ce9bb944d46dc7a4e2ba683f22c6a560847b2"
-  integrity sha512-U/26PFvpHf3x2DiJHrbOFz7qwypznVjplXnCtFTuhsuLVNxM9hJcjN7FtPeRyTuVEPcpSwdlH+zUwc4ls+VeRw==
+"@forge/bridge@4.5.3", "@forge/bridge@^4.5.3":
+  version "4.5.3"
+  resolved "https://packages.atlassian.com/api/npm/atlassian-npm/@forge/bridge/-/@forge/bridge-4.5.3.tgz#65ff0c73412e6208ccb325259ebe3c8dabb090f2"
+  integrity sha512-vc0tcKphj4bWCTDT6T8Jvi5UHzy9AvUzCP4dGre7rXxWZa2n8AnNPLCbvJwddjCLNm1oGLe3jq3FMrDFhkl5kw==
   dependencies:
     "@atlaskit/tokens" "^1.58.0"
-    "@forge/i18n" "0.0.5"
+    "@forge/i18n" "0.0.6"
     "@types/history" "^4.7.11"
 
 "@forge/egress@1.4.0":
@@ -2688,16 +2688,23 @@
   dependencies:
     lodash "^4.17.21"
 
-"@forge/react@^11.2.1":
-  version "11.2.1"
-  resolved "https://registry.yarnpkg.com/@forge/react/-/react-11.2.1.tgz#ede767310c67aa31164f2e12e7b4d03ef9d56a72"
-  integrity sha512-ZGdMpcV08PVRtuF68lsu42kvEGyD60FMJsOOkMaSJqDiA8V64pZBHZIsBb9iW5WsxOxlSm0n6hZ6DbWWB1EK/g==
+"@forge/i18n@0.0.6":
+  version "0.0.6"
+  resolved "https://packages.atlassian.com/api/npm/atlassian-npm/@forge/i18n/-/@forge/i18n-0.0.6.tgz#0da192ade29dacce338e4dd1f924dc60a06b92ad"
+  integrity sha512-iIK0SxWwMUHp8ThYiBU+Cq/ty1Ng1dGEr+apWbh6SwbxaXWR8MGRr91AFj3BLLAiC6FXYprIBclgI8tRf0DxmA==
+  dependencies:
+    lodash "^4.17.21"
+
+"@forge/react@^11.2.2":
+  version "11.2.2"
+  resolved "https://packages.atlassian.com/api/npm/atlassian-npm/@forge/react/-/@forge/react-11.2.2.tgz#cb52e541e50d5bb1b3482ff2d26e457cec4d827b"
+  integrity sha512-o6XpaljCBncTGk2FdMZTuCTm6mT1IyfmXY+llSK/k/6aj5Vg4XPRRb6ln2BtazRmqUQRQZLqg0EhZ2Ss3f14Ng==
   dependencies:
     "@atlaskit/adf-schema" "^48.0.0"
     "@atlaskit/adf-utils" "^19.19.0"
     "@atlaskit/forge-react-types" "^0.41.14"
-    "@forge/bridge" "^4.5.2"
-    "@forge/i18n" "0.0.5"
+    "@forge/bridge" "^4.5.3"
+    "@forge/i18n" "0.0.6"
     "@types/react-reconciler" "^0.28.8"
     lodash "^4.17.21"
     react "^18.2.0"

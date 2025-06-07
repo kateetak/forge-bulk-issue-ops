@@ -7,6 +7,7 @@ import { ImportColumnValueType } from 'src/types/ImportColumnValueType';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { on } from 'events';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { ImportInstructions, importIssues } from 'src/controller/issueImporter';
 
 const showDebug = false;
 
@@ -37,8 +38,20 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
     updateState();
   }, [props.columnMappingCompletionState, props.importIssuesCompletionState]);
 
-  const onImportIssuesButtonClick = async () => {
+  const onImportProgressUpdate = async (importCount: number, lineSkipCount: number, failCount: number, totalCount: number): Promise<void> => {
+    console.log(`ImportIssuesPanel.onImportProgressUpdate called with importCount = ${importCount}, lineSkipCount = ${lineSkipCount}, failCount = ${failCount}, totalCount = ${totalCount}`);
+  }
 
+  const onImportIssuesButtonClick = async () => {
+    console.log('ImportIssuesPanel.onImportIssuesButtonClick called');
+    const importInstructions: ImportInstructions = {
+      targetProject: importModel.getSelectedProject(),
+      targetIssueType: importModel.getSelectedIssueType(),
+      columnNamesToIndexes: importModel.getColumnNamesToIndexes(),
+      fieldKeysToMatchInfos: importModel.getFieldKeysToMatchInfos(),
+      csvLines: importModel.getCsvLines(),
+    }
+    importIssues(importInstructions, onImportProgressUpdate);
   }
 
   const renderImportButton = () => {

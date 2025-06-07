@@ -13,12 +13,12 @@ import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
 const showDebug = false;
 
-export type ProjectAndIssueTypeSelectionPanelProps = {
+export type ImportProjectAndIssueTypeSelectionPanelProps = {
   fileUploadCompletionState: CompletionState,
   projectAndIssueTypeSelectionCompletionState: CompletionState
 }
 
-const ProjectAndIssueTypeSelectionPanel = (props: ProjectAndIssueTypeSelectionPanelProps) => {
+const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTypeSelectionPanelProps) => {
 
   const getSelectProjectFromProps = (): Project[] => {
     const selectedProjectAndIssueType = importModel.getSelectedProject();
@@ -34,7 +34,7 @@ const ProjectAndIssueTypeSelectionPanel = (props: ProjectAndIssueTypeSelectionPa
   const [columnNamesToValueTypes, setColumnNamesToValueTypes] = React.useState<ObjectMapping<ImportColumnValueType>>({});
 
   const updateState = async (): Promise<void> => {
-    console.log('ProjectAndIssueTypeSelectionPanel.updateState called');
+    console.log('ImportProjectAndIssueTypeSelectionPanel.updateState called');
     console.log(' * fileUploadCompletionState:', props.fileUploadCompletionState);
     console.log(' * projectAndIssueTypeSelectionCompletionState:', props.projectAndIssueTypeSelectionCompletionState);
     const waitingMessage = new WaitingMessageBuilder()
@@ -46,7 +46,7 @@ const ProjectAndIssueTypeSelectionPanel = (props: ProjectAndIssueTypeSelectionPa
   }
 
   useEffect(() => {
-    console.log('ProjectAndIssueTypeSelectionPanel mounted');
+    console.log('ImportProjectAndIssueTypeSelectionPanel mounted');
   }, []);
 
   useEffect(() => {
@@ -120,4 +120,4 @@ const ProjectAndIssueTypeSelectionPanel = (props: ProjectAndIssueTypeSelectionPa
 
 }
 
-export default ProjectAndIssueTypeSelectionPanel;
+export default ImportProjectAndIssueTypeSelectionPanel;
