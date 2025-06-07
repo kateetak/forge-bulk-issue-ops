@@ -71,7 +71,7 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
 
   const renderImportButton = () => {
     const issueCount = importModel.getIssueCount();
-    const buttonLabel = issueCount === 0 ? 'Import issues' : `Import ${issueCount} ${issueCount === 1 ? 'issue' : 'issues'}`;
+    const buttonLabel = issueCount === 0 ? 'Import work items' : `Import ${issueCount} ${issueCount === 1 ? 'work item' : 'work items'}`;
     const allowImportStart = props.columnMappingCompletionState === 'complete' && progressInfo.state === 'waiting';
     return (
       <Button

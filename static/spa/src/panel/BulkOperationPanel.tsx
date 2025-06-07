@@ -962,7 +962,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   let lastStepNumber = 1;
   return (
     <div>
-      <h3>Bulk {bulkOperationMode} Issues</h3>
+      <h3>Bulk {bulkOperationMode} Work Items</h3>
       {showCompletionStateDebug ? renderStepCompletionState() : null}
       {rendermainWarningMessage()}
       <div className="bulk-move-main-panel">
