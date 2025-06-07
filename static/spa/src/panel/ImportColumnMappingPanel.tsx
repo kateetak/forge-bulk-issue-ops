@@ -75,11 +75,11 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
     console.log(' * importProjectCompletionState:', props.importProjectCompletionState);
     console.log(' * columnMappingCompletionState:', props.columnMappingCompletionState);
     const waitingMessage = new WaitingMessageBuilder()
-      .addCheck(props.importProjectCompletionState === 'complete', 'Waiting for target project selection.')
+      .addCheck(props.importProjectCompletionState === 'complete', 'Waiting for target project and issue type selection.')
       .build();
     setWaitingMessage(waitingMessage);
     setColumnIndexesToColumnNames(importModel.getColumnIndexesToColumnNames());
-    setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
+    // setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
 
     const fieldKeysToMappedColumnNames: ObjectMapping<string> = {};
     const fieldKeysToMatchInfos: ObjectMapping<ImportColumnMatchInfo> = {};
@@ -182,8 +182,8 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
     const columnOptions: Option[] = [];
     let selectedOption: undefined | Option = undefined;
     let matchStrength = 0;
-    const columnNamesToValueTypes = importModel.getColumnNamesToValueTypes();
-    const columnNames = Object.keys(columnNamesToValueTypes);
+    // const columnNamesToValueTypes = importModel.getColumnNamesToValueTypes();
+    // const columnNames = Object.keys(columnNamesToValueTypes);
     let matchedColumnName: undefined | string = undefined;
 
     const columnIndexesToColumnNames = importModel.getColumnIndexesToColumnNames();

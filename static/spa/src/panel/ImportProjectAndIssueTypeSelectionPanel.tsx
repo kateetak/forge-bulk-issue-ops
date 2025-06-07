@@ -21,16 +21,16 @@ export type ImportProjectAndIssueTypeSelectionPanelProps = {
 const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTypeSelectionPanelProps) => {
 
   const getSelectProjectFromProps = (): Project[] => {
-    const selectedProjectAndIssueType = importModel.getSelectedProject();
-    if (selectedProjectAndIssueType) {
-      return [selectedProjectAndIssueType];
+    const selectedProject = importModel.getSelectedProject();
+    if (selectedProject) {
+      return [selectedProject];
     } else {
       return [];
     }
   }
 
   const [waitingMessage, setWaitingMessage] = React.useState<string>('');
-  const [selectedProjectAndIssueType, setSelectedProjectAndIssueType] = React.useState<undefined | Project>(importModel.getSelectedProject());
+  const [selectedProject, setSelectedProject] = React.useState<undefined | Project>(importModel.getSelectedProject());
   const [columnNamesToValueTypes, setColumnNamesToValueTypes] = React.useState<ObjectMapping<ImportColumnValueType>>({});
 
   const updateState = async (): Promise<void> => {
@@ -54,6 +54,9 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
   }, [props.fileUploadCompletionState, props.projectAndIssueTypeSelectionCompletionState]);
 
   const onProjectsSelect = async (selectedProjects: Project[]): Promise<void> => {
+    // Step 1: First make sure the selected issue type is reset.
+    await importModel.setSelectedIssueType(undefined);
+    // Step 2: Then set the selected project.
     await importModel.setSelectedProject(selectedProjects[0]);
   }
 
@@ -69,7 +72,7 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
           isMulti={false}
           isClearable={true}
           isDisabled={props.fileUploadCompletionState !== 'complete'}
-          selectedProjects={selectedProjectAndIssueType ? [selectedProjectAndIssueType] : []}
+          selectedProjects={selectedProject ? [selectedProject] : []}
           onProjectsSelect={onProjectsSelect}
         />
       </FormSection>
@@ -97,7 +100,9 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
       return (
         <FormSection>
           <IssueTypeSelect 
+            key={`issue-type-select-${selectedProject ? selectedProject.id : ''}`}
             label={"Issue type"}
+            isClearable={true}
             isDisabled={selectedProjectCreateIssueMetadata === undefined}
             selectedIssueType={selectedIssueype}
             selectableIssueTypes={selectableIssueTypes}

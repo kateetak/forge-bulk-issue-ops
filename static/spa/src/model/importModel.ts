@@ -18,18 +18,31 @@ export type ImportColumnMatchInfo = {
   fieldMetadata: FieldMetadata;
 }
 
-export type FileParseResult = {
+export type CsvLine = {
+  cells: string[];
+}
+
+export type CsvParseResult = {
   success: boolean;
+  headerLine: CsvLine;
+  bodyLines: CsvLine[];
   errorMessage?: string;
 }
+
+const nilCsvParseResult: CsvParseResult = {
+  success: false,
+  headerLine: { cells: [] },
+  bodyLines: [],
+  errorMessage: 'No file selected.'
+};
 
 class ImportModel extends BulkOpsModel<ImportStepName> {
 
   private issueCount: number = 0;
-  private fileLines: string[] = [];
+  private csvParseResult: CsvParseResult = nilCsvParseResult;
   private columnIndexesToColumnNames: Record<number, string> = {};
   private columnNamesToIndexes: Record<string, number> = {};
-  private columnNamesToValueTypes: Record<string, ImportColumnValueType> = {};
+  // private columnNamesToValueTypes: Record<string, ImportColumnValueType> = {};
   private fieldKeysToMatchInfos: Record<string, ImportColumnMatchInfo> = {};
   private selectedProject: undefined | Project = undefined;
   private selectedProjectCreateIssueMetadata: undefined | ProjectCreateIssueMetadata = undefined;
@@ -40,24 +53,20 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     super('ImportModel', importStepSequence);
   }
 
-  public onFileSelection = async (file: any): Promise<FileParseResult> => {
+  public onFileSelection = async (file: any): Promise<CsvParseResult> => {
     this.setStepCompletionState('file-upload', 'incomplete');
     console.log('ImportModel.onFileSelection: onFileSelected called');
     console.log(`ImportModel.onFileSelection... selected file: ${file ? file.name : 'none'}`); 
     console.log(`ImportModel.onFileSelection: file: `, file);
     if (file) {
       const fileContent = await this.readFileContent(file);
-      this.fileLines = fileContent.split('\n');
-      const fileParseResult = await this.setFileLines(this.fileLines);
-      return fileParseResult;
+      const fileLines = fileContent.split('\n');
+      console.log(`ImportModel.onFileSelection: fileLines length: ${fileLines.length}`);
+      this.csvParseResult = await this.parseFileLines(fileLines);
+      return this.csvParseResult;
     } else {
-      this.fileLines = [];
-      await this.setFileLines(this.fileLines);
-      const fileParseResult = {
-        success: false,
-        errorMessage: 'No file selected.'
-      }
-      return fileParseResult;
+      this.csvParseResult = nilCsvParseResult;
+      return this.csvParseResult
     }
   }
 
@@ -71,6 +80,10 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     if (notify) {
       this.notifyStepCompletionStateChangeListeners('column-mapping', this.allMandatoryFieldsHaveColumnMappings ? 'complete' : 'incomplete');
     }
+  }
+
+  signalImportComplete = (): void => {
+    this.notifyStepCompletionStateChangeListeners('import-issues', 'complete');
   }
 
   getSelectedProjectCreateIssueMetadata() {
@@ -109,8 +122,8 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     return this.fieldKeysToMatchInfos;
   }
 
-  getCsvLines = (): string[] => {
-    return this.fileLines;
+  getCsvParseResult = (): undefined | CsvParseResult => {
+    return this.csvParseResult;
   }
 
   setSelectedIssueType = async (issueType: undefined | IssueType): Promise<void> => {
@@ -139,73 +152,82 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     });
   }
 
-  private setFileLines = async (fileLines: string[]): Promise<FileParseResult> => {
-    const fileParseResult =  await this.startFileMapping(fileLines);
-    this.setStepCompletionState('file-upload', fileParseResult.success && this.issueCount > 0 ? 'complete' : 'incomplete');
-    return fileParseResult;
+  private parseFileLines = async (fileLines: string[]): Promise<CsvParseResult> => {
+    const csvParseResult =  await this.startFileMapping(fileLines);
+    console.log(`ImportModel.setFileLines: csvParseResult: ${JSON.stringify(csvParseResult)}`);
+    console.log(`ImportModel.setFileLines: this.issueCount: ${this.issueCount}`);
+    this.setStepCompletionState('file-upload', csvParseResult.success && this.issueCount > 0 ? 'complete' : 'incomplete');
+    return csvParseResult;
   }
 
   public getColumnIndexesToColumnNames = (): any => {
     return this.columnIndexesToColumnNames;
   }
 
-  public getColumnNamesToValueTypes = (): Record<string, ImportColumnValueType> => {
-    return this.columnNamesToValueTypes;
-  }
+  // public getColumnNamesToValueTypes = (): Record<string, ImportColumnValueType> => {
+  //   return this.columnNamesToValueTypes;
+  // }
 
-  private startFileMapping = async (fileLines: string[]): Promise<FileParseResult> => {
+  private startFileMapping = async (fileLines: string[]): Promise<CsvParseResult> => {
+    const headerLine: CsvLine = {
+      cells: []
+    };
+    const bodyLines: CsvLine[] = [];
+    const csvParseResult: CsvParseResult = {
+      success: true,
+      headerLine: headerLine,
+      bodyLines: bodyLines
+    };
     let columnCount = 0;
     const columnIndexesToColumnNames: Record<number, string> = {};
     const columnNamesToIndexes: Record<string, number> = {};
-    const columnNamesToValueTypes: ObjectMapping<ImportColumnValueType> = {};
+    // const columnNamesToValueTypes: ObjectMapping<ImportColumnValueType> = {};
     let issueCount = 0;
     for (let lineIndex = 0; lineIndex < fileLines.length; lineIndex++) {
       const line = fileLines[lineIndex].trim();
       if (!line) {
         continue; // Skip empty lines
       }
-      const columns = line.split(',');
+      const columnNames = line.split(',');
       if (lineIndex === 0) {
         // This is the header line.
-        columnCount = columns.length;
-        columns.forEach((column, index) => {
-          const trimmedColumn = column.trim();
-          if (trimmedColumn) {
-            columnIndexesToColumnNames[index] = trimmedColumn;
-            columnNamesToIndexes[trimmedColumn] = index;
+        columnCount = columnNames.length;
+        columnNames.forEach((columnName, index) => {
+          const trimmedColumnName = columnName.trim();
+          if (trimmedColumnName) {
+            columnIndexesToColumnNames[index] = trimmedColumnName;
+            columnNamesToIndexes[trimmedColumnName] = index;
+            headerLine.cells.push(trimmedColumnName);
           }
         });
       } else {
-        if (columns.length !== columnCount) {
+        if (columnNames.length !== columnCount) {
           // KNOWN-14: Import functionality does not surface file format warnings to the user.
-          console.warn(`Line ${lineIndex} has ${columns.length} columns, expected ${columnCount}. Skipping this line.`);
+          console.warn(`Line ${lineIndex} has ${columnNames.length} columns, expected ${columnCount}. Skipping this line.`);
           continue;
         }
         issueCount++;
-        for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+        const bodyLine: CsvLine = {
+          cells: []
+        };
+        bodyLines.push(bodyLine);
+        for (let columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
           const columnName = columnIndexesToColumnNames[columnIndex];
-          if (columnNamesToValueTypes[columnName] !== undefined) {
-            // This column has already been processed, skip it.
-            const fileParseResult = {
-              success: false,
-              errorMessage: `Column ${columnIndex} with name "${columnName}" in line ${lineIndex} has already been processed.`
-            };
-            return fileParseResult;
-          }
           if (columnName) {
-            const columnValue = columns[columnIndex].trim();
+            const columnValue = columnNames[columnIndex].trim();
+            bodyLine.cells.push(columnValue);
             const valueType = this.interpretColumnType(columnValue);
             console.log(`Determining the type of column ${columnIndex} with name "${columnName}" in line ${lineIndex} based on the value "${columnValue}"`);
-            const previouslyDeterminedType = columnNamesToValueTypes[columnName];
-            if (valueType === previouslyDeterminedType || previouslyDeterminedType === undefined) {
-              // All good
-              columnNamesToValueTypes[columnName] = valueType;
-            } else if (previouslyDeterminedType === 'unknown') {
-              columnNamesToValueTypes[columnName] = valueType;
-            } else {
-              console.warn(`Column "${columnName}" has inconsistent types: ${previouslyDeterminedType} vs ${valueType}`);
-              columnNamesToValueTypes[columnName] = 'string';
-            }
+            // const previouslyDeterminedType = columnNamesToValueTypes[columnName];
+            // if (valueType === previouslyDeterminedType || previouslyDeterminedType === undefined) {
+            //   // All good
+            //   columnNamesToValueTypes[columnName] = valueType;
+            // } else if (previouslyDeterminedType === 'unknown') {
+            //   columnNamesToValueTypes[columnName] = valueType;
+            // } else {
+            //   console.warn(`Column "${columnName}" has inconsistent types: ${previouslyDeterminedType} vs ${valueType}`);
+            //   columnNamesToValueTypes[columnName] = 'string';
+            // }
             console.log(`Column ${columnIndex} with name "${columnName}" in line ${lineIndex} has type: ${valueType}`);
           } else {
             console.warn(`No column name found for index ${columnIndex} in line ${lineIndex}`);
@@ -224,11 +246,8 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     this.issueCount = issueCount;
     this.columnIndexesToColumnNames = columnIndexesToColumnNames;
     this.columnNamesToIndexes = columnNamesToIndexes;
-    this.columnNamesToValueTypes = columnNamesToValueTypes;
-    const fileParseResult = {
-      success: true
-    };
-    return fileParseResult;
+    // this.columnNamesToValueTypes = columnNamesToValueTypes;
+    return csvParseResult;
   }
 
   private interpretColumnType = (columnValue: string): ImportColumnValueType => {

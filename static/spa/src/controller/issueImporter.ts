@@ -3,24 +3,25 @@ import { IssueType } from "../types/IssueType";
 import { Project } from "../types/Project";
 import { CreateIssuePayload, CreateIssuePayloadField } from "src/types/CreateIssuePayload";
 import { ObjectMapping } from "src/types/ObjectMapping";
-import { ImportColumnMatchInfo } from "src/model/importModel";
+import { CsvLine, CsvParseResult, ImportColumnMatchInfo } from "src/model/importModel";
 import { textToAdf } from "./textToAdf";
 import { IssueFieldType } from "src/types/IssueFieldType";
+import { Issue } from 'src/types/Issue';
 
 export type ImportInstructions = {
   targetProject: Project,
   targetIssueType: IssueType,
   columnNamesToIndexes: Record<string, number>,
   fieldKeysToMatchInfos: Record<string, ImportColumnMatchInfo>,
-  csvLines: string[];
+  csvParseResult: CsvParseResult;
 }
 
 const buildFieldsForCvsLine = async (
   importInstructions: ImportInstructions,
-  csvLine: string,
+  csvLine: CsvLine,
   lineIndex: number
 ) => {
-  const columns = csvLine.split(',');
+  const columns = csvLine.cells;
   const createIssueFields: ObjectMapping<CreateIssuePayloadField> = {};
   const fieldKeys = Object.keys(importInstructions.fieldKeysToMatchInfos);
   for (const fieldKey of fieldKeys) {
@@ -50,23 +51,10 @@ export const importIssues = async (
   let importCount: number = 0;
   let lineSkipCount: number = 0;
   let failCount: number = 0;
-  let totalCount: number = importInstructions.csvLines.length;
+  let totalCount: number = importInstructions.csvParseResult.bodyLines.length;
   let lineIndex = 0;
-  let headerColumnCount = 0;
-  for (const csvLine of importInstructions.csvLines) {
-    if (lineIndex === 0) {
-      headerColumnCount = csvLine.split(',').length;
-      lineIndex++;
-      continue;
-    }
+  for (const csvLine of importInstructions.csvParseResult.bodyLines) {
     let skipLineMessage = '';
-    if (csvLine.trim() === '') {
-      skipLineMessage = `issueImporter.importIssues: CSV line number ${lineIndex + 1} is empty. Skipping line.`
-    }
-    const columns = csvLine.split(',');
-    if (columns.length !== headerColumnCount) {
-      skipLineMessage = `issueImporter.importIssues: CSV line number ${lineIndex + 1} has ${columns.length} columns (expected ${headerColumnCount}). Skipping line.`;
-    }
     if (skipLineMessage) {
       console.warn(skipLineMessage);
       lineIndex++;
@@ -74,7 +62,6 @@ export const importIssues = async (
       continue;
     }
     console.log(`issueImporter.importIssues processing line ${lineIndex + 1} of ${totalCount}`);
-
     const createIssueFields = await buildFieldsForCvsLine(importInstructions, csvLine, lineIndex);
     createIssueFields['project'] = {
       id: importInstructions.targetProject.id
@@ -86,28 +73,57 @@ export const importIssues = async (
       fields: createIssueFields
     };
     console.log(`issueImporter.importIssues built payload: ${JSON.stringify(createIssuePayload, null, 2)}`);
-    const response = await requestJira(`/rest/api/3/issue`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(createIssuePayload)
-    });
-    if (response.ok) {
+    const issue = await createIssue(createIssuePayload, 1, 3);
+    if (issue) {
       importCount++;
-      const data = await response.json();
-      console.log('Issue created successfully:', data);
+      console.log(`Issue created successfully: ${issue.key}`);
     } else {
       failCount++;
-      const errorMessage = await response.text();
-      console.error('Error creating issue:', errorMessage);
-      throw new Error(`Failed to create issue: ${errorMessage}`);
+      console.error('Error creating issue');
     }
     await onProgressUpdate(importCount, lineSkipCount, failCount, totalCount);
     lineIndex++;
   }
+}
 
+const createIssue = async (createIssuePayload: CreateIssuePayload, attemptNumber: number, allowedRetryCount: number): Promise<Issue | undefined> => {
+  const response = await requestJira(`/rest/api/3/issue`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(createIssuePayload)
+  });
+  if (response.ok) {
+    const data = await response.json();
+    console.log('Issue created successfully:', data);
+    return data as Issue;
+  } else {
+    const status = response.status;
+    const retryAfter = response.headers.get('Retry-After');
+    if (retryAfter) {
+      // response.status is probably a 429 or 500, but it doesn't matter, just delay and retry.
+      console.warn(`Rate limit exceeded. Retry after ${retryAfter} seconds.`);
+      let secondsToDelay = parseInt(retryAfter);
+      if (isNaN(secondsToDelay)) {
+        secondsToDelay = 5;
+      }
+      // Exponential backoff: double the delay with each successive attempt
+      for (let i = 1; i < attemptNumber; i++) {
+        secondsToDelay = secondsToDelay * 2;
+      }
+      await delay(secondsToDelay * 1000);
+      return createIssue(createIssuePayload, attemptNumber + 1, allowedRetryCount - 1);
+    } else {
+      console.warn(`Failed to create issue. Status: ${status}`);
+      return undefined;
+    }
+  }
+}
+
+const delay = (milliseconds: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
 const buildField = async (

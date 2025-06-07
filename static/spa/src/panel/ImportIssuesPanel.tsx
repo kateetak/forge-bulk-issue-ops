@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
 import Button from '@atlaskit/button/new';
+import { LinearProgress } from '@mui/material';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
 import importModel from 'src/model/importModel';
 import { CompletionState } from 'src/types/CompletionState';
 import { ImportColumnValueType } from 'src/types/ImportColumnValueType';
 import { ObjectMapping } from 'src/types/ObjectMapping';
-import { on } from 'events';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 import { ImportInstructions, importIssues } from 'src/controller/issueImporter';
+import { ProgressInfo } from 'src/types/ProgressInfo';
+import { Label } from '@atlaskit/form';
 
 const showDebug = false;
 
@@ -21,6 +23,10 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
   const [waitingMessage, setWaitingMessage] = React.useState<string>('');
   const [columnIndexesToColumnNames, setColumnIndexesToColumnNames] = React.useState<any>({});
   const [columnNamesToValueTypes, setColumnNamesToValueTypes] = React.useState<ObjectMapping<ImportColumnValueType>>({});
+  const [progressInfo, setProgressInfo] = React.useState<ProgressInfo>({
+    state: 'waiting',
+    percentComplete: 0
+  });
 
   const updateState = async (): Promise<void> => {
     console.log('ImportIssuesPanel.updateState called');
@@ -31,7 +37,7 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
       .build();
     setWaitingMessage(waitingMessage);
     setColumnIndexesToColumnNames(importModel.getColumnIndexesToColumnNames());
-    setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
+    // setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
   }
 
   useEffect(() => {
@@ -40,6 +46,15 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
 
   const onImportProgressUpdate = async (importCount: number, lineSkipCount: number, failCount: number, totalCount: number): Promise<void> => {
     console.log(`ImportIssuesPanel.onImportProgressUpdate called with importCount = ${importCount}, lineSkipCount = ${lineSkipCount}, failCount = ${failCount}, totalCount = ${totalCount}`);
+    const progressInfo: ProgressInfo = {
+      state: 'in_progress',
+      percentComplete: totalCount > 0 ? Math.round((importCount + lineSkipCount + failCount) / totalCount * 100) : 0,
+      message: `Imported ${importCount} of ${totalCount} (${lineSkipCount} skipped, ${failCount} failed)`
+    };
+    setProgressInfo(progressInfo);
+    if (progressInfo.percentComplete === 100) {
+      importModel.signalImportComplete();
+    }
   }
 
   const onImportIssuesButtonClick = async () => {
@@ -49,7 +64,7 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
       targetIssueType: importModel.getSelectedIssueType(),
       columnNamesToIndexes: importModel.getColumnNamesToIndexes(),
       fieldKeysToMatchInfos: importModel.getFieldKeysToMatchInfos(),
-      csvLines: importModel.getCsvLines(),
+      csvParseResult: importModel.getCsvParseResult(),
     }
     importIssues(importInstructions, onImportProgressUpdate);
   }
@@ -57,10 +72,11 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
   const renderImportButton = () => {
     const issueCount = importModel.getIssueCount();
     const buttonLabel = issueCount === 0 ? 'Import issues' : `Import ${issueCount} ${issueCount === 1 ? 'issue' : 'issues'}`;
+    const allowImportStart = props.columnMappingCompletionState === 'complete' && progressInfo.state === 'waiting';
     return (
       <Button
         appearance="primary"
-        isDisabled={props.columnMappingCompletionState !== 'complete'}
+        isDisabled={!allowImportStart}
         onClick={onImportIssuesButtonClick}
       >
         {buttonLabel}
@@ -68,10 +84,24 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
     );
   };
 
+  const renderProgressIndicator = () => {
+    if (progressInfo.state === 'waiting') {
+      return null;
+    } else {
+      return (
+        <div>
+          <Label htmlFor={''}>{progressInfo.message ?? ''}</Label>
+          <LinearProgress variant="determinate" value={progressInfo.percentComplete} color="secondary" />
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="step-panel-content-container">
       {renderPanelMessage(waitingMessage)}
       {renderImportButton()}
+      {renderProgressIndicator()}
     </div>
   )
 

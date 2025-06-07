@@ -12,6 +12,7 @@ import { formatIssueType } from 'src/controller/formatters';
 export type IssueTypeSelectProps = {
   label: string;
   isDisabled?: boolean;
+  isClearable?: boolean;
   selectedIssueType: IssueType | undefined;
   selectableIssueTypes: IssueType[];
   onIssueTypeSelect: (selectedIssueType: undefined | IssueType) => Promise<void>;
@@ -51,6 +52,7 @@ const IssueTypeSelect = (props: IssueTypeSelectProps) => {
         testId="issue-types-select"
         isMulti={false}
         isDisabled={props.isDisabled}
+        isClearable={props.isClearable}
         defaultValue={initiallySelectedOption}
         options={options}
         placeholder={props.label}
