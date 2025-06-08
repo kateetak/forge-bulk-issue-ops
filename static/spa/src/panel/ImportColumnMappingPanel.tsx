@@ -27,6 +27,7 @@ export type ImportColumnMappingPanelProps = {
   columnMappingCompletionState: CompletionState,
   selectedIssueType: undefined | IssueType,
   createIssueMetadata: undefined | ProjectCreateIssueMetadata
+  modelUpdateTimestamp: number;
 }
 
 const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
@@ -52,30 +53,6 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
     }
     importModel.setAllMandatoryFieldsHaveColumnMappings(newAllMandatoryFieldsHaveColumnMappings);
   }
-
-  // const updateFieldKeysToOptionMatchesState = (fieldKeysToOptionMatches: ObjectMapping<ColumnOptionsMatch>): void => {
-
-  // }
-
-  // const buildFieldKeysToOptionMatches = (
-  //   issueTypeCreateMetadata: IssueTypeMetadata,
-  //   autoMatch: boolean
-  // ) => {
-  //   const fieldKeysToOptionMatches: ObjectMapping<ColumnOptionsMatch> = {};
-  //   const fields = issueTypeCreateMetadata.fields;
-  //   const filteredFields = filterFields(Object.values(fields));
-  //   const sortedFilteredFields = sortFields(filteredFields);
-  //   for (const fieldMetadata of sortedFilteredFields) {
-  //     const fieldType = fieldMetadata.schema?.type;
-  //     if (fieldType) {
-  //       if (fieldKeysToOptionMatches[fieldMetadata.key] === undefined) {
-  //         const optionsMatch = matchColumns(fieldMetadata, fieldKeysToMappedColumnNames, fieldKeysToMatchInfos);
-  //         fieldKeysToOptionMatches[fieldMetadata.key] = optionsMatch;
-  //       }
-  //     }
-  //   }
-  //   setFieldKeysToOptionMatches(fieldKeysToOptionMatches);
-  // }
 
   const updateState = async (): Promise<void> => {
     console.log('ImportColumnMappingPanel.updateState called');
@@ -122,9 +99,13 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
     console.log('ImportColumnMappingPanel mounted');
   }, []);
 
+  // useEffect(() => {
+  //   updateState();
+  // }, [props.importProjectCompletionState, props.columnMappingCompletionState, props.selectedIssueType, props.createIssueMetadata]);
+
   useEffect(() => {
     updateState();
-  }, [props.importProjectCompletionState, props.columnMappingCompletionState, props.selectedIssueType, props.createIssueMetadata]);
+  }, [props.modelUpdateTimestamp]);
 
   const isFieldMandatory = (fieldMetadata: FieldMetadata): boolean => {
     return fieldMetadata.required && !fieldMetadata.hasDefaultValue;

@@ -45,7 +45,7 @@ import ImportProjectAndIssueTypeSelectionPanel from './ImportProjectAndIssueType
 import importModel from 'src/model/importModel';
 
 const showDebug = false;
-const showCompletionStateDebug = false;
+const showCompletionStateDebug = true;
 const implyAllIssueTypesWhenNoneAreSelected = true;
 const autoShowFieldMappings = true;
 
@@ -626,6 +626,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             <ImportProjectAndIssueTypeSelectionPanel
               fileUploadCompletionState={fileUploadCompletionState}
               projectAndIssueTypeSelectionCompletionState={projectAndIssueTypeSelectionCompletionState}
+              modelUpdateTimestamp={modelUpdateTimestamp}
             />
           </div>
         </div>
@@ -650,6 +651,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
               columnMappingCompletionState={columnMappingCompletionState}
               selectedIssueType={importModel.getSelectedIssueType()}
               createIssueMetadata={importModel.getSelectedProjectCreateIssueMetadata()}
+              modelUpdateTimestamp={modelUpdateTimestamp}
             />
           </div>
         </div>

@@ -16,6 +16,7 @@ const showDebug = false;
 export type ImportProjectAndIssueTypeSelectionPanelProps = {
   fileUploadCompletionState: CompletionState,
   projectAndIssueTypeSelectionCompletionState: CompletionState
+  modelUpdateTimestamp: number;
 }
 
 const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTypeSelectionPanelProps) => {
@@ -34,9 +35,9 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
   const [columnNamesToValueTypes, setColumnNamesToValueTypes] = React.useState<ObjectMapping<ImportColumnValueType>>({});
 
   const updateState = async (): Promise<void> => {
-    console.log('ImportProjectAndIssueTypeSelectionPanel.updateState called');
-    console.log(' * fileUploadCompletionState:', props.fileUploadCompletionState);
-    console.log(' * projectAndIssueTypeSelectionCompletionState:', props.projectAndIssueTypeSelectionCompletionState);
+    // console.log('ImportProjectAndIssueTypeSelectionPanel.updateState called');
+    // console.log(' * fileUploadCompletionState:', props.fileUploadCompletionState);
+    // console.log(' * projectAndIssueTypeSelectionCompletionState:', props.projectAndIssueTypeSelectionCompletionState);
     const waitingMessage = new WaitingMessageBuilder()
       .addCheck(props.fileUploadCompletionState === 'complete', 'Waiting for file upload.')
       .build();
@@ -45,13 +46,17 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
     // setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
   }
 
-  useEffect(() => {
-    console.log('ImportProjectAndIssueTypeSelectionPanel mounted');
-  }, []);
+  // useEffect(() => {
+  //   console.log('ImportProjectAndIssueTypeSelectionPanel mounted');
+  // }, []);
+
+  // useEffect(() => {
+  //   updateState();
+  // }, [props.fileUploadCompletionState, props.projectAndIssueTypeSelectionCompletionState]);
 
   useEffect(() => {
     updateState();
-  }, [props.fileUploadCompletionState, props.projectAndIssueTypeSelectionCompletionState]);
+  }, [props.modelUpdateTimestamp]);
 
   const onProjectsSelect = async (selectedProjects: Project[]): Promise<void> => {
     // Step 1: First make sure the selected issue type is reset.
@@ -103,7 +108,7 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
             key={`issue-type-select-${selectedProject ? selectedProject.id : ''}`}
             label={"Issue type"}
             isClearable={true}
-            isDisabled={selectedProjectCreateIssueMetadata === undefined}
+            isDisabled={props.fileUploadCompletionState !== 'complete' || selectedProjectCreateIssueMetadata === undefined}
             selectedIssueType={selectedIssueype}
             selectableIssueTypes={selectableIssueTypes}
             onIssueTypeSelect={onIssueTypeSelect} 

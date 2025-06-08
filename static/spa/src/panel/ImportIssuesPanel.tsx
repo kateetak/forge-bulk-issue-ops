@@ -45,7 +45,7 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
       mappedColumnNames: mappedColumnNumes,
       unmappedColumnNames: unmappedColumnNumes
     };
-    console.log(`ImportIssuesPanel.buildColumnMappingSummary: built columnMappingSummaryInfo: ${JSON.stringify(columnMappingSummaryInfo, null, 2)}`);
+    // console.log(`ImportIssuesPanel.buildColumnMappingSummary: built columnMappingSummaryInfo: ${JSON.stringify(columnMappingSummaryInfo, null, 2)}`);
     return columnMappingSummaryInfo;
   }
 
@@ -59,9 +59,9 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
   const [columnMappingSummary, setColumnMappingSummary] = React.useState<ColumnMappingSummaryInfo | null>(buildColumnMappingSummary());
 
   const updateState = async (): Promise<void> => {
-    console.log('ImportIssuesPanel.updateState called');
-    console.log(' * columnMappingCompletionState:', props.columnMappingCompletionState);
-    console.log(' * importIssuesCompletionState:', props.importIssuesCompletionState);
+    // console.log('ImportIssuesPanel.updateState called');
+    // console.log(' * columnMappingCompletionState:', props.columnMappingCompletionState);
+    // console.log(' * importIssuesCompletionState:', props.importIssuesCompletionState);
     const waitingMessage = new WaitingMessageBuilder()
       .addCheck(props.columnMappingCompletionState === 'complete', 'Waiting for column mapping.')
       .build();
