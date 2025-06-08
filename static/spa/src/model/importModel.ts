@@ -54,7 +54,7 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     super('ImportModel', importStepSequence);
   }
 
-  public onFileSelection = async (file: any): Promise<CsvParseResult> => {
+  public onFileSelection = async (file: undefined | File): Promise<CsvParseResult> => {
     this.setStepCompletionState('file-upload', 'incomplete');
     console.log('ImportModel.onFileSelection: onFileSelected called');
     console.log(`ImportModel.onFileSelection... selected file: ${file ? file.name : 'none'}`); 

@@ -1,11 +1,7 @@
 import React, { useEffect } from 'react';
-import { invoke } from '@forge/bridge';
-import Button from '@atlaskit/button/new';
-import { ObjectMapping } from 'src/types/ObjectMapping';
-import { ImportColumnValueType } from 'src/types/ImportColumnValueType';
 import importModel from '../model/importModel';
 import { CompletionState } from 'src/types/CompletionState';
-import Lozenge from '@atlaskit/lozenge';
+import FileUploadWidget from 'src/widget/FileUploadWidget';
 
 const showDebug = false;
 
@@ -23,10 +19,8 @@ const FileUploadPanel = (props: FileUploadPanelProps) => {
     console.log('FileUploadPanel mounted');
   }, []);
 
-  const onFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileSelected = async (file: undefined | File) => {
     console.log('onFileSelected called');
-    console.log('event:', event);
-    const file = event.target.files[0];
     const fileParseResult = await importModel.onFileSelection(file);
 
     if (!fileParseResult.success) {
@@ -43,7 +37,37 @@ const FileUploadPanel = (props: FileUploadPanelProps) => {
           id="file-select"
           type="file"
           accept=".csv" 
-          onChange={onFileSelected}
+          multiple={false}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            console.log('event:', event);
+            if (event.target.files && event.target.files.length > 0) {
+              const file = event.target.files[0];
+              onFileSelected(file);
+            } else {
+              onFileSelected(undefined);
+            }
+          }}
+        />
+      </div>
+    )
+  }
+
+  const renderFileUploadDropTarget = () => {
+    return (
+      <div style={{margin: '20px auto', width: 'fit-content'}}>
+        <FileUploadWidget
+          message="Drag and drop your file to import here"
+          allowedFileTypes={['.csv']}
+          width={'400px'}
+          height={'100px'}
+          allowMultiple={false}
+          onFilesSelected={(files: File[]): void => {
+            if (files.length === 0) {
+              onFileSelected(undefined);
+            } else {
+              onFileSelected(files[0]);
+            }
+          }} 
         />
       </div>
     )
@@ -99,7 +123,8 @@ const FileUploadPanel = (props: FileUploadPanelProps) => {
 
   return (
     <div>
-      {renderFileUploadWidget()}
+      {/* {renderFileUploadWidget()} */}
+      {renderFileUploadDropTarget()}
       {renderDebug()}
     </div>
   )

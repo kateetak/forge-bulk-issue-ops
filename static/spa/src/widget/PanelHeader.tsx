@@ -1,7 +1,7 @@
 import React from 'react';
 import { CompletionState } from 'src/types/CompletionState';
-import SuccessIcon from '@atlaskit/icon/core/success';
 import ShowMoreHorizontalIcon from '@atlaskit/icon/core/show-more-horizontal';
+import SuccessSymbol from './SuccessSymbol';
 
 export type PanelHeaderProps = {
   stepNumber: number;
@@ -19,7 +19,7 @@ const PanelHeader = (props: PanelHeaderProps) => {
         <div style={{color: iconColor}}>
           {
           props.completionState === 'complete' ? 
-            <SuccessIcon label="Step complete" /> : 
+            <SuccessSymbol label="Step complete" /> : 
             <ShowMoreHorizontalIcon label="Step incomplete" />
           }
         </div>

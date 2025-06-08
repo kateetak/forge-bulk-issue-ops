@@ -34,6 +34,18 @@ span.button-link:hover {
   white-space: nowrap;
 }
 
+.important-message {
+  font-weight: bold;
+}
+
+.success-message {
+  color: #006644
+}
+
+.error-message {
+  color: #BF2600
+}
+
 div.warning-message {
   margin-left: auto;
   margin-right: auto;
