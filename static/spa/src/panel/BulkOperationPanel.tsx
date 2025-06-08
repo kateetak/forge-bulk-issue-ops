@@ -45,7 +45,7 @@ import ImportProjectAndIssueTypeSelectionPanel from './ImportProjectAndIssueType
 import importModel from 'src/model/importModel';
 
 const showDebug = false;
-const showCompletionStateDebug = true;
+const showCompletionStateDebug = false;
 const implyAllIssueTypesWhenNoneAreSelected = true;
 const autoShowFieldMappings = true;
 
