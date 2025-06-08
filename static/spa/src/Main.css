@@ -41,7 +41,8 @@ div.warning-message {
   padding: 6px;
   border-radius: 6px;
   text-align: center;
-  background-color: #BF2600;
+  /* background-color: #BF2600; */
+  background-color: #FFAB00;
   color: #fff;
 }
 

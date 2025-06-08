@@ -10,15 +10,44 @@ import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 import { ImportInstructions, importIssues } from 'src/controller/issueImporter';
 import { ProgressInfo } from 'src/types/ProgressInfo';
 import { Label } from '@atlaskit/form';
+import WarningSymbol from 'src/widget/WarningSymbol';
+import SuccessSymbol from 'src/widget/SuccessSymbol';
 
-const showDebug = false;
+const showDebug = true;
 
 export type ImportIssuesPanelProps = {
   columnMappingCompletionState: CompletionState;
   importIssuesCompletionState: CompletionState;
+  modelUpdateTimestamp: number;
+}
+
+type ColumnMappingSummaryInfo = {
+  mappedColumnNames: string[];
+  unmappedColumnNames: string[];
 }
 
 const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
+
+  const buildColumnMappingSummary = (): ColumnMappingSummaryInfo => {
+    const csvParseResult = importModel.getCsvParseResult();
+    const mappedColumnNumes: string[] = [];
+    const unmappedColumnNumes: string[] = [];
+    const columnNames = csvParseResult.headerLine.cells;
+    for (const columnName of columnNames) {
+      const matchInfo = importModel.getImportColumnMatchInfoByColumnName(columnName);
+      if (matchInfo) {
+        mappedColumnNumes.push(columnName);
+      } else {
+        unmappedColumnNumes.push(columnName);
+      }
+    }
+    const columnMappingSummaryInfo: ColumnMappingSummaryInfo = {
+      mappedColumnNames: mappedColumnNumes,
+      unmappedColumnNames: unmappedColumnNumes
+    };
+    console.log(`ImportIssuesPanel.buildColumnMappingSummary: built columnMappingSummaryInfo: ${JSON.stringify(columnMappingSummaryInfo, null, 2)}`);
+    return columnMappingSummaryInfo;
+  }
 
   const [waitingMessage, setWaitingMessage] = React.useState<string>('');
   const [columnIndexesToColumnNames, setColumnIndexesToColumnNames] = React.useState<any>({});
@@ -27,6 +56,7 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
     state: 'waiting',
     percentComplete: 0
   });
+  const [columnMappingSummary, setColumnMappingSummary] = React.useState<ColumnMappingSummaryInfo | null>(buildColumnMappingSummary());
 
   const updateState = async (): Promise<void> => {
     console.log('ImportIssuesPanel.updateState called');
@@ -37,12 +67,16 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
       .build();
     setWaitingMessage(waitingMessage);
     setColumnIndexesToColumnNames(importModel.getColumnIndexesToColumnNames());
-    // setColumnNamesToValueTypes(importModel.getColumnNamesToValueTypes());
+    setColumnMappingSummary(buildColumnMappingSummary());
   }
 
   useEffect(() => {
     updateState();
-  }, [props.columnMappingCompletionState, props.importIssuesCompletionState]);
+  }, [props.columnMappingCompletionState, props.importIssuesCompletionState, props.modelUpdateTimestamp]);
+
+  const canImportBeStarted = (): boolean => {
+    return props.columnMappingCompletionState === 'complete' && progressInfo.state === 'waiting';
+  }
 
   const onImportProgressUpdate = async (importCount: number, lineSkipCount: number, failCount: number, totalCount: number): Promise<void> => {
     console.log(`ImportIssuesPanel.onImportProgressUpdate called with importCount = ${importCount}, lineSkipCount = ${lineSkipCount}, failCount = ${failCount}, totalCount = ${totalCount}`);
@@ -69,14 +103,41 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
     importIssues(importInstructions, onImportProgressUpdate);
   }
 
+  const renderImportSummary = () => {
+    if (props.columnMappingCompletionState !== 'complete') {
+      return null;
+    }
+    const csvParseResult = importModel.getCsvParseResult();
+    const mappedColumnNumes = columnMappingSummary.mappedColumnNames;
+    const unmappedColumnNumes = columnMappingSummary.unmappedColumnNames;
+    let renderedColumnMappingSummary = null;
+    if (unmappedColumnNumes.length === 0) {
+      renderedColumnMappingSummary = <p><SuccessSymbol /> All columns have been mapped to fields.</p>;
+    } else if (unmappedColumnNumes.length === 1) {
+      renderedColumnMappingSummary = <p><WarningSymbol/> Column "{unmappedColumnNumes[0]}" is not mapped to any field so its data will be ignored.</p>;
+    } else {
+      renderedColumnMappingSummary = <p><WarningSymbol/> Columns {unmappedColumnNumes.join(', ')} are not mapped to any fields so their data will be ignored.</p>;
+    }
+    return (
+      <div style={{margin: '20px'}}>
+        <h5>Import Summary</h5>
+        <ul style={{listStyleType: 'none', paddingLeft: '0px'}}>
+          <li><p><SuccessSymbol /> File: {csvParseResult.fileName}</p></li>
+          <li><p><SuccessSymbol /> Number of data lines: {csvParseResult.bodyLines.length}</p></li>
+          <li><p><SuccessSymbol /> Mapped columns: {mappedColumnNumes.join(', ')}</p></li>
+          <li>{renderedColumnMappingSummary}</li>
+        </ul>
+      </div>
+    );
+  }
+
   const renderImportButton = () => {
     const issueCount = importModel.getIssueCount();
     const buttonLabel = issueCount === 0 ? 'Import work items' : `Import ${issueCount} ${issueCount === 1 ? 'work item' : 'work items'}`;
-    const allowImportStart = props.columnMappingCompletionState === 'complete' && progressInfo.state === 'waiting';
     return (
       <Button
         appearance="primary"
-        isDisabled={!allowImportStart}
+        isDisabled={!canImportBeStarted()}
         onClick={onImportIssuesButtonClick}
       >
         {buttonLabel}
@@ -100,6 +161,7 @@ const ImportIssuesPanel = (props: ImportIssuesPanelProps) => {
   return (
     <div className="step-panel-content-container">
       {renderPanelMessage(waitingMessage)}
+      {renderImportSummary()}
       {renderImportButton()}
       {renderProgressIndicator()}
     </div>

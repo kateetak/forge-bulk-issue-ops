@@ -11,7 +11,7 @@ import Select from '@atlaskit/select';
 import { IssueType } from 'src/types/IssueType';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
-const showDebug = true;
+const showDebug = false;
 
 const mandatoryIndicatorWidth = '10px';
 
@@ -34,26 +34,9 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
   const [waitingMessage, setWaitingMessage] = React.useState<string>('');
   const [columnIndexesToColumnNames, setColumnIndexesToColumnNames] = React.useState<any>({});
   const [columnNamesToValueTypes, setColumnNamesToValueTypes] = React.useState<ObjectMapping<ImportColumnValueType>>({});
-  // const [fieldKeysToMappedColumnNames, setFieldKeysToMappedColumnNames] = React.useState<ObjectMapping<string>>({});
-  // const [columnIndexesToMatchInfos, setColumnIndexesToMatchInfos] = React.useState<ObjectMapping<ImportColumnMatchInfo>>({});
   const [fieldKeysToMatchInfos, setFieldKeysToMatchInfos] = React.useState<ObjectMapping<ImportColumnMatchInfo>>({});
   const [sortedFilteredFields, setSortedFilteredFields] = React.useState<FieldMetadata[]>([]);
   const [fieldKeysToOptionMatches, setFieldKeysToOptionMatches] = React.useState<ObjectMapping<ColumnOptionsMatch>>({});
-
-  // const updateSelectionState = async (fieldKeysToMappedColumnNames: ObjectMapping<string>): Promise<void> => {
-  //   let newAllMandatoryFieldsHaveColumnMappings = false;
-  //   if (props.createIssueMetadata && props.selectedIssueType) {
-  //     const issueTypeCreateMetadata = props.createIssueMetadata.issuetypes.find(issueType => {
-  //       return issueType.id === props.selectedIssueType.id;
-  //     });
-  //     newAllMandatoryFieldsHaveColumnMappings = doAllMandatoryFieldsHaveColumnMappings(
-  //       issueTypeCreateMetadata,
-  //       fieldKeysToMappedColumnNames);
-  //   } else {
-  //     newAllMandatoryFieldsHaveColumnMappings = false;
-  //   }
-  //   importModel.setAllMandatoryFieldsHaveColumnMappings(newAllMandatoryFieldsHaveColumnMappings);
-  // }
 
   const updateSelectionState = async (fieldKeysToMatchInfos: ObjectMapping<ImportColumnMatchInfo>): Promise<void> => {
     let newAllMandatoryFieldsHaveColumnMappings = false;
@@ -69,6 +52,30 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
     }
     importModel.setAllMandatoryFieldsHaveColumnMappings(newAllMandatoryFieldsHaveColumnMappings);
   }
+
+  // const updateFieldKeysToOptionMatchesState = (fieldKeysToOptionMatches: ObjectMapping<ColumnOptionsMatch>): void => {
+
+  // }
+
+  // const buildFieldKeysToOptionMatches = (
+  //   issueTypeCreateMetadata: IssueTypeMetadata,
+  //   autoMatch: boolean
+  // ) => {
+  //   const fieldKeysToOptionMatches: ObjectMapping<ColumnOptionsMatch> = {};
+  //   const fields = issueTypeCreateMetadata.fields;
+  //   const filteredFields = filterFields(Object.values(fields));
+  //   const sortedFilteredFields = sortFields(filteredFields);
+  //   for (const fieldMetadata of sortedFilteredFields) {
+  //     const fieldType = fieldMetadata.schema?.type;
+  //     if (fieldType) {
+  //       if (fieldKeysToOptionMatches[fieldMetadata.key] === undefined) {
+  //         const optionsMatch = matchColumns(fieldMetadata, fieldKeysToMappedColumnNames, fieldKeysToMatchInfos);
+  //         fieldKeysToOptionMatches[fieldMetadata.key] = optionsMatch;
+  //       }
+  //     }
+  //   }
+  //   setFieldKeysToOptionMatches(fieldKeysToOptionMatches);
+  // }
 
   const updateState = async (): Promise<void> => {
     console.log('ImportColumnMappingPanel.updateState called');
@@ -106,8 +113,6 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
       setSortedFilteredFields([]);
       setFieldKeysToOptionMatches({});
     }
-    // setFieldKeysToMappedColumnNames(fieldKeysToMappedColumnNames);
-    // await updateSelectionState(fieldKeysToMappedColumnNames);
     importModel.setFieldKeysToMatchInfos(fieldKeysToMatchInfos);
     setFieldKeysToMatchInfos(fieldKeysToMatchInfos);
     await updateSelectionState(fieldKeysToMatchInfos);
@@ -221,7 +226,8 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
         fieldKeysToMappedColumnNames[fieldMetadata.key] = columnName; // Store the mapping
         const matchInfo: ImportColumnMatchInfo = {
           columnName: columnName,
-          fieldMetadata: fieldMetadata
+          fieldMetadata: fieldMetadata,
+          userSelected: false // This is a system-generated match
         }
         fieldKeysToMatchInfos[fieldMetadata.key] = matchInfo;
         matchedColumnName = columnName; // Store the matched column name
@@ -237,31 +243,32 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
     };
   }
 
-  // const onColumnSelect = async (fieldMetadata: FieldMetadata, selectedOption: undefined | Option): Promise<void> => {
-  //   // console.log(`ImportColumnMappingPanel.onColumnSelect: selectedOption = `, selectedOption);
-  //   const newFieldKeysToMappedColumnNames = { ...fieldKeysToMappedColumnNames };
-  //   if (selectedOption) {
-  //     const columnName = selectedOption ? selectedOption.value : '';
-  //     newFieldKeysToMappedColumnNames[fieldMetadata.key] = columnName;
-  //   } else {
-  //     delete newFieldKeysToMappedColumnNames[fieldMetadata.key];
-  //   }
-  //   setFieldKeysToMappedColumnNames(newFieldKeysToMappedColumnNames);
-  //   await updateSelectionState(newFieldKeysToMappedColumnNames);
-  // }
-
   const onColumnSelect = async (fieldMetadata: FieldMetadata, selectedOption: undefined | Option): Promise<void> => {
-    // console.log(`ImportColumnMappingPanel.onColumnSelect: selectedOption = `, selectedOption);
+    console.log(`ImportColumnMappingPanel.onColumnSelect: selectedOption = `, selectedOption);
+    const newFieldKeysToOptionMatches: ObjectMapping<ColumnOptionsMatch> = { ...fieldKeysToOptionMatches };
+    const existingColumnOptionsMatch: ColumnOptionsMatch | undefined = newFieldKeysToOptionMatches[fieldMetadata.key];
+    if (existingColumnOptionsMatch) {
+      const newColumnOptionsMatch: ColumnOptionsMatch = { ...existingColumnOptionsMatch };
+      newColumnOptionsMatch.selectedOption = selectedOption;
+      newFieldKeysToOptionMatches[fieldMetadata.key] = newColumnOptionsMatch;
+    } else {
+      console.warn(`No existing column options match found for field "${fieldMetadata.name}". Creating a new one.`);
+    }
+
     const newFieldKeysToMatchInfos = { ...fieldKeysToMatchInfos };
     if (selectedOption) {
       const columnName = selectedOption ? selectedOption.value : '';
-      newFieldKeysToMatchInfos[fieldMetadata.key] = {
+      const newImportColumnMatchInfo: ImportColumnMatchInfo = {
         columnName: columnName,
-        fieldMetadata: fieldMetadata
+        fieldMetadata: fieldMetadata,
+        userSelected: true
       };
+      newFieldKeysToMatchInfos[fieldMetadata.key] = newImportColumnMatchInfo;
     } else {
       delete newFieldKeysToMatchInfos[fieldMetadata.key];
     }
+    setFieldKeysToOptionMatches(newFieldKeysToOptionMatches);
+    importModel.setFieldKeysToMatchInfos(newFieldKeysToMatchInfos);
     setFieldKeysToMatchInfos(newFieldKeysToMatchInfos);
     await updateSelectionState(newFieldKeysToMatchInfos);
   }
@@ -300,12 +307,6 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
 
   const renderColumnMappingTable = (createIssueMetadata: ProjectCreateIssueMetadata, issueTypeCreateMetadata: IssueTypeMetadata) => {
     const renderedRows: any[] = [];
-    // const fields = issueTypeCreateMetadata.fields;
-    // const filteredFields = filterFields(Object.values(fields));
-    // const sortedFields = sortFields(filteredFields);
-
-    const columnIndexesToColumnNames = importModel.getColumnIndexesToColumnNames();
-
     for (const fieldMetadata of sortedFilteredFields) {
       const fieldType = fieldMetadata.schema?.type || 'unknown';
       renderedRows.push(
@@ -356,10 +357,6 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
     return (
       <div style={{margin: '20px 0px'}}>
         <h3>Debug Information</h3>
-        {/* <div>
-          <strong>fieldKeysToOptionMatches:</strong>
-          <pre>{JSON.stringify(fieldKeysToOptionMatches, null, 2)}</pre>
-        </div> */}
         <div>
           <strong>fieldKeysToMatchInfos:</strong>
           <pre>{JSON.stringify(fieldKeysToMatchInfos, null, 2)}</pre>

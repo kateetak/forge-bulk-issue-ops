@@ -38,7 +38,7 @@ import { MoveOrEditPanel } from './MoveOrEditPanel';
 import { Activity } from 'src/types/Activity';
 import { StepName } from 'src/model/BulkOperationsWorkflow';
 import FileUploadPanel from './FileUploadPanel';
-import { BulkOpsModel } from 'src/model/BulkOpsModel';
+import { BulkOpsModel, CompletionStateChangeInfo } from 'src/model/BulkOpsModel';
 import ImportColumnMappingPanel from './ImportColumnMappingPanel';
 import ImportIssuesPanel from './ImportIssuesPanel';
 import ImportProjectAndIssueTypeSelectionPanel from './ImportProjectAndIssueTypeSelectionPanel';
@@ -64,6 +64,7 @@ type FilterMode = 'basic' | 'advanced';
 const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
 
   const [stepNamesToCompletionStates, setStepNamesToCompletionStates] = useState<ObjectMapping<CompletionState>>({});
+  const [modelUpdateTimestamp, setLastModelUpdateTime] = useState<number>(0);
   const [stepSequence, setStepSequence] = useState<StepName[]>([])
   const [bulkOperationMode, setBulkOperationMode] = useState<BulkOperationMode>(props.bulkOperationMode);
   const [mainWarningMessage, setMainWarningMessage] = useState<string>('');
@@ -102,7 +103,9 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     setFieldIdsToValuesTime(Date.now());
   }
 
-  const onImportModelStepCompletionStateChange = (stepName: StepName, completionState: CompletionState) => {
+  const onImportModelStepCompletionStateChange = (completionStateChangeInfo: CompletionStateChangeInfo) => {
+    const stepName = completionStateChangeInfo.stepName;
+    const completionState = completionStateChangeInfo.completionState;
     console.log(`BulkOperationPanel.onImportModelStepCompletionStateChange: step "${stepName}" is now "${completionState}"`);
     setStepNamesToCompletionStates(prevState => ({
       ...prevState,
@@ -110,12 +113,18 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     }));
   }
 
+  const onModelUpdateChange = (modelUpdateTimestamp: number) => {
+    setLastModelUpdateTime(modelUpdateTimestamp);
+  }
+
   useEffect(() => {
     editedFieldsModel.registerValueEditsListener(onEditedFieldsModelChange);
     props.bulkOpsModel.registerStepCompletionStateChangeListener(onImportModelStepCompletionStateChange);
+    props.bulkOpsModel.registerModelUpdateChangeListener(onModelUpdateChange);
     return () => {
       editedFieldsModel.unregisterValueEditsListener(onEditedFieldsModelChange);
       props.bulkOpsModel.unregisterStepCompletionStateChangeListener(onImportModelStepCompletionStateChange);
+      props.bulkOpsModel.unregisterModelUpdateChangeListener(onModelUpdateChange);
     };
   }, []);
 
@@ -656,13 +665,14 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label={`Import issues`}
+            label={`Import work items`}
             completionState={importIssuesCompletionState}
           />
           <div className="step-panel-content-container">
             <ImportIssuesPanel
               columnMappingCompletionState={columnMappingCompletionState}
               importIssuesCompletionState={importIssuesCompletionState}
+              modelUpdateTimestamp={modelUpdateTimestamp}
             />
           </div>
         </div>

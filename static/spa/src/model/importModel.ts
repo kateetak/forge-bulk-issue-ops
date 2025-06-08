@@ -1,6 +1,5 @@
 import { ImportColumnValueType } from "src/types/ImportColumnValueType";
-import { ObjectMapping } from "src/types/ObjectMapping";
-import { ImportStepName, StepName } from "./BulkOperationsWorkflow";
+import { ImportStepName } from "./BulkOperationsWorkflow";
 import { BulkOpsModel } from "./BulkOpsModel";
 import { Project } from "src/types/Project";
 import jiraDataModel from "./jiraDataModel";
@@ -16,6 +15,7 @@ export const importStepSequence: ImportStepName[] = ['file-upload', 'project-and
 export type ImportColumnMatchInfo = {
   columnName: string;
   fieldMetadata: FieldMetadata;
+  userSelected: boolean;
 }
 
 export type CsvLine = {
@@ -24,6 +24,7 @@ export type CsvLine = {
 
 export type CsvParseResult = {
   success: boolean;
+  fileName: string;
   headerLine: CsvLine;
   bodyLines: CsvLine[];
   errorMessage?: string;
@@ -31,6 +32,7 @@ export type CsvParseResult = {
 
 const nilCsvParseResult: CsvParseResult = {
   success: false,
+  fileName: '',
   headerLine: { cells: [] },
   bodyLines: [],
   errorMessage: 'No file selected.'
@@ -42,7 +44,6 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
   private csvParseResult: CsvParseResult = nilCsvParseResult;
   private columnIndexesToColumnNames: Record<number, string> = {};
   private columnNamesToIndexes: Record<string, number> = {};
-  // private columnNamesToValueTypes: Record<string, ImportColumnValueType> = {};
   private fieldKeysToMatchInfos: Record<string, ImportColumnMatchInfo> = {};
   private selectedProject: undefined | Project = undefined;
   private selectedProjectCreateIssueMetadata: undefined | ProjectCreateIssueMetadata = undefined;
@@ -62,10 +63,12 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
       const fileContent = await this.readFileContent(file);
       const fileLines = fileContent.split('\n');
       console.log(`ImportModel.onFileSelection: fileLines length: ${fileLines.length}`);
-      this.csvParseResult = await this.parseFileLines(fileLines);
+      this.csvParseResult = await this.parseFileLines(file.name, fileLines);
+      this.updateModelTimestamp();
       return this.csvParseResult;
     } else {
       this.csvParseResult = nilCsvParseResult;
+      this.updateModelTimestamp();
       return this.csvParseResult
     }
   }
@@ -77,6 +80,7 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
   setAllMandatoryFieldsHaveColumnMappings = (newAllMandatoryFieldsHaveColumnMappings: boolean): void => {
     const notify = this.allMandatoryFieldsHaveColumnMappings !== newAllMandatoryFieldsHaveColumnMappings;
     this.allMandatoryFieldsHaveColumnMappings = newAllMandatoryFieldsHaveColumnMappings;
+    this.updateModelTimestamp();
     if (notify) {
       this.notifyStepCompletionStateChangeListeners('column-mapping', this.allMandatoryFieldsHaveColumnMappings ? 'complete' : 'incomplete');
     }
@@ -101,8 +105,8 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     } else {
       this.selectedProjectCreateIssueMetadata = undefined;
     }
-    // const stepComplete = this.selectedProject !== undefined && this.selectedProjectCreateIssueMetadata !== undefined;
     const stepComplete = this.isStepComplete();
+    this.updateModelTimestamp();
     this.notifyStepCompletionStateChangeListeners('project-and-issue-type-selection', stepComplete ? 'complete' : 'incomplete');
   }
 
@@ -116,6 +120,7 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
 
   setFieldKeysToMatchInfos = (fieldKeysToMatchInfos: Record<string, ImportColumnMatchInfo>): void => {
     this.fieldKeysToMatchInfos = fieldKeysToMatchInfos;
+    this.updateModelTimestamp();
   }
 
   getFieldKeysToMatchInfos = (): Record<string, ImportColumnMatchInfo> => {
@@ -126,10 +131,22 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     return this.csvParseResult;
   }
 
+  getImportColumnMatchInfoByColumnName = (columnName: string): ImportColumnMatchInfo | undefined => {
+    const fieldKeys = Object.keys(this.fieldKeysToMatchInfos);
+    for (const fieldKey of fieldKeys) {
+      const matchInfo = this.fieldKeysToMatchInfos[fieldKey];
+      if (matchInfo.columnName === columnName) {
+        return matchInfo;
+      }
+    }
+    return undefined;
+  }
+
   setSelectedIssueType = async (issueType: undefined | IssueType): Promise<void> => {
     this.selectedIssueType = issueType;
     const stepComplete = this.isStepComplete();
     this.notifyStepCompletionStateChangeListeners('project-and-issue-type-selection', stepComplete ? 'complete' : 'incomplete');
+    this.updateModelTimestamp();
   }
 
   private isStepComplete = (): boolean => {
@@ -152,8 +169,8 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
     });
   }
 
-  private parseFileLines = async (fileLines: string[]): Promise<CsvParseResult> => {
-    const csvParseResult =  await this.startFileMapping(fileLines);
+  private parseFileLines = async (fileName: string, fileLines: string[]): Promise<CsvParseResult> => {
+    const csvParseResult =  await this.startFileMapping(fileName, fileLines);
     console.log(`ImportModel.setFileLines: csvParseResult: ${JSON.stringify(csvParseResult)}`);
     console.log(`ImportModel.setFileLines: this.issueCount: ${this.issueCount}`);
     this.setStepCompletionState('file-upload', csvParseResult.success && this.issueCount > 0 ? 'complete' : 'incomplete');
@@ -168,13 +185,14 @@ class ImportModel extends BulkOpsModel<ImportStepName> {
   //   return this.columnNamesToValueTypes;
   // }
 
-  private startFileMapping = async (fileLines: string[]): Promise<CsvParseResult> => {
+  private startFileMapping = async (fileName: string, fileLines: string[]): Promise<CsvParseResult> => {
     const headerLine: CsvLine = {
       cells: []
     };
     const bodyLines: CsvLine[] = [];
     const csvParseResult: CsvParseResult = {
       success: true,
+      fileName: fileName,
       headerLine: headerLine,
       bodyLines: bodyLines
     };
