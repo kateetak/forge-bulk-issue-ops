@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
+import Button from '@atlaskit/button/new';
 import { FormSection } from "@atlaskit/form";
 import { LoadingState } from "../types/LoadingState";
 import { LinearProgress } from '@mui/material';
 import Lozenge from "@atlaskit/lozenge";
 import Toggle from "@atlaskit/toggle";
-import { Radio } from '@atlaskit/radio';
 import { IssueSearchInfo } from "../types/IssueSearchInfo";
 import { Issue } from "../types/Issue";
-import SuccessIcon from '@atlaskit/icon/core/success';
-import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 import placeholderImage from './issue-filter-placeholder.png';
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueLink } from "./IssueLink";
@@ -21,13 +19,10 @@ export type IssueSelectionPanelProps = {
   onIssuesSelectionChange: (selectedIssues: Issue[]) => Promise<void>;
 }
 
-type GlobalSelectionMode = 'All' | 'Some' | 'None';
-
 export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const [multipleProjectsDetected, setMultipleProjectsDetected] = useState<boolean>(
     jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1);
-  const [globalSelectionMode, setGlobalSelectionMode] = useState<GlobalSelectionMode>(multipleProjectsDetected ? 'Some' : 'All');
 
   useEffect(() => {
     setMultipleProjectsDetected(jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1);
@@ -35,46 +30,44 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
 
   const onToggleIssueSelection = (issueToToggle: Issue) => {
-    if (globalSelectionMode === 'Some') {
-      const newSelectedIssues: Issue[] = [];
-      for (const issue of props.issueSearchInfo.issues) {
-        const existingSelectedIssueKey = props.selectedIssues.find((selectedIssue: Issue) => {
-          return selectedIssue.key === issue.key;
-        });
-        const issueIsSelected = !!existingSelectedIssueKey;
-        if (issue.key === issueToToggle.key) {
-          if (issueIsSelected) {
-            // don't add
-          } else {
-            newSelectedIssues.push(issue);
-          }
-        } else if (issueIsSelected){
+    const newSelectedIssues: Issue[] = [];
+    for (const issue of props.issueSearchInfo.issues) {
+      const existingSelectedIssueKey = props.selectedIssues.find((selectedIssue: Issue) => {
+        return selectedIssue.key === issue.key;
+      });
+      const issueIsSelected = !!existingSelectedIssueKey;
+      if (issue.key === issueToToggle.key) {
+        if (issueIsSelected) {
+          // don't add
+        } else {
           newSelectedIssues.push(issue);
         }
+      } else if (issueIsSelected){
+        newSelectedIssues.push(issue);
       }
-      console.log(` * IssueSelectionPanel: Computed new issue selection: ${newSelectedIssues.map(issue => issue.key).join(', ')}`);
-      props.onIssuesSelectionChange(newSelectedIssues);
     }
+    console.log(` * IssueSelectionPanel: Computed new issue selection: ${newSelectedIssues.map(issue => issue.key).join(', ')}`);
+    props.onIssuesSelectionChange(newSelectedIssues);
   }
 
-  const onGlobalSelectionModeChange = (mode: GlobalSelectionMode) => {
-    setGlobalSelectionMode(mode);
-    if (mode === 'All' || mode === 'None') {
-      let changeDetected = false;
-      const newSelectedIssues: Issue[] = [];
-      for (const issue of props.issueSearchInfo.issues) {
-        const currentlySelected = props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key);
-        if (mode === 'All') {
-          changeDetected = changeDetected || !currentlySelected;
-          newSelectedIssues.push(issue);
-        } else if (mode === 'None') {
-          changeDetected = changeDetected || !!currentlySelected;
-        } else {
-          throw new Error(`Unreachable`);
-        }
-      }
-      props.onIssuesSelectionChange(newSelectedIssues);
+  const onSelectAllIssues = () => {
+    const newSelectedIssues: Issue[] = [];
+    let changeDetected = false;
+    for (const issue of props.issueSearchInfo.issues) {
+      const currentlySelected = props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key);
+      changeDetected = changeDetected || !currentlySelected;
+      newSelectedIssues.push(issue);
     }
+    props.onIssuesSelectionChange(newSelectedIssues);
+  }
+
+  const onDeselectAllIssues = () => {
+    let changeDetected = false;
+    for (const issue of props.issueSearchInfo.issues) {
+      const currentlySelected = props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key);
+      changeDetected = changeDetected || !!currentlySelected;
+    }
+    props.onIssuesSelectionChange([]);
   }
 
   const renderIssueLoading = () => {
@@ -85,58 +78,45 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     );
   }
 
-  const renderGlobalRadioOption = (mode: GlobalSelectionMode, label: string) => {
-    return (
-      <Radio
-				value={mode}
-				label={mode}
-				name="global-selection-mode"
-				testId="global-selection-mode"
-				isChecked={mode === globalSelectionMode}
-        isDisabled={multipleProjectsDetected}
-				onChange={() => {
-          onGlobalSelectionModeChange(mode);
-        }}
-			/>
-    );
-  }
-
   const renderGlobalSelectionControls = () => {
     return (
       <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '12px'}}>
-        {renderGlobalRadioOption('All', 'All')}
-        {renderGlobalRadioOption('Some', 'Some')}
-        {renderGlobalRadioOption('None', 'None')}
+        <Button
+          appearance="default"
+          onClick={() => {
+            onSelectAllIssues();
+          }}
+        >
+          All
+        </Button>
+        <div style={{marginLeft: '6px'}}>
+          <Button
+            appearance="default"
+            onClick={() => {
+              onDeselectAllIssues();
+            }}
+          >
+            None
+          </Button>
+        </div>
       </div>
     );
   }
 
   const renderIssueSelectionWidget = (issue: Issue) => {
-    if (globalSelectionMode === 'All') {
-      return (
-        <div className="faked-toggle checked-faked-toggle"><div><div className="toggle-container"><SuccessIcon label="" color="currentColor" /></div></div></div>
-      )
-    } else if (globalSelectionMode === 'Some') {
-      return (
-        <div>
-          <Toggle
-            key={`issue-select-${issue.key}`}
-            id={`toggle-${issue.key}`}
-            isChecked={!!props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key)}
-            isDisabled={multipleProjectsDetected || globalSelectionMode !== 'Some'}
-            onChange={(event: any) => {
-              onToggleIssueSelection(issue);
-            }}
-          />
-        </div>
-      )
-    } else if (globalSelectionMode === 'None') {
-      return (
-        <div className="faked-toggle unchecked-faked-toggle"><div><div className="toggle-container"><CrossCircleIcon label="" color="currentColor" /></div></div></div>
-      )
-    } else {
-      throw new Error(`Unreachable: globalSelectionMode = ${globalSelectionMode}`);
-    }
+    return (
+      <div>
+        <Toggle
+          key={`issue-select-${issue.key}`}
+          id={`toggle-${issue.key}`}
+          isChecked={!!props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key)}
+          // isDisabled={multipleProjectsDetected || globalSelectionMode !== 'Some'}
+          onChange={(event: any) => {
+            onToggleIssueSelection(issue);
+          }}
+        />
+      </div>
+    )
   }
 
   const renderMultipleProjectsError = () => {
