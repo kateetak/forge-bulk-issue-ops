@@ -43,6 +43,7 @@ import ImportColumnMappingPanel from './ImportColumnMappingPanel';
 import ImportIssuesPanel from './ImportIssuesPanel';
 import ImportProjectAndIssueTypeSelectionPanel from './ImportProjectAndIssueTypeSelectionPanel';
 import importModel from 'src/model/importModel';
+import { bulkImportEnabled } from 'src/model/config';
 
 const showDebug = false;
 const showCompletionStateDebug = false;
@@ -603,6 +604,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           />
           <div className="step-panel-content-container">
             <FileUploadPanel
+              disabled={!bulkImportEnabled}
               completionState={completionState}
             />
           </div>

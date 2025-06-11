@@ -7,6 +7,7 @@ const showDebug = false;
 
 export type FileUploadPanelProps = {
   completionState: CompletionState
+  disabled?: boolean;
 }
 
 const FileUploadPanel = (props: FileUploadPanelProps) => {
@@ -30,28 +31,6 @@ const FileUploadPanel = (props: FileUploadPanelProps) => {
     setColumnIndexesToColumnNames(importModel.getColumnIndexesToColumnNames());
   }
 
-  const renderFileUploadWidget = () => {
-    return (
-      <div style={{margin: '20px auto', width: 'fit-content'}}>
-        <input
-          id="file-select"
-          type="file"
-          accept=".csv" 
-          multiple={false}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            console.log('event:', event);
-            if (event.target.files && event.target.files.length > 0) {
-              const file = event.target.files[0];
-              onFileSelected(file);
-            } else {
-              onFileSelected(undefined);
-            }
-          }}
-        />
-      </div>
-    )
-  }
-
   const renderFileUploadDropTarget = () => {
     return (
       <div style={{margin: '20px auto', width: 'fit-content'}}>
@@ -61,6 +40,7 @@ const FileUploadPanel = (props: FileUploadPanelProps) => {
           width={'400px'}
           height={'100px'}
           allowMultiple={false}
+          disabled={props.disabled}
           onFilesSelected={(files: File[]): void => {
             if (files.length === 0) {
               onFileSelected(undefined);

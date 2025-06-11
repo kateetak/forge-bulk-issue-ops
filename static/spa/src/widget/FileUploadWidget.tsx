@@ -9,6 +9,7 @@ export type FileUploadDropTargetProps = {
   width: string;
   height: string;
   allowMultiple: boolean;
+  disabled?: boolean; // Optional prop to disable the widget
   allowedFileTypes: string[]; // e.g. ['.pdf', '.docx', '.pptx', '.txt', '.xlsx']
   onFilesSelected: (files: File[]) => void;
 }
@@ -68,9 +69,10 @@ const FileUploadDropTarget = (props: FileUploadDropTargetProps) => {
             </div>
             <input
               key={`file-input-${files.length}`}
-              type="file"
-              hidden
               id="browse"
+              type="file"
+              hidden={true}
+              disabled={props.disabled}
               onChange={onFileChange}
               accept={props.allowedFileTypes.join(", ")}
               multiple={props.allowMultiple}

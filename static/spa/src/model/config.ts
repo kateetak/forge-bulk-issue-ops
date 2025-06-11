@@ -6,6 +6,8 @@ export const requireFieldEditErrorAcknowledgement = false;
 
 export const taskStatusPollPeriodMillis = 1000;
 
+export const bulkImportEnabled = true;
+
 // These are just for testing purposes.
 export const mockGetProjects = false;
 export const mockGetFieldConfigurationItems = false;

@@ -5,6 +5,9 @@ import BulkOperationPanel from "./panel/BulkOperationPanel";
 import importModel from "./model/importModel";
 import moveModel from "./model/moveModel";
 import editModel from "./model/editModel";
+import { bulkImportEnabled } from "./model/config";
+import { BulkOperationMode } from "./types/BulkOperationMode";
+import { BulkOpsModel } from "./model/BulkOpsModel";
 
 export type HomeProps = {
   history: any;
@@ -32,7 +35,7 @@ const Home = (props: HomeProps) => {
       <div className="bulk-move-main-panel clickable">
         {renderMainPanel('move', 'Bulk Move Work Items', `Use this functionality to move a large number of work items from one or more projects to another project.`)}
         {renderMainPanel('edit', 'Bulk Edit Work Items', `Use this functionality to edit a large number of work items in a similar way to each other.`)}
-        {renderMainPanel('import', 'Bulk Import Work Items', `Using this functionality to import a large number of work items.`)}
+        {bulkImportEnabled ? renderMainPanel('import', 'Bulk Import Work Items', `Using this functionality to import a large number of work items.`) : null }
       </div>
     </Fragment>
   );
@@ -73,7 +76,27 @@ const Main = () => {
     }
   }, [history]);
 
-  const importEnabled = true;
+  const renderBulkOperationRoute = (path: string, bulkOperationMode: BulkOperationMode, model: BulkOpsModel<any>, enabled: boolean = true) => {
+    const element: React.ReactElement = enabled ? (
+      <BulkOperationPanel
+        key={bulkOperationMode}
+        bulkOperationMode={bulkOperationMode}
+        bulkOpsModel={model}
+      />
+    ) : (
+      <div>
+        <h3>Feature not enabled</h3>
+        <p>This feature is not enabled in your app configuration.</p>
+      </div>
+    );
+    return (
+      <Route
+        path={path}
+        key={path}
+        element={element}
+      ></Route>
+    );
+  }
 
   return (
     <div>
@@ -85,9 +108,9 @@ const Main = () => {
         >
           <Routes>
             <Route path="/" element={<Home history={history} />}></Route>
-            <Route path="/move" element={<BulkOperationPanel key="Move" bulkOperationMode="Move" bulkOpsModel={moveModel} />}></Route>
-            <Route path="/edit" element={<BulkOperationPanel key="Edit" bulkOperationMode="Edit" bulkOpsModel={editModel} />}></Route>
-            <Route path="/import" element={<BulkOperationPanel key="Import" bulkOperationMode="Import" bulkOpsModel={importModel} />}></Route>
+            {renderBulkOperationRoute('/move', 'Move', moveModel)}
+            {renderBulkOperationRoute('/edit', 'Edit', editModel)}
+            {renderBulkOperationRoute('/import', 'Import', importModel, bulkImportEnabled)}
           </Routes>
         </Router>
       ) : (
