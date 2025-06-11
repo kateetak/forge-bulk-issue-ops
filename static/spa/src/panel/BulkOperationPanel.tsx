@@ -347,7 +347,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     }
     setStepCompletionState('filter', selectedProjects.length > 0 ? 'complete' : 'incomplete');
     await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
-    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
+    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects)
     setSelectableIssueTypes(selectableIssueTypes);
   }
 
@@ -511,7 +511,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }
 
   const renderIssueTypesSelect = () => {
-    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects, allIssueTypes)
+    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects)
 
     const issueTypesAlreadySelected = selectedIssueTypes.length !== allIssueTypes.length;
     // console.log(`BulkOperationPanel: renderIssueTypesSelect: issueTypesAlreadySelected: ${issueTypesAlreadySelected}`);

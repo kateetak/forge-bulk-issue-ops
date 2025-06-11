@@ -2,6 +2,7 @@ import { Issue } from "src/types/Issue";
 import { IssueType } from "../types/IssueType";
 import { Project } from "../types/Project";
 import { ProjectCategory } from "src/types/ProjectCategory";
+import { ObjectMapping } from "src/types/ObjectMapping";
 
 class JiraUtil {
 
@@ -29,12 +30,15 @@ class JiraUtil {
     return projectKeys.size;
   }
 
-  filterProjectsIssueTypes = (projects: Project[], allIssueTypes: IssueType[]): IssueType[] => {
+  filterProjectsIssueTypes = (projects: Project[]): IssueType[] => {
+    console.log(`JiraUtil.filterProjectsIssueTypes: projects: ${JSON.stringify(projects, null, 2)}`);
     const filteredIssueTypes = new Set<IssueType>();
     // const isTeamManagedProject = project.simplified;
-    for (const issueType of allIssueTypes) {
-      if (this.isIssueTypeInProjects(issueType, projects)) {
-        filteredIssueTypes.add(issueType);
+    for (const project of projects) {
+      for (const issueType of project.issueTypes) {
+        if (this.isIssueTypeInProjects(issueType, projects)) {
+          filteredIssueTypes.add(issueType);
+        }
       }
     }
     return Array.from(filteredIssueTypes);

@@ -10,6 +10,7 @@ const buildMockProjects = (query: string, maxResults: number): Project[] => {
       id: `${10000 + i}`,
       name: `${prefix}${i + 1}`,
       key: `PPP${i}`,
+      issueTypes: [],
       projectTypeKey: 'software',
       simplified: false,
       style: 'classic',

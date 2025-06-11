@@ -104,7 +104,7 @@ class BulkOperationRuleEnforcer {
     issuesToMove: Issue[],
     candidateTargetProjects: Project[]
   ): Promise<Project[]> => {
-    console.log(`bulkOperationRuleEnforcer: filterCrossCategoryMoves...`);
+    // console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves...`);
     const filteredProjectKeysToProjects = new Map<string, Project>();
     for (const candidateTargetProject of candidateTargetProjects) {
       filteredProjectKeysToProjects.set(candidateTargetProject.key, candidateTargetProject);
@@ -124,7 +124,7 @@ class BulkOperationRuleEnforcer {
 
           }
           const sameProjectCategories = jiraUtil.areSameProjectCategories(issueProjectCategory, candidateProject.projectCategory);
-          console.log(` * sameProjectCategories ${sameProjectCategories} for issue ${issueToMove.key}.`);
+          // console.log(` * sameProjectCategories ${sameProjectCategories} for issue ${issueToMove.key}.`);
           if (sameProjectCategories) {
             // Do nothing
           } else {
@@ -141,13 +141,13 @@ class BulkOperationRuleEnforcer {
     }
 
     if (issueProjectCategoryIdsToCategories.size === 0) {
-      console.log(` * no issue project categories found, returning no target projects.`);
+      // console.log(` * no issue project categories found, returning no target projects.`);
       // return [];
     } else if (issueProjectCategoryIdsToCategories.size === 1) {
       issueProjectCategoryIdsToCategories.forEach((issueProjectCategory: ProjectCategory, issueProjectCategoryId: string) => {
         for (const candidateTargetProject of candidateTargetProjects) {
           const sameProjectCategories = jiraUtil.areSameProjectCategories(issueProjectCategory, candidateTargetProject.projectCategory);
-          console.log(` * sameProjectCategories ${sameProjectCategories} for issueProjectCategory ${issueProjectCategory.name}.`);
+          // console.log(` * sameProjectCategories ${sameProjectCategories} for issueProjectCategory ${issueProjectCategory.name}.`);
           if (sameProjectCategories) {
             // Do nothing
           } else {

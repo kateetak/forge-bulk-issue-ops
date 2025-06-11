@@ -277,7 +277,7 @@ class JiraDataModel {
     if (mockGetProjects) {
       return await getMockProjectSearchInfo(query, maxResults);
     } else {
-      const response = await requestJira(`/rest/api/3/project/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}`, {
+      const response = await requestJira(`/rest/api/3/project/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}&expand=issueTypes`, {
         headers: {
           'Accept': 'application/json'
         }

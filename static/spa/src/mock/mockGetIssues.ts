@@ -41,6 +41,7 @@ export const getIssueSearchInfo = async (projectId: string): Promise<IssueSearch
         id: projectId,
         key: 'FEAT',
         name: "",
+        issueTypes: [],
         projectTypeKey: "",
         simplified: false,
         style: "",

@@ -27,14 +27,14 @@ export class BulkOpsModel<StepNameSubtype extends StepName> {
   private debouncedNotifyModelUpdateChangeListeners: () => void;
 
   constructor(modelName: string, stepSequence: StepNameSubtype[]) {
-    console.log(`BulkOpsModel(${this.modelName}): constructing...`);
+    // console.log(`BulkOpsModel(${this.modelName}): constructing...`);
     this.modelName = modelName;
     this.stepSequence = stepSequence;
     this.stepCompletionStateChangeListenerGroup = new ListenerGroup(`${modelName}-step-completion`);
     this.modelUpdateChangeListenerGroup = new ListenerGroup(`${modelName}-model-update`);
     this.stepNamesToCompletionStates = {} as Record<StepNameSubtype, CompletionState>;
     stepSequence.forEach((stepName) => {
-      console.log(`BulkOpsModel(${this.modelName}): Initializing step "${stepName}" to "incomplete".`);
+      // console.log(`BulkOpsModel(${this.modelName}): Initializing step "${stepName}" to "incomplete".`);
       this.stepNamesToCompletionStates[stepName] = 'incomplete';
     });
     this.debouncedNotifyModelUpdateChangeListeners = debounce(
