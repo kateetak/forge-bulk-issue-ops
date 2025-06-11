@@ -137,6 +137,7 @@ div.content-panel {
 
 table.issue-selection-table {
   width: 100%;
+  display: block;
 }
 
 table.issue-selection-table > tbody {

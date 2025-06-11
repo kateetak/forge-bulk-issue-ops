@@ -12,6 +12,8 @@ import placeholderImage from './issue-filter-placeholder.png';
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueLink } from "./IssueLink";
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
+import { render } from "react-dom";
+import { renderPanelMessage } from "./renderPanelMessage";
 
 export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
@@ -212,6 +214,12 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     );
   }
 
+  const renderNoResults = () => {
+    return renderPanelMessage(
+      `No issues found matching the search criteria.`, { margin: '20px 0px' }
+    );
+  }
+
   const renderPlaceholder = () => {
     return (
       <div style={{ margin: '20px 0px' }}>
@@ -222,9 +230,13 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     );
   }
 
+  const nilSearch =
+    props.issueSearchInfo.issues.length === 0 &&
+    props.issueSearchInfo.total === 0 &&
+    props.issueSearchInfo.maxResults === 0;
   return (
     <>
-      {props.issueSearchInfo.issues.length === 0 ? renderPlaceholder() : renderIssuesPanel()}
+      {nilSearch ? renderPlaceholder() : props.issueSearchInfo.issues.length === 0 ? renderNoResults() : renderIssuesPanel()}
     </>
   );
 
