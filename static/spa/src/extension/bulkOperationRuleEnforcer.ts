@@ -67,7 +67,7 @@ class BulkOperationRuleEnforcer {
    * @param targetProject The target project for the bulk edit operation.
    * @returns The filtered issue types that are allowed to be selected as the target issue type.
    */
-  public filterIssueTypes = (issueTypes: IssueType[], targetProject: Project) => {
+  public filterIssueTypes = (issueTypes: IssueType[], targetProject: Project): IssueType[] => {
     return issueTypes.filter(issueType => {
       // Apply your filtering logic here
 
