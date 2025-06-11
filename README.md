@@ -117,7 +117,7 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-2: The `REMOVE` option is not supported when bulk editing labels.
 * KNOWN-3: Labels can not be created within the bulk edit form.
 * KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
-* KNOWN-5: Not all fields types are supported since each type of field requires custom UI to edit it.
+* KNOWN-5: Not all fields types are supported since each type of field requires custom UI to edit it. 
 * KNOWN-6: Rich text fields in bulk move operations only supports plain text where each new line is represented as a new paragraph.
 * KNOWN-7: Bulk move operations only allow values to be specified for required custom fields.
 * KNOWN-8: Only a limited set of field types are supported for default values in bulk move operations.
@@ -146,8 +146,9 @@ Supported:
 * comment
 * duedate
 * com.atlassian.jira.plugin.system.customfieldtypes:datetime
+* com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect
 
-Not supported:
+Known fields that are not supported:
 * com.atlassian.jira.ext.charting:firstresponsedate
 * com.atlassian.jira.ext.charting:timeinstatus
 * com.atlassian.jira.plugins.service-entity:service-entity-field-cftype

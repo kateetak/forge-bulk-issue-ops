@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { 
+  CascadingSelectField,
   CommentField,
   DueDateField,
   IssueBulkEditField,
@@ -25,6 +26,8 @@ import { OperationOutcome } from 'src/types/OperationOutcome';
 import { FlagOptions, showFlag } from '@forge/bridge';
 import { uuid } from 'src/model/util';
 import { requireFieldEditErrorAcknowledgement } from 'src/model/config';
+import { ObjectMapping } from 'src/types/ObjectMapping';
+import { CascadingSelect, CascadingSelectValue } from './CascadingSelect';
 
 // KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it. To extend
 //          support, start by setting the following constant to true since this will render the unsupported field types
@@ -53,6 +56,7 @@ export const isFieldTypeEditingSupported = (fieldType: string): boolean => {
     case 'comment':
     case 'duedate':
     case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':
+    case 'com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect':
       return true;
   }
   return false;
@@ -402,6 +406,58 @@ export const FieldEditor = (props: FieldEditorProps) => {
     );
   }
 
+  const renderCascadingSelectFieldEditor = () => {
+    // console.log(`renderCascadingSelectFieldEditor: ${JSON.stringify(props.field, null, 2)}`);
+    const field = props.field as CascadingSelectField;
+    /*
+       If set, props.maybeEditValue will look something like the following:
+       {
+         "value": "Marsupial",
+          "id": "10054",
+         "child": {
+           "value": "Quokka",
+           "id": "10058"
+         }
+       }
+     */
+    const value = props.maybeEditValue?.value as undefined | any;
+    const cascadingSelectValue: undefined | CascadingSelectValue = value ? {
+      value: value,
+      id: value?.value,
+      child: {
+        value: value?.child?.value,
+        id: value?.child?.id,
+      }
+    } : undefined;
+
+    return (
+      <CascadingSelect
+        value={cascadingSelectValue}
+        field={field}
+        isDisabled={!props.enabled}
+        isInvalid={!operationOutcome.success}
+        onChange={(newValue: CascadingSelectValue) => {
+          if (newValue) {
+            const updatedValue: FieldEditValue = {
+              value: {
+                id: newValue.id,
+                value: newValue.value,
+                child: {
+                  id: newValue.child.id,
+                  value: newValue.child.value,
+                }
+              },
+            }
+            onChange(updatedValue);
+          } else {
+            // If the newValue is undefined, we clear the field value.
+            onChange(undefined);
+          }
+        }}
+      />
+    );
+  }
+
   const renderUnsupportedFieldEditor = () => {
     if (renderUnsupportedFieldTypesDebug) {
       return <div>Unsupported field type: {field.type}</div>;
@@ -434,6 +490,8 @@ export const FieldEditor = (props: FieldEditorProps) => {
         return renderDateFieldEditor();
       case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':
         return renderDateTimeFieldEditor();
+      case 'com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect':
+        return renderCascadingSelectFieldEditor();
       default:
         return renderUnsupportedFieldEditor();
     }

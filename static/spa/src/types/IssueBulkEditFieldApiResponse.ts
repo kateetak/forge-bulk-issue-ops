@@ -85,6 +85,70 @@ export interface CommentField extends BaseField {
   type: "comment";
 }
 
+export interface CascadingFieldOption {
+  parentOption: FieldOption;
+  childOptions: FieldOption[];
+}
+
+export interface CascadingSelectField extends BaseField {
+  fieldOptions: CascadingFieldOption[];
+  /*
+    Example shape:
+    {
+    "type": "com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect",
+    "id": "customfield_10289",
+    "name": "Animal Type",
+    "description": "",
+    "isRequired": false,
+    "fieldOptions": [
+      {
+        "parentOption": {
+          "optionId": 10053,
+          "value": "Mammal",
+          "isDisabled": false
+        },
+        "childOptions": [
+          {
+            "optionId": 10055,
+            "value": "Dog",
+            "isDisabled": false
+          },
+          {
+            "optionId": 10056,
+            "value": "Cat",
+            "isDisabled": false
+          }
+        ]
+      },
+      {
+        "parentOption": {
+          "optionId": 10054,
+          "value": "Marsupial",
+          "isDisabled": false
+        },
+        "childOptions": [
+          {
+            "optionId": 10057,
+            "value": "Koala",
+            "isDisabled": false
+          },
+          {
+            "optionId": 10058,
+            "value": "Quokka",
+            "isDisabled": false
+          },
+          {
+            "optionId": 10059,
+            "value": "Thylacine",
+            "isDisabled": false
+          }
+        ]
+      }
+    ]
+  }
+  */
+}
+
 export type IssueBulkEditField = 
   | BaseField
   | VersionField
@@ -98,6 +162,7 @@ export type IssueBulkEditField =
   | NumberField
   | IssueTypeField
   | CommentField
+  | CascadingSelectField
 
 // Main response export interface
 export interface IssueBulkEditFieldApiResponse {

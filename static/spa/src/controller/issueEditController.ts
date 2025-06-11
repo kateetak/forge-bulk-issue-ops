@@ -4,6 +4,7 @@ import jiraDataModel from "../model/jiraDataModel";
 import { InvocationResult } from "../types/InvocationResult";
 import { 
   BulkIssueEditRequestData,
+  JiraCascadingSelectField,
   JiraDateField,
   JiraDateInput,
   JiraDateTimeField,
@@ -24,6 +25,7 @@ import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 import { Issue } from "src/types/Issue";
 import { FieldEditValue } from "src/types/FieldEditValue";
 import { dateToJiraEditFormat } from "./dateTimeUtil";
+import { CascadingSelectValue } from "src/widget/CascadingSelect";
 
 const issueEditPollPeriodMillis = 1000;
 
@@ -180,6 +182,18 @@ class IssueEditController {
           }
           editedFieldsInputBuilder.addDateTimePickerField(jiraDateTimeField);
           break;
+        case 'com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect':
+          const cascadingSelectValue = editedFieldValue.value as CascadingSelectValue;
+          const cascadingSelectField: JiraCascadingSelectField = {
+            fieldId: field.id,
+            parentOptionValue: {
+              optionId: cascadingSelectValue.id
+            },
+            childOptionValue: {
+              optionId: cascadingSelectValue.child.id
+            },
+          }
+          editedFieldsInputBuilder.addCascadingSelectField(cascadingSelectField);
         default:
           console.warn(` * Unsupported field type: "${field.type}" (field ID ${field.id}). Skipping.`);
           return;
