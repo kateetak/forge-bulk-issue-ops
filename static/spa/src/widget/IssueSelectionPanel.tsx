@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import Button from '@atlaskit/button/new';
+import Button, { IconButton } from '@atlaskit/button/new';
+import Textfield from '@atlaskit/textfield';
 import { FormSection } from "@atlaskit/form";
 import { LoadingState } from "../types/LoadingState";
 import { LinearProgress } from '@mui/material';
@@ -10,6 +11,7 @@ import { Issue } from "../types/Issue";
 import placeholderImage from './issue-filter-placeholder.png';
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueLink } from "./IssueLink";
+import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 
 export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
@@ -21,6 +23,7 @@ export type IssueSelectionPanelProps = {
 
 export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
+  const [issueKeyOrSummaryFilter, setIssueKeyOrSummaryFilter] = useState<string>('');
   const [multipleProjectsDetected, setMultipleProjectsDetected] = useState<boolean>(
     jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1);
 
@@ -78,6 +81,36 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     );
   }
 
+  const renderClearFilterControl = () => {
+    return (
+      <IconButton
+        label="Clear"
+        appearance="subtle"
+        value={issueKeyOrSummaryFilter}
+        icon={CrossCircleIcon}
+        onClick={() => {
+          setIssueKeyOrSummaryFilter('');
+        }}
+      />
+    );
+  }
+
+  const renderFieldNameFilterControl = () => {
+    return (
+      <Textfield
+        name='issueKeyOrSummaryFilter'
+        placeholder='Filter issues...'
+        value={issueKeyOrSummaryFilter}
+        isCompact={true}
+        elemAfterInput={renderClearFilterControl()}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          const filterValue = event.currentTarget.value;
+          setIssueKeyOrSummaryFilter(filterValue);
+        }}
+      />
+    );
+  }
+
   const renderGlobalSelectionControls = () => {
     return (
       <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '12px'}}>
@@ -89,7 +122,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
         >
           All
         </Button>
-        <div style={{marginLeft: '6px'}}>
+        <div style={{marginLeft: '8px'}}>
           <Button
             appearance="default"
             onClick={() => {
@@ -98,6 +131,9 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
           >
             None
           </Button>
+        </div>
+        <div style={{marginLeft: '8px', flexGrow: 100}}>
+          {renderFieldNameFilterControl()}
         </div>
       </div>
     );
@@ -148,7 +184,13 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const renderIssuesPanel = () => {
     const hasIssues = props.issueSearchInfo.issues.length > 0;
-    const renderedIssueRows = hasIssues ? props.issueSearchInfo.issues.map(renderIssueRow) : null;
+    const issueKeyOrSummaryFilterUpper = issueKeyOrSummaryFilter.toUpperCase();
+    const filterIssues = issueKeyOrSummaryFilter.length > 0 ? props.issueSearchInfo.issues.filter(issue => {
+      const issueKey = issue.key.toUpperCase();
+      const issueSummary = issue.fields.summary.toUpperCase();
+      return issueKey.includes(issueKeyOrSummaryFilterUpper) || issueSummary.includes(issueKeyOrSummaryFilterUpper);
+    }) : props.issueSearchInfo.issues;
+    const renderedIssueRows = hasIssues ? filterIssues.map(renderIssueRow) : null;
     const renderedIssuesTable = hasIssues ? (
       <table className="issue-selection-table">
         <tbody>

@@ -28,7 +28,7 @@ span.button-link:hover {
 
 .clip-text-300 {
   /* This is used to clip text to a maximum of 200 pixels */
-  max-width: 300px !important;
+  max-width: 800px !important;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -130,6 +130,7 @@ div.padding-panel:hover {
 }
 
 div.content-panel {
+  overflow-x: hidden;
   min-width: 300px;
   /* max-width: 400px; */
 }
