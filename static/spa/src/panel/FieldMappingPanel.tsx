@@ -20,6 +20,7 @@ import { mapToObjectMap } from 'src/model/util';
 import { formatIssueType } from 'src/controller/formatters';
 import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 import { textToAdf } from 'src/controller/textToAdf';
+import { bulkMoveShowRetainOption } from 'src/model/config';
 
 const showDebug = false;
 const showUnsupportedFields = false;
@@ -275,11 +276,11 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
               <tr key={`mapping-${targetIssueTypeId}-${fieldId}`}>
                 <td>{formatIssueType(targetIssueType)}</td>
                 <td>{fieldIdsToFields.get(fieldId)?.name || fieldId}</td>
-                <td>
+                <td style={{width: 'min-content'}} colSpan={2}>
                   {renderFieldValuesEntryWidget(fieldId, targetIssueType, fieldMappingInfo)}
                 </td>
                 <td>
-                  {renderRetainFieldValueWidget(fieldId, targetIssueType, fieldMappingInfo)}
+                  {bulkMoveShowRetainOption ? renderRetainFieldValueWidget(fieldId, targetIssueType, fieldMappingInfo) : null}
                 </td>
               </tr>
             );
@@ -290,13 +291,14 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     });
     const renderedTable = (
       <div>
-        <table >
+        <table className="field-mapping-table">
           <thead>
             <tr>
-              <th className="no-break">Work item Type</th>
+              <th className="no-break">Type</th>
               <th className="no-break">Field</th>
               <th className="no-break">Value</th>
-              <th className="no-break">Retain</th>
+              <th className="no-break">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th>
+              {bulkMoveShowRetainOption ? <th className="no-break">Retain</th> : null}
             </tr>
           </thead>
           <tbody>

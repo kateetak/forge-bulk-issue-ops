@@ -8,6 +8,8 @@ export const taskStatusPollPeriodMillis = 1000;
 
 export const bulkImportEnabled = true;
 
+export const bulkMoveShowRetainOption = false;
+
 // These are just for testing purposes.
 export const mockGetProjects = false;
 export const mockGetFieldConfigurationItems = false;

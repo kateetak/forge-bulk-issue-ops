@@ -83,6 +83,8 @@ div.bulk-move-main-panel {
   justify-content: space-between;
   align-items: flex-start;
   align-items: stretch;
+  /* height: fit-content; */
+  /* overflow-y: auto;; */
 }
 
 div.bulk-move-main-panel > div {
@@ -133,6 +135,10 @@ div.content-panel {
   overflow-x: hidden;
   min-width: 300px;
   /* max-width: 400px; */
+  min-height: 260px;
+  /* height: 100%; */
+  /* overflow-y: auto; */
+  padding-bottom: 40px; /* This ensures dropdown menus aren't totally hidden unless the user scrolls down */
 }
 
 table.issue-selection-table {
@@ -223,6 +229,17 @@ div.fake-button {
   padding: 0px;
   cursor: pointer;
   border-radius: 4px;
+}
+
+table.field-mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.field-mapping-table > thead > tr > th,
+table.field-mapping-table > tbody > tr > td {
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 table.field-edit-table {

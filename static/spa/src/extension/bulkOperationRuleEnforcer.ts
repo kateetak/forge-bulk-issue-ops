@@ -9,6 +9,7 @@ import { FieldEditValue } from "src/types/FieldEditValue";
 import { ProjectCategory } from "src/types/ProjectCategory";
 import jiraDataModel from "src/model/jiraDataModel";
 import jiraUtil from "src/controller/jiraUtil";
+import { IssueType } from "src/types/IssueType";
 
 class BulkOperationRuleEnforcer {
 
@@ -58,6 +59,26 @@ class BulkOperationRuleEnforcer {
       return !this.excludedProjectKeys.has(project.key);
     });
     return filteredProjects;
+  }
+
+  /**
+   * Filters the issue types that are allowed to be mapped to in the bulk move operation.
+   * @param issueTypes The issue types to filter.
+   * @param targetProject The target project for the bulk edit operation.
+   * @returns The filtered issue types that are allowed to be selected as the target issue type.
+   */
+  public filterIssueTypes = (issueTypes: IssueType[], targetProject: Project) => {
+    return issueTypes.filter(issueType => {
+      // Apply your filtering logic here
+
+      // The following is a simple example to avoid changing parenting of issues by identifying 
+      // issue types based on their names. It would be more robust to use the issue type IDs.
+      if (issueType.name === 'Epic' || issueType.name === 'Sub-task') {
+        return false;
+      }
+
+      return true;
+    });
   }
 
   /**

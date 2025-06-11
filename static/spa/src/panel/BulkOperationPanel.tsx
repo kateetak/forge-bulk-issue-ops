@@ -710,12 +710,16 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     const waitingMessage = new WaitingMessageBuilder()
       .addCheck(arePrerequisiteStepsComplete('issue-selection'), 'Waiting for previous step to be completed.')
       .build();
+    let panelLabel = `Select work items to ${bulkOperationMode.toLowerCase()}`;
+    if (issueSearchInfo.issues.length > 0) {
+      panelLabel += ` (${issueSearchInfo.issues.length} found)`;
+    }
     return (
       <div className="padding-panel">
         <div className="content-panel">
           <PanelHeader
             stepNumber={stepNumber}
-            label={`Confirm work items to ${bulkOperationMode.toLowerCase()}`}
+            label={panelLabel}
             completionState={getStepCompletionState('issue-selection')}
           />
           {renderPanelMessage(waitingMessage, {marginTop: '20px', marginBottom: '20px'})}
@@ -800,6 +804,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             key={`issue-type-mapping-panel-${lastDataLoadTime}-${selectedIssues.length}-${selectedToProjectTime}`}
             selectedIssues={selectedIssues}
             targetProject={selectedToProject}
+            filterIssueTypes={bulkOperationRuleEnforcer.filterIssueTypes}
             onIssueTypeMappingChange={onIssueTypeMappingChange}
           />
         </div>

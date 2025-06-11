@@ -7,8 +7,6 @@ import { Option } from '../types/Option'
 import jiraDataModel from 'src/model/jiraDataModel';
 import bulkIssueTypeMappingModel from '../model/bulkIssueTypeMappingModel';
 import { formatIssueType, formatProject } from 'src/controller/formatters';
-import { mapToObjectMap } from 'src/model/util';
-import { renderPanelMessage } from 'src/widget/renderPanelMessage';
 
 const showDebug = false;
 
@@ -20,6 +18,7 @@ type RowData = {
 export type IssueTypeMappingPanelProps = {
   selectedIssues: Issue[];
   targetProject: undefined | Project;
+  filterIssueTypes: (issueTypes: IssueType[], targetProject: Project) => IssueType[];
   onIssueTypeMappingChange: () => Promise<void>;
 }
 
@@ -112,7 +111,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
 
   const renderTargetProjectIssueTypeSelect = (sourceProjectId: string, sourceIssueTypeId: string) => {
     const options: Option[] = [];
-    for (const issueType of targetProjectIssueTypes.map(issueType => issueType)) {
+    const filteredIssueTypes = props.filterIssueTypes(targetProjectIssueTypes, props.targetProject);
+    for (const issueType of filteredIssueTypes.map(issueType => issueType)) {
       const option: Option = {
         label: `${formatIssueType(issueType)}`,
         value: issueType.id,
