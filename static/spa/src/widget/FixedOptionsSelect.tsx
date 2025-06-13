@@ -78,6 +78,7 @@ const FixedOptionsSelect = (props: FixedOptionsSelectProps) => {
         options={optionTextsToOptions(props.allOptionTexts)}
         value={determineDefaultOptions()}
         placeholder={props.placeholder}
+        menuPortalTarget={document.body}
         onChange={props.allowMultiple ? onMultiSelectChange : onSingleSelectChange}
       />
     )

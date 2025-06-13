@@ -15,6 +15,7 @@ export type IssueTypeSelectProps = {
   isClearable?: boolean;
   selectedIssueType: IssueType | undefined;
   selectableIssueTypes: IssueType[];
+  menuPortalTarget?: HTMLElement;
   onIssueTypeSelect: (selectedIssueType: undefined | IssueType) => Promise<void>;
 }
 
@@ -56,6 +57,7 @@ const IssueTypeSelect = (props: IssueTypeSelectProps) => {
         defaultValue={initiallySelectedOption}
         options={options}
         placeholder={props.label}
+        menuPortalTarget={props.menuPortalTarget}
         onChange={onChange}
       />
     );

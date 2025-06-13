@@ -78,6 +78,7 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
           isClearable={true}
           isDisabled={props.fileUploadCompletionState !== 'complete'}
           selectedProjects={selectedProject ? [selectedProject] : []}
+          menuPortalTarget={document.body}
           onProjectsSelect={onProjectsSelect}
         />
       </FormSection>
@@ -111,6 +112,7 @@ const ImportProjectAndIssueTypeSelectionPanel = (props: ImportProjectAndIssueTyp
             isDisabled={props.fileUploadCompletionState !== 'complete' || selectedProjectCreateIssueMetadata === undefined}
             selectedIssueType={selectedIssueype}
             selectableIssueTypes={selectableIssueTypes}
+            menuPortalTarget={document.body}
             onIssueTypeSelect={onIssueTypeSelect} 
           />
         </FormSection>

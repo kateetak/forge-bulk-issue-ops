@@ -13,6 +13,7 @@ export type IssueTypesSelectProps = {
   label: string;
   selectedIssueTypeIds: string[];
   selectableIssueTypes: IssueType[];
+  menuPortalTarget?: HTMLElement;
   onIssueTypesSelect: (selectedIssueTypes: IssueType[]) => Promise<void>;
 }
 
@@ -56,6 +57,7 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
         defaultValue={initiallySelectedOptions}
         options={options}
         placeholder={props.label}
+        menuPortalTarget={props.menuPortalTarget}
         onChange={onChange}
       />
     );

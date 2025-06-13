@@ -130,6 +130,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
           options={options}
           value={defaultValue}
           placeholder="Select issue type"
+          menuPortalTarget={document.body}
           onChange={(option: Option) => {
             console.log(`Selected target issue type: "${option.label} (${option.value})" for source project: ${sourceProjectId}, source issue type: ${sourceIssueTypeId}`);
             const issueTypeId = option.value;

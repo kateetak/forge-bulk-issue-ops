@@ -17,6 +17,7 @@ export type ProjectsSelectProps = {
   isDisabled?: boolean;
   isClearable: boolean;
   targetProjectsFilterConditionsChangeTime?: number;
+  menuPortalTarget?: HTMLElement;
   filterProjects?: (projectsToFilter: Project[]) => Promise<Project[]>;
   onProjectsSelect: (selectedProjects: Project[]) => Promise<void>;
 }
@@ -118,6 +119,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
         isClearable={props.isClearable}
 				loadOptions={promiseOptions}
         placeholder={props.label}
+        menuPortalTarget={props.menuPortalTarget}
         onChange={onChange}
       />
     );
@@ -132,3 +134,5 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
 }
 
 export default ProjectsSelect;
+
+

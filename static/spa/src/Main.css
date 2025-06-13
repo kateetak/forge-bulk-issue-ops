@@ -135,10 +135,9 @@ div.content-panel {
   overflow-x: hidden;
   min-width: 300px;
   /* max-width: 400px; */
-  min-height: 260px;
+  /* min-height: 260px; */
   /* height: 100%; */
   /* overflow-y: auto; */
-  padding-bottom: 40px; /* This ensures dropdown menus aren't totally hidden unless the user scrolls down */
 }
 
 table.issue-selection-table {

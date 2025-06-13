@@ -612,7 +612,7 @@
 
 "@atlaskit/portal@^5.1.0":
   version "5.1.0"
-  resolved "https://registry.yarnpkg.com/@atlaskit/portal/-/portal-5.1.0.tgz#f1beddadf8c9254bc4054665c4d2cd4f0c122bb8"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/portal/-/portal-5.1.0.tgz#f1beddadf8c9254bc4054665c4d2cd4f0c122bb8"
   integrity sha512-OYDY/gpilOGQgcs7wuZZdFxpziudX2DvxRVhdjAP1wBjaoh15/QEvRl678/KWPngMvs5M6gYWkr/sSWkQPxR0w==
   dependencies:
     "@atlaskit/platform-feature-flags" "^1.1.0"

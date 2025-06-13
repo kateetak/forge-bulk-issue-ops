@@ -158,6 +158,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
         label={undefined}
         selectableCustomFieldOptions={selectableCustomFieldOptions}
         selectedCustomFieldOption={selectedCustomFieldOption}
+        menuPortalTarget={document.body}
         onSelect={async (selectedCustomFieldOption: CustomFieldOption): Promise<void> => {
           const defaultValue: DefaultFieldValue = {
             retain: false,

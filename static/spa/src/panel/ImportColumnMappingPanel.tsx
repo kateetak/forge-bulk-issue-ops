@@ -273,6 +273,7 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
             isRequired={fieldMetadata.required}
             isClearable={!isFieldMandatory(fieldMetadata)}
             placeholder="Select a column"
+            menuPortalTarget={document.body}
             onChange={selectedOption => onColumnSelect(fieldMetadata, selectedOption)}
           />
         </div>

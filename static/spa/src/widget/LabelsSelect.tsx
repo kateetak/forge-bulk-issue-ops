@@ -15,6 +15,7 @@ export type LabelsSelectProps = {
   allowMultiple: boolean;
   selectedLabel?: string;
   selectedLabels?: string[],
+  menuPortalTarget?: HTMLElement;
   onLabelsSelect: (selectedLabels: string[]) => Promise<void>;
 }
 
@@ -83,6 +84,7 @@ const LabelsSelect = (props: LabelsSelectProps) => {
         defaultValue={defaultValue}
         options={options}
         placeholder={props.label}
+        menuPortalTarget={props.menuPortalTarget}
         onChange={onSingleSelectChange}
       />
     );
@@ -99,6 +101,7 @@ const LabelsSelect = (props: LabelsSelectProps) => {
         defaultValue={defaultValue}
         options={options}
         placeholder={props.label}
+        menuPortalTarget={props.menuPortalTarget}
         onChange={onMultiSelectChange}
       />
     )

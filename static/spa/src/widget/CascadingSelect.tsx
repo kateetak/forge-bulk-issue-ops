@@ -19,6 +19,7 @@ export type CascadingSelectProps = {
   field: IssueBulkEditField;
   isDisabled?: boolean;
   isInvalid?: boolean;
+  menuPortalTarget?: HTMLElement;
   onChange: (value: CascadingSelectValue) => void;
 }
 
@@ -143,6 +144,7 @@ export const CascadingSelect = (props: CascadingSelectProps) => {
           isDisabled={props.isDisabled}
           isInvalid={props.isInvalid}
           defaultOptions={optionContext.parentOptions}
+          menuPortalTarget={props.menuPortalTarget}
           onChange={onParentOptionSelect}
         />
         <Select
@@ -152,6 +154,7 @@ export const CascadingSelect = (props: CascadingSelectProps) => {
           isDisabled={props.isDisabled}
           isInvalid={props.isInvalid}
           defaultOptions={childOptions}
+          menuPortalTarget={props.menuPortalTarget}
           onChange={onChildOptionSelect}
         />
       </div>

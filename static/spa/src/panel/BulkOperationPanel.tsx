@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Portal from '@atlaskit/portal';
 import Button from '@atlaskit/button/new';
 import LabelsSelect from '../widget/LabelsSelect';
 import { Project } from '../types/Project';
@@ -506,9 +507,10 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           isClearable={false}
           selectedProjects={selectedFromProjects}
           filterProjects={filterProjectsForFromSelection}
+          menuPortalTarget={document.body}
           onProjectsSelect={onFromProjectsSelect}
         />
-      </FormSection>
+    </FormSection>
     );
   }
 
@@ -526,6 +528,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           selectedProjects={[selectedToProject]}
           filterProjects={filterProjectsForToSelection}
           targetProjectsFilterConditionsChangeTime={targetProjectsFilterConditionsChangeTime}
+          menuPortalTarget={document.body}
           onProjectsSelect={async (selected: Project[]): Promise<void> => {
             // console.log(`Selected to projects: ${JSON.stringify(selected, null, 2)}`);
             const selectedToProject: undefined | Project = selected.length > 0 ? selected[0] : undefined;
@@ -554,6 +557,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           label="Work item types"
           selectedIssueTypeIds={selectedIssueTypeIds}
           selectableIssueTypes={selectableIssueTypes}
+          menuPortalTarget={document.body}
           onIssueTypesSelect={onIssueTypesSelect}
         />
       </FormSection>
@@ -567,6 +571,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           label="Labels"
           allowMultiple={true}
           selectedLabels={selectedLabels}
+          menuPortalTarget={document.body}
           onLabelsSelect={onLabelsSelect}
         />
       </FormSection>

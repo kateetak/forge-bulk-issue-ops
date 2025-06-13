@@ -18,6 +18,7 @@ export type UsersSelectProps = {
   isInvalid?: boolean;
   includeAppUsers: boolean;
   isClearable: boolean;
+  menuPortalTarget?: HTMLElement;
   filterUsers?: (usersToFilter: User[]) => Promise<User[]>;
   onUsersSelect: (selectedUsers: User[]) => Promise<void>;
 }
@@ -93,6 +94,7 @@ const UsersSelect = (props: UsersSelectProps) => {
         isClearable={props.isClearable}
 				loadOptions={promiseOptions}
         placeholder={props.label}
+        menuPortalTarget={props.menuPortalTarget}
         onChange={onChange}
       />
     );

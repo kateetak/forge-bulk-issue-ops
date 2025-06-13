@@ -12,6 +12,7 @@ export type FieldValuesSelectProps = {
   label: string;
   selectableCustomFieldOptions: CustomFieldOption[];
   selectedCustomFieldOption?: CustomFieldOption;
+  menuPortalTarget?: HTMLElement;
   onSelect: (selectedCustomFieldOption: CustomFieldOption) => Promise<void>;
 }
 
@@ -59,6 +60,7 @@ const FieldValuesSelect = (props: FieldValuesSelectProps) => {
         defaultValue={defaultValue}
         options={options}
         placeholder={props.label}
+        menuPortalTarget={props.menuPortalTarget}
         onChange={onSingleSelectChange}
       />
     </>

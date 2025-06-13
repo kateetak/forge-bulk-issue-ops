@@ -126,6 +126,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
+        menuPortalTarget={document.body}
         onChange={(selectedOption: Option) => {
           const newValue: FieldEditValue = {
             value: selectedOption.value,
@@ -157,6 +158,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
+        menuPortalTarget={document.body}
         onChange={(selectedOption: Option) => {
           const newValue: FieldEditValue = {
             value: selectedOption.value,
@@ -262,6 +264,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
             isDisabled={!props.enabled || selectedMultiSelectFieldOption === 'REMOVE_ALL'}
             isInvalid={!operationOutcome.success}
             selectedLabels={selectedLabels}
+            menuPortalTarget={document.body}
             onLabelsSelect={async (selectedLabels: string[]): Promise<void> => {
               const newValue: FieldEditValue = {
                 value: selectedLabels,
@@ -296,6 +299,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
+        menuPortalTarget={document.body}
         onChange={(selectedOption: Option) => {
           const newValue: FieldEditValue = {
             value: selectedOption.value,
@@ -436,6 +440,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         field={field}
         isDisabled={!props.enabled}
         isInvalid={!operationOutcome.success}
+        menuPortalTarget={document.body}
         onChange={(newValue: CascadingSelectValue) => {
           if (newValue) {
             const updatedValue: FieldEditValue = {
