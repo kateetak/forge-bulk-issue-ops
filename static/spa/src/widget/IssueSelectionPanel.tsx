@@ -12,27 +12,34 @@ import placeholderImage from './issue-filter-placeholder.png';
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueLink } from "./IssueLink";
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
-import { render } from "react-dom";
 import { renderPanelMessage } from "./renderPanelMessage";
+
+export type IssueSelectionValidity = "valid" | "invalid-no-issues-selected" | "multiple-projects" | "multiple-issue-types";
+
+export type IssueSelectionState = {
+  selectedIssues: Issue[];
+  selectionValidity: IssueSelectionValidity;
+}
 
 export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
   issueSearchInfo: IssueSearchInfo;
   selectedIssues: Issue[];
-  allowBulkMovesFromMultipleProjects: boolean;
-  onIssuesSelectionChange: (selectedIssues: Issue[]) => Promise<void>;
+  computeSelectionValidity: (selectedIssues: Issue[]) => IssueSelectionValidity;
+  onIssuesSelectionChange: (issueSelectionState: IssueSelectionState) => Promise<void>;
 }
 
 export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
+  const initialMultipleProjectsDetected = jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1;
+  const initialMultipleIssueTypesDetected = jiraUtil.countIssueTypesByIssues(props.issueSearchInfo.issues) > 1;
   const [issueKeyOrSummaryFilter, setIssueKeyOrSummaryFilter] = useState<string>('');
-  const [multipleProjectsDetected, setMultipleProjectsDetected] = useState<boolean>(
-    jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1);
+  const [selectionValidity, setStateValidity] = useState<IssueSelectionValidity>(props.computeSelectionValidity(props.issueSearchInfo.issues));
 
   useEffect(() => {
-    setMultipleProjectsDetected(jiraUtil.countProjectsByIssues(props.issueSearchInfo.issues) > 1);
+    const selectionValidity = props.computeSelectionValidity(props.issueSearchInfo.issues);
+    setStateValidity(selectionValidity);
   }, [props.issueSearchInfo.issues]);
-
 
   const onToggleIssueSelection = (issueToToggle: Issue) => {
     const newSelectedIssues: Issue[] = [];
@@ -52,7 +59,14 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
       }
     }
     console.log(` * IssueSelectionPanel: Computed new issue selection: ${newSelectedIssues.map(issue => issue.key).join(', ')}`);
-    props.onIssuesSelectionChange(newSelectedIssues);
+
+    const selectionValidity = props.computeSelectionValidity(newSelectedIssues);
+    setStateValidity(selectionValidity);
+    const issueSelectionState: IssueSelectionState = {
+      selectedIssues: newSelectedIssues,
+      selectionValidity: selectionValidity
+    }
+    props.onIssuesSelectionChange(issueSelectionState);
   }
 
   const onSelectAllIssues = () => {
@@ -63,7 +77,14 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
       changeDetected = changeDetected || !currentlySelected;
       newSelectedIssues.push(issue);
     }
-    props.onIssuesSelectionChange(newSelectedIssues);
+
+    const selectionValidity = props.computeSelectionValidity(newSelectedIssues);
+    setStateValidity(selectionValidity);
+    const issueSelectionState: IssueSelectionState = {
+      selectedIssues: newSelectedIssues,
+      selectionValidity: selectionValidity
+    }
+    props.onIssuesSelectionChange(issueSelectionState);
   }
 
   const onDeselectAllIssues = () => {
@@ -72,7 +93,13 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
       const currentlySelected = props.selectedIssues.find(selectedIssue => selectedIssue.key === issue.key);
       changeDetected = changeDetected || !!currentlySelected;
     }
-    props.onIssuesSelectionChange([]);
+    const selectionValidity = props.computeSelectionValidity([]);
+    setStateValidity(selectionValidity);
+    const issueSelectionState: IssueSelectionState = {
+      selectedIssues: [],
+      selectionValidity: selectionValidity
+    }
+    props.onIssuesSelectionChange(issueSelectionState);
   }
 
   const renderIssueLoading = () => {
@@ -157,12 +184,25 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     )
   }
 
-  const renderMultipleProjectsError = () => {
-    return (
-      <div className="inline-error-message">
-        <p>The issues are in multiple projects but this is not supported. Please select issues from a single project or enable bulk moves from multiple projects in the app settings.</p>
-      </div>
-    );
+  const renderStateValidityMessage = () => {
+    if (selectionValidity === 'invalid-no-issues-selected') {
+      return renderPanelMessage(
+        `No work items selected. Please select at least one issue.`,
+        { margin: '20px 0px', color: '#BF2600', fontWeight: 'bold' }
+      );
+    } else if (selectionValidity === 'multiple-projects') {
+      return renderPanelMessage(
+        `The selected work items are from multiple projects, but this is not supported. Please select work items from a single project.`,
+        { margin: '20px 0px', color: '#BF2600', fontWeight: 'bold' }
+      );
+    } else if (selectionValidity === 'multiple-issue-types') {
+      return renderPanelMessage(
+        `The selected work items are of multiple issue types, but this is not supported. Please select work items of a single issue type.`,
+        { margin: '20px 0px', color: '#BF2600', fontWeight: 'bold' }
+      );
+    } else {
+      return null;
+    }
   }
 
   const renderIssueRow = (issue: Issue) => {
@@ -202,11 +242,9 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     ) : null;
     return (
       <>
-        <div style={{marginTop: '20px', marginBottom: '-20px'}}>
-          {multipleProjectsDetected ? renderMultipleProjectsError() : null}
-        </div>
         {renderIssueLoading()}
         <FormSection>
+          {renderStateValidityMessage()}
           {renderGlobalSelectionControls()}
           {renderedIssuesTable}
         </FormSection>
@@ -236,6 +274,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     props.issueSearchInfo.maxResults === 0;
   return (
     <>
+
       {nilSearch ? renderPlaceholder() : props.issueSearchInfo.issues.length === 0 ? renderNoResults() : renderIssuesPanel()}
     </>
   );

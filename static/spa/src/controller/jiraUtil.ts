@@ -16,7 +16,17 @@ class JiraUtil {
     }
   }
 
-  countProjectsByIssues(issues: Issue[]) {
+  countIssueTypesByIssues = (issues: Issue[]) => {
+    const issueTypeIds = new Set<string>();
+    for (const issue of issues) {
+      if (issue.fields.issuetype) {
+        issueTypeIds.add(issue.fields.issuetype.id);
+      }
+    }
+    return issueTypeIds.size;
+  }
+
+  countProjectsByIssues = (issues: Issue[]) => {
     const projectKeys = new Set<string>();
     for (const issue of issues) {
       if (issue.fields.project) {

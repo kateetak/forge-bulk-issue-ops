@@ -25,7 +25,6 @@ import { InvocationResult } from '../types/InvocationResult';
 import { ProjectWithIssueTypes } from '../types/ProjectWithIssueTypes';
 import { IssueBulkEditFieldApiResponse, IssueBulkEditField } from '../types/IssueBulkEditFieldApiResponse';
 import { Issue } from 'src/types/Issue';
-import { UserSearchInfo } from 'src/types/UserSearchInfo';
 import { User } from 'src/types/User';
 import { BulkIssueEditRequestData } from 'src/types/BulkIssueEditRequestData';
 import { ObjectMapping } from 'src/types/ObjectMapping';
