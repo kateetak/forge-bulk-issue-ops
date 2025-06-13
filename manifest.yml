@@ -1,22 +1,8 @@
 modules:
-  # https://developer.atlassian.com/platform/forge/manifest-reference/modules/web-trigger/
-  webtrigger:
-    - key: file-upload-webtrigger
-      function: upload-csv-fn
-      response:
-        type: static
-        outputs:
-          - key: status-ok
-            statusCode: 200
-            contentType: application/json
-            body: '{"body": "Upload successful"}'
-          - key: status-error
-            statusCode: 400
-            contentType: text/plain
-            body: 'Error: Bad request'
   jira:globalPage:
     - key: forge-custom-bulk-move-issues-page
       resource: main
+      layout: blank
       resolver:
         function: global-resolver-fn
       title: Bulk Work Item Operations
