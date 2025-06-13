@@ -91,7 +91,7 @@ div.bulk-move-main-panel {
 div.bulk-move-main-panel > div {
   margin-bottom: 20px;
   padding: 10px;
-  background-color: #fff;
+  /* background-color: #fff; */
 }
 
 div.bulk-move-main-panel > div > div {
