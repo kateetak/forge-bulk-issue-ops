@@ -31,7 +31,7 @@ class JiraUtil {
   }
 
   filterProjectsIssueTypes = (projects: Project[]): IssueType[] => {
-    console.log(`JiraUtil.filterProjectsIssueTypes: projects: ${JSON.stringify(projects, null, 2)}`);
+    // console.log(`JiraUtil.filterProjectsIssueTypes: projects: ${JSON.stringify(projects, null, 2)}`);
     const filteredIssueTypes = new Set<IssueType>();
     // const isTeamManagedProject = project.simplified;
     for (const project of projects) {

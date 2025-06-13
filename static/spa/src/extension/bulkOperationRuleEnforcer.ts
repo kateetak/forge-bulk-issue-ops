@@ -35,7 +35,8 @@ class BulkOperationRuleEnforcer {
       fieldIdsToFields: ObjectMapping<IssueBulkEditField>,
       otherEditedFieldIdsToValues: ObjectMapping<FieldEditValue>
   ): Promise<OperationOutcome> => {
-    
+    // console.log(`bulkOperationRuleEnforcer.validateFieldValue: field = ${field.name}, value = ${value}`);
+
     // See exampleValidateEndDateFieldValue at the bottom of this class for an example of how to validate
     // a field in relation to other fields.
 
@@ -55,6 +56,7 @@ class BulkOperationRuleEnforcer {
   public filterSourceProjects = async (
     selectedSourceProjects: Project[],
   ): Promise<Project[]> => {
+    // console.log(`bulkOperationRuleEnforcer.filterSourceProjects: selectedSourceProjects = ${selectedSourceProjects.map(project => project.name).join(', ')}`);
     const filteredProjects = selectedSourceProjects.filter((project: Project) => {
       return !this.excludedProjectKeys.has(project.key);
     });
@@ -68,6 +70,7 @@ class BulkOperationRuleEnforcer {
    * @returns The filtered issue types that are allowed to be selected as the target issue type.
    */
   public filterIssueTypes = (issueTypes: IssueType[], targetProject: Project): IssueType[] => {
+    // console.log(`bulkOperationRuleEnforcer.filterIssueTypes: issueTypes = ${issueTypes.map(issueType => issueType.name).join(', ')}`);
     return issueTypes.filter(issueType => {
       // Apply your filtering logic here
 
@@ -87,6 +90,7 @@ class BulkOperationRuleEnforcer {
    * @returns the filtered fields that are allowed to be edited in the bulk edit operation.
    */
   public filterEditFields = async (fields: IssueBulkEditField[]): Promise<IssueBulkEditField[]> => {
+    // console.log(`bulkOperationRuleEnforcer.filterEditFields: fields = ${fields.map(field => field.name).join(', ')}`);
     const filteredFields = fields.filter(field => {
       if (field.id === 'reporter') {
         // It is assummed that the reporter field is not editable.
