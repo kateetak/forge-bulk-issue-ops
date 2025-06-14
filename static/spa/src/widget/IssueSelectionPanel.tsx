@@ -267,7 +267,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
   const renderPlaceholder = () => {
     return (
       <div style={{ margin: '20px 0px' }}>
-        <div style={{ opacity: 0.5 }}>
+        <div style={{ opacity: 0.2 }}>
           <img src={placeholderImage} width="220px" alt="placeholder" />
         </div>
       </div>
