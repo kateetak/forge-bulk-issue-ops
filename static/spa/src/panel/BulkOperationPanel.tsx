@@ -29,7 +29,7 @@ import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import bulkIssueTypeMappingModel from 'src/model/bulkIssueTypeMappingModel';
-import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { renderPanelMessage } from 'src/widget/PanelMessage';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
 import PanelHeader from 'src/widget/PanelHeader';
 import { CompletionState } from 'src/types/CompletionState';
@@ -987,7 +987,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   const rendermainWarningMessage = () => {
     if (mainWarningMessage) {
       return (
-        <div className="warning-message">
+        <div className="warning-banner">
           <div
             className="fake-button"
             style={{border: '1px solid #ccc'}}

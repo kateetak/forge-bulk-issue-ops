@@ -9,7 +9,7 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import { Project } from 'src/types/Project';
 import IssueTypeSelect from 'src/widget/IssueTypeSelect';
 import ProjectsSelect from 'src/widget/ProjectsSelect';
-import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { renderPanelMessage } from 'src/widget/PanelMessage';
 
 const showDebug = false;
 

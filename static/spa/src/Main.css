@@ -1,4 +1,6 @@
 
+/* Design tokens: https://atlassian.design/components/tokens/all-tokens */
+
 body {
   background-color: initial;
   margin: 20px;
@@ -23,7 +25,7 @@ span.button-link {
 }
 
 span.button-link:hover {
-  color: #005A9E;
+  color: var(--ds-link);
   text-decoration: underline;
 }
 
@@ -40,23 +42,20 @@ span.button-link:hover {
 }
 
 .success-message {
-  color: #006644
+  color: var(--ds-text-success);
 }
 
-.error-message {
-  color: #BF2600
-}
-
-div.warning-message {
+div.warning-banner {
+  margin-top: 8px;
+  margin-bottom: 8px;
   margin-left: auto;
   margin-right: auto;
   width: 80%;
   padding: 6px;
   border-radius: 6px;
   text-align: center;
-  /* background-color: #BF2600; */
-  background-color: #FFAB00;
-  color: #fff;
+  background-color: var(--ds-background-danger-bold);
+  color: var(--ds-text-inverse);
 }
 
 div.edit-options-panel {
@@ -91,16 +90,10 @@ div.bulk-move-main-panel {
 div.bulk-move-main-panel > div {
   margin-bottom: 20px;
   padding: 10px;
-  /* background-color: #fff; */
 }
 
 div.bulk-move-main-panel > div > div {
-  /* max-height: 600px; */
   height: fit-content;
-}
-
-div.bulk-move-main-panel > div > div > div {
-  /* overflow-y: none; */
 }
 
 div.panel-header {
@@ -118,27 +111,22 @@ div.step-panel-content-container {
 
 div.filter-panel {
   min-width: 300px;
-  /* max-width: 400px; */
 }
 
 div.padding-panel {
   padding: 10px;
   margin: 0px 5px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--ds-border-input);
 }
 
 div.padding-panel:hover {
-  border: 1px solid #4C9AFF;
+  border: 1px solid var(--ds-border-focused);
 }
 
 div.content-panel {
   overflow-x: hidden;
   min-width: 300px;
-  /* max-width: 400px; */
-  /* min-height: 260px; */
-  /* height: 100%; */
-  /* overflow-y: auto; */
 }
 
 table.issue-selection-table {
@@ -177,50 +165,16 @@ div.issue-selection-panel {
 }
 
 .inline-error-message {
-  color: #BF2600;
+  color: var(--ds-text-danger);
   font-weight: bold;
 }
 
 .disabled-text {
-  color: #ccc;
+  color: var(--ds-text-disabled)
 }
 
 .debug-panel {
   margin-top: 30px
-}
-
-div.faked-toggle {
-  display: inline-block;
-  width: 44px;
-  height: 28px;
-}
-
-div.faked-toggle > div {
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 5px;
-  width: 30px;
-  height: 18px;
-  border-radius: 9px;
-  position: relative;
-  color: #fff;
-}
-
-div.checked-faked-toggle > div {
-  color: #fff;
-  background-color: #00875A;
-}
-
-div.unchecked-faked-toggle > div {
-  background-color: #6B778C;
-}
-
-div.checked-faked-toggle > div > div.toggle-container {
-  margin-left: 1px;
-}
-
-div.unchecked-faked-toggle > div > div.toggle-container {
-  margin-left: 13px;
 }
 
 div.fake-button {

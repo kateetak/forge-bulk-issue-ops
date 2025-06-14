@@ -6,7 +6,7 @@ import importModel from 'src/model/importModel';
 import { CompletionState } from 'src/types/CompletionState';
 import { ImportColumnValueType } from 'src/types/ImportColumnValueType';
 import { ObjectMapping } from 'src/types/ObjectMapping';
-import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { renderPanelMessage } from 'src/widget/PanelMessage';
 import { ImportInstructions, importIssues } from 'src/controller/issueImporter';
 import { ProgressInfo } from 'src/types/ProgressInfo';
 import { Label } from '@atlaskit/form';

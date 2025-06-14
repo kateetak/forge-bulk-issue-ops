@@ -9,7 +9,7 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import { Option } from '../types/Option';
 import Select from '@atlaskit/select';
 import { IssueType } from 'src/types/IssueType';
-import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { renderPanelMessage } from 'src/widget/PanelMessage';
 
 const showDebug = false;
 

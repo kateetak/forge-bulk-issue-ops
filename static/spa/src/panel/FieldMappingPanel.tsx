@@ -18,7 +18,7 @@ import bulkIssueTypeMappingModel from 'src/model/bulkIssueTypeMappingModel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { mapToObjectMap } from 'src/model/util';
 import { formatIssueType } from 'src/controller/formatters';
-import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { renderPanelMessage } from 'src/widget/PanelMessage';
 import { textToAdf } from 'src/controller/textToAdf';
 import { bulkMoveShowRetainOption } from 'src/model/config';
 

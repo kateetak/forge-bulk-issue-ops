@@ -14,7 +14,7 @@ import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import { CompletionState } from 'src/types/CompletionState';
 import { IssueMoveEditRequestOutcome } from 'src/types/IssueMoveRequestOutcome';
 import { TaskOutcome } from 'src/types/TaskOutcome';
-import { renderPanelMessage } from 'src/widget/renderPanelMessage';
+import { renderPanelMessage } from 'src/widget/PanelMessage';
 import targetProjectFieldsModel from '../controller/TargetProjectFieldsModel';
 import { Project } from 'src/types/Project';
 import { Issue } from 'src/types/Issue';

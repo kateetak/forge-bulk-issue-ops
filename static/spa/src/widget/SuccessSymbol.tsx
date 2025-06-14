@@ -1,4 +1,5 @@
 import React from 'react';
+import { token } from '@atlaskit/tokens';
 import SuccessIcon from '@atlaskit/icon/core/success';
 
 export type SuccessSymbolProps = {
@@ -6,8 +7,11 @@ export type SuccessSymbolProps = {
 }
 
 const SuccessSymbol = (props: SuccessSymbolProps) => {
-
-  return <span style={{ color: '#006644' }}><SuccessIcon spacing="none" label={props.label ?? ''} /></span>
+  return (
+    <span style={{ color: token("color.icon.success") }}>
+      <SuccessIcon spacing="none" label={props.label ?? ''} />
+    </span>
+  )
 }
 
 export default SuccessSymbol;

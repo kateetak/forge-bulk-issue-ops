@@ -12,7 +12,7 @@ import placeholderImage from './issue-filter-placeholder.png';
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueLink } from "./IssueLink";
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
-import { renderPanelMessage } from "./renderPanelMessage";
+import { PanelMessage, renderPanelMessage } from "./PanelMessage";
 
 export type IssueSelectionValidity = "valid" | "invalid-no-issues-selected" | "multiple-projects" | "multiple-issue-types";
 
@@ -104,7 +104,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const renderIssueLoading = () => {
     return (
-      <div style={{margin: '12px 0px 12px 0px'}}>
+      <div>
         {props.loadingState === 'busy' ? <LinearProgress color="secondary" /> : <div style={{height: '4px'}}></div>} 
       </div>
     );
@@ -186,19 +186,25 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const renderStateValidityMessage = () => {
     if (selectionValidity === 'invalid-no-issues-selected') {
-      return renderPanelMessage(
-        `No work items selected. Please select at least one issue.`,
-        { margin: '20px 0px', color: '#BF2600', fontWeight: 'bold' }
+      return (
+        <PanelMessage
+          message={`No work items selected. Please select at least one work item.`}
+          className="warning-banner"
+        />
       );
     } else if (selectionValidity === 'multiple-projects') {
-      return renderPanelMessage(
-        `The selected work items are from multiple projects, but this is not supported. Please select work items from a single project.`,
-        { margin: '20px 0px', color: '#BF2600', fontWeight: 'bold' }
+      return (
+        <PanelMessage
+          message={`The selected work items are from multiple projects, but this is not supported. Please select work items from a single project.`}
+          className="warning-banner"
+        />
       );
     } else if (selectionValidity === 'multiple-issue-types') {
-      return renderPanelMessage(
-        `The selected work items are of multiple issue types, but this is not supported. Please select work items of a single issue type.`,
-        { margin: '20px 0px', color: '#BF2600', fontWeight: 'bold' }
+      return (
+        <PanelMessage
+          message={`The selected work items are of multiple issue types, but this is not supported. Please select work items of a single issue type.`}
+          className="warning-banner"
+        />
       );
     } else {
       return null;

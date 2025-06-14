@@ -1,4 +1,5 @@
 import React from 'react';
+import { token } from '@atlaskit/tokens';
 import WarningIcon from '@atlaskit/icon/core/warning';
 
 export type WarningSymbolProps = {
@@ -7,7 +8,11 @@ export type WarningSymbolProps = {
 
 const WarningSymbol = (props: WarningSymbolProps) => {
 
-  return <span style={{ color: '#FFAB00' }}><WarningIcon spacing="none" label={props.label ?? ''} /></span>
+  return (
+    <span style={{ color: token('color.icon.warning') }}>
+      <WarningIcon spacing="none" label={props.label ?? ''} />
+    </span>
+  )
 }
 
 export default WarningSymbol;

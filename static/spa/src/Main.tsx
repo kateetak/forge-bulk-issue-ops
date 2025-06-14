@@ -8,6 +8,7 @@ import editModel from "./model/editModel";
 import { bulkImportEnabled } from "./model/config";
 import { BulkOperationMode } from "./types/BulkOperationMode";
 import { BulkOpsModel } from "./model/BulkOpsModel";
+import './Main.css';
 
 export type HomeProps = {
   history: any;
