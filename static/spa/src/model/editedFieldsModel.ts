@@ -6,6 +6,8 @@ import jiraDataModel from "./jiraDataModel";
 import bulkOperationRuleEnforcer from "src/extension/bulkOperationRuleEnforcer";
 import { FieldEditValue } from "src/types/FieldEditValue";
 import { OperationOutcome } from "src/types/OperationOutcome";
+import jiraUtil from "src/controller/jiraUtil";
+import { IssueType } from "src/types/IssueType";
 
 export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, editedFieldValue: FieldEditValue) => void;
 
@@ -94,9 +96,11 @@ class EditedFieldsModel {
 
   setIssues = async (issues: Issue[]) => {
     // console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
+    const issueTypeMap: Map<string, IssueType> = jiraUtil.getIssueTypesFromIssues(issues);
+    const issueTypes = Array.from(issueTypeMap.values());
     const fields = await jiraDataModel.getAllIssueBulkEditFields(issues);
     // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
-    const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields);
+    const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields, issueTypes);
     const sortedFields = this.sortFields(filteredFields);
     this.setFields(sortedFields);
     this.issues = issues;

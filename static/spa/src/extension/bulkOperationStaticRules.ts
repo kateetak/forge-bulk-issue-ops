@@ -9,6 +9,8 @@ export const allowBulkMovesAcrossProjectCategories = false;
 
 export const allowBulkMovesFromMultipleProjects = false;
 
+export const allowBulkEditsFromMultipleProjects = false;
+
 export const allowBulkEditsAcrossMultipleProjects = true;
 
 export const filterModeDefault: 'advanced' | 'basic' = 'basic';

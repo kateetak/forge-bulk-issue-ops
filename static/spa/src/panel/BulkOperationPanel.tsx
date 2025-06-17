@@ -24,7 +24,7 @@ import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './
 import targetProjectFieldsModel from 'src/controller/TargetProjectFieldsModel';
 import { IssueSelectionPanel, IssueSelectionState, IssueSelectionValidity } from '../widget/IssueSelectionPanel';
 import bulkOperationRuleEnforcer from 'src/extension/bulkOperationRuleEnforcer';
-import { allowBulkEditsAcrossMultipleProjects, allowBulkMovesFromMultipleProjects, filterModeDefault } from '../extension/bulkOperationStaticRules';
+import { allowBulkEditsAcrossMultipleProjects, allowBulkEditsFromMultipleProjects, allowBulkMovesFromMultipleProjects, filterModeDefault } from '../extension/bulkOperationStaticRules';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
@@ -272,6 +272,18 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
       }
       if (props.bulkOperationMode === 'Move') {
         // Don't allow multiple issue types to be selected when moving issues
+        if (multipleIssueTypesDetected) {
+          return "multiple-issue-types";
+        }
+      }
+      if (props.bulkOperationMode === 'Edit' && !allowBulkEditsFromMultipleProjects) {
+        // Don't allow edits from multiple projects
+        if (multipleProjectsDetected) {
+          return "multiple-projects";
+        }
+      }
+      if (props.bulkOperationMode === 'Edit') {
+        // Don't allow multiple issue types to be selected when editing issues
         if (multipleIssueTypesDetected) {
           return "multiple-issue-types";
         }

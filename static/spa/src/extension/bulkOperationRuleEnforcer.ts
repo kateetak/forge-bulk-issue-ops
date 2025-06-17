@@ -89,7 +89,7 @@ class BulkOperationRuleEnforcer {
    * @param fields The fields to filter.
    * @returns the filtered fields that are allowed to be edited in the bulk edit operation.
    */
-  public filterEditFields = async (fields: IssueBulkEditField[]): Promise<IssueBulkEditField[]> => {
+  public filterEditFields = async (fields: IssueBulkEditField[], issueTypes: IssueType[]): Promise<IssueBulkEditField[]> => {
     // console.log(`bulkOperationRuleEnforcer.filterEditFields: fields = ${fields.map(field => field.name).join(', ')}`);
     const filteredFields = fields.filter(field => {
       if (field.id === 'reporter') {

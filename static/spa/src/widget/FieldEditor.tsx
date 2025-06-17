@@ -320,6 +320,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         isClearable={true}
         includeAppUsers={false}
         selectedUsers={[]}
+        menuPortalTarget={document.body}
         onUsersSelect={async (selectedUsers: User[]) => {
           if (selectedUsers.length === 0) {
             onChange(undefined);

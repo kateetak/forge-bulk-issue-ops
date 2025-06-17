@@ -47,13 +47,15 @@ const Home = (props: HomeProps) => {
 
 const Main = () => {
 
-  const [history, setHistory] = useState(null);
+  const [history, setHistory] = useState<import("history").History>(null);
+
+  const initialiseHistory = async () => {
+    const history = await view.createHistory();
+    setHistory(history);
+  }
 
   useEffect(() => {
-    // When the app mounts, we use the view API to create a history "log"
-    view.createHistory().then((newHistory) => {
-      setHistory(newHistory);
-    });
+    initialiseHistory();
   }, []);
 
   const [historyState, setHistoryState] = useState(null);

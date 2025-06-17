@@ -48,10 +48,9 @@ class JiraDataModel {
     errorMessage: 'Not yet fetched'
   };
 
-  
-  // This cache could be changed to be on a per page basis, but for now, the requesting of IssueBulkEditFields
-  // recursively fetches all fields for the project and issue type ids of the issues which might be prone to failure 
-  // due to the possibility of Forge function timeouts.
+
+  // This cache can not be changed to be on a per page basis since each page of results includes a cursor that
+  // only makes sense for the entire set of results.
   private projectAndIssueTypeIdsToIssueBulkEditFields = new Map<string, IssueBulkEditField[]>();
 
   constructor() {
@@ -174,7 +173,7 @@ class JiraDataModel {
       const labelsPage = await response.json();
       // console.log(`Labels: ${JSON.stringify(labels, null, 2)}`);
       this.labelPagesToLabels[cacheKey] = labelsPage;
-      // console.log(`getAllLabels: Page labels: ${JSON.stringify(labelsPage, null, 2)}`);
+      console.log(`getAllLabels: Page labels: ${JSON.stringify(labelsPage, null, 2)}`);
       return labelsPage;
     }
   }
@@ -374,7 +373,7 @@ class JiraDataModel {
       invocationResult.data = data as T;
     } else {
       const errorMessage = await response.text();
-      // console.error(`Error response: ${errorText}`);
+      console.error(`jiraDataModel.readResponse: Error response: ${errorMessage}`);
       invocationResult.errorMessage = errorMessage;
     }
     return invocationResult;
@@ -636,6 +635,10 @@ class JiraDataModel {
       return cachedIssueBulkEditFields;
     } else {
       const fields: IssueBulkEditField[] = [];
+      if (issues.length === 0) {
+        return fields;
+      }
+      let errorDetected = false;
       let loadMoreFields = true;
       let startingAfter = '';
       while (loadMoreFields) {
@@ -648,28 +651,37 @@ class JiraDataModel {
           } else {
             console.warn(`No data in IssueBulkEditFieldApiResponse for issueIdsOrKeys: ${issues.map(issue => issue.key).join(', ')}`);
             loadMoreFields = false;
+            errorDetected = true;
           }
         } else {
           console.warn(`Failed to retrieve IssueBulkEditFieldApiResponse for issueIdsOrKeys: ${issues.map(issue => issue.key).join(', ')}. Error: ${invocationResult.errorMessage}`);
           loadMoreFields = false;
+          errorDetected = true;
         }
       }
-      this.projectAndIssueTypeIdsToIssueBulkEditFields.set(key, fields);
+      if (!errorDetected) {
+        this.projectAndIssueTypeIdsToIssueBulkEditFields.set(key, fields);
+      }
+      // console.log(`getAllIssueBulkEditFields: Loaded fields ${JSON.stringify(fields, null, 2)}`);
+      // const taskFields = fields.filter(field => field.name.toLowerCase().indexOf('task') >= 0);
+      // console.log(`getAllIssueBulkEditFields: Loaded task fields ${JSON.stringify(taskFields, null, 2)}`);
       return fields;
     }
   }
 
   private pageOfIssueBulkEditFieldApiResponse = async (issues: Issue[], startingAfter: string): Promise<InvocationResult<IssueBulkEditFieldApiResponse>> => {
+    console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields after "${startingAfter}"...`);
     let queryOptions = '';
     for (const issue of issues) {
-      const separator = queryOptions ? '&' : '';
+      const separator = queryOptions ? '&' : '?';
       queryOptions += `${separator}issueIdsOrKeys=${issue.key}`;
     }
     if (startingAfter) {
       queryOptions += `&startingAfter=${startingAfter}`;
     }
-    const path = `/rest/api/3/bulk/issues/fields?${queryOptions}`;
-    // console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields for ${issues.length} issues.`);
+    // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-bulk-operations/#api-rest-api-3-bulk-issues-fields-get
+    const path = `/rest/api/3/bulk/issues/fields${queryOptions}`;
+    console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields for ${issues.length} issues;- path="${path}"`);
     const response = await requestJira(path, {
       headers: {
         'Accept': 'application/json'
