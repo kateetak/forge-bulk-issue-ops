@@ -29,6 +29,8 @@ import { User } from 'src/types/User';
 import { BulkIssueEditRequestData } from 'src/types/BulkIssueEditRequestData';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import { ProjectCategory } from 'src/types/ProjectCategory';
+import { ProjectVersion } from 'src/types/ProjectVersion';
+import { ProjectComponent } from 'src/types/ProjectComponent';
 
 class JiraDataModel {
 
@@ -318,6 +320,28 @@ class JiraDataModel {
       }
     });
     const invocationResult = await this.readResponse<ProjectWithIssueTypes>(response);
+    return invocationResult;
+  }
+  
+  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-project-versions/#api-rest-api-3-project-projectidorkey-versions-get
+  public getProjectVersions = async (projectIdOrKey: string): Promise<InvocationResult<ProjectVersion[]>> => {
+    const response = await requestJira(`/rest/api/3/project/${projectIdOrKey}/versions`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const invocationResult = await this.readResponse<ProjectVersion[]>(response);
+    return invocationResult;
+  }
+
+  public getProjectComponents = async (projectIdOrKey: string): Promise<InvocationResult<ProjectComponent[]>> => {
+    // console.log(`JiraDataModel.getProjectComponents: Fetching components for project ${projectIdOrKey}: /rest/api/3/project/${projectIdOrKey}/components`);
+    const response = await requestJira(`/rest/api/3/project/${projectIdOrKey}/components`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const invocationResult = await this.readResponse<ProjectComponent[]>(response);
     return invocationResult;
   }
   

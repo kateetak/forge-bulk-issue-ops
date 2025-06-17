@@ -106,7 +106,7 @@ export class JiraIssueFieldsBuilder {
     multipleSelectClearableUserPickerFields: [],
     multipleSelectFields: [],
     multipleVersionPickerFields: [],
-    multiselectComponents: [],
+    multiselectComponents: undefined,
     originalEstimateField: undefined,
     priority: undefined,
     richTextFields: [],
@@ -176,7 +176,7 @@ export class JiraIssueFieldsBuilder {
   }
 
   setMultiselectComponents = (field: JiraMultiSelectComponentField): JiraIssueFieldsBuilder => {
-    this.jiraIssueFields.multiselectComponents = [field];
+    this.jiraIssueFields.multiselectComponents = field;
     return this;
   }
 

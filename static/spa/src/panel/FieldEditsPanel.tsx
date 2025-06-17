@@ -22,7 +22,6 @@ const fieldInfoDebugEnabled = false;
 const toggleColumnWidth = '10px';
 
 export type FieldEditsPanelProps = {
-  // selectedIssues: Issue[];
   issueSelectionState: IssueSelectionState;
   selectedIssuesTime: number;
   onEditsValidityChange: (editsValid: boolean) => void;
@@ -118,7 +117,16 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
   const renderFields = () => {
     if (fields.length === 0 || editedFieldsModel.getCurrentIssues().length === 0) {
-      return <PanelMessage message={'No fields available.'} />;
+      if (loadingFields) {
+        return (
+          <div style={{marginTop: '20px', marginBottom: '20px'}}>
+            <Label htmlFor={''}>Loading fields...</Label>
+            <LinearProgress variant="indeterminate" color="secondary" />
+          </div>
+        );
+      } else {
+        return <PanelMessage message={'No fields available.'} />;
+      }
     }
     const filteredFields = fields.filter(field => {
       return field.name.toLowerCase().includes(fieldNameFilter);
@@ -157,6 +165,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
             <td>
               <FieldEditor
                 field={field}
+                issueSelectionState={props.issueSelectionState}
                 enabled={selectedForChange}
                 maybeEditValue={fieldIdsToValues[field.id]}
                 onChange={ async (value: FieldEditValue): Promise<OperationOutcome> => {
@@ -180,19 +189,6 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
         </table>
       </div>
     );
-  }
-
-  const renderLoadingIndicator = () => {
-    if (loadingFields) {
-      return (
-        <div style={{marginTop: '20px', marginBottom: '20px'}}>
-          <Label htmlFor={''}>Loading fields...</Label>
-          <LinearProgress variant="indeterminate" color="secondary" />
-        </div>
-      );
-    } else {
-      return null;
-    }
   }
 
   const renderDataDebug = (label: string, data: any) => {
@@ -228,7 +224,6 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
   return (
     <div style={{marginTop:  '20px'}}>
-      {renderLoadingIndicator()}
       {renderFields()}
       {currentIssuesDebugEnabled ? renderCurrentIssuesDebug() : null}
       {editedFieldsDebugEnabled ? renderEditedFieldsDebug() : null}

@@ -117,7 +117,7 @@ Where possible, known issues are documented in the relevant locations in the cod
 * KNOWN-2: The `REMOVE` option is not supported when bulk editing labels.
 * KNOWN-3: Labels can not be created within the bulk edit form.
 * KNOWN-4: Bulk comment editing only supports plain text where each new line is represented as a new paragraph.
-* KNOWN-5: Not all fields types are supported since each type of field requires custom UI to edit it. 
+* KNOWN-5: In relation to bulk field editing, not all fields types are supported since each type of field requires custom UI to edit it. 
 * KNOWN-6: Rich text fields in bulk move operations only supports plain text where each new line is represented as a new paragraph.
 * KNOWN-7: Bulk move operations only allow values to be specified for required custom fields.
 * KNOWN-8: Only a limited set of field types are supported for default values in bulk move operations.
@@ -132,7 +132,7 @@ Where possible, known issues are documented in the relevant locations in the cod
 
 # Edit field support
 
-The following identifies the support for bulk editing different types of fields:
+As per KNOWN-5, the following identifies the support for bulk editing different types of fields:
 
 Supported:
 * issuetype
@@ -144,11 +144,14 @@ Supported:
 * priority
 * text
 * comment
+* fixVersions
+* components
 * duedate
+* com.atlassian.jira.plugin.system.customfieldtypes:textfield
 * com.atlassian.jira.plugin.system.customfieldtypes:datetime
 * com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect
 
-Known fields that are not supported:
+As per KNOWN-5, the following fields are not supported, although there could be more unsupported fields:
 * com.atlassian.jira.ext.charting:firstresponsedate
 * com.atlassian.jira.ext.charting:timeinstatus
 * com.atlassian.jira.plugins.service-entity:service-entity-field-cftype
@@ -157,18 +160,15 @@ Known fields that are not supported:
 * com.atlassian.jira.plugin.system.customfieldtypes:multigrouppicker
 * com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker
 * com.atlassian.jira.plugin.system.customfieldtypes:textarea
-* components
 * com.atlassian.jira.plugins.jira-development-integration-plugin:designcf
 * com.atlassian.jira.plugins.jira-development-integration-plugin:devsummarycf
 * environment
 * com.pyxis.greenhopper.jira:gh-epic-link
-* fixVersions
 * com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes
 * com.atlassian.jira.plugin.system.customfieldtypes:goals
 * com.pyxis.greenhopper.jira:jsw-issue-color
 * issuelinks
 * com.atlassian.jira.plugins.proforma-managed-fields:forms-locked-field-cftype
-* com.atlassian.jira.plugin.system.customfieldtypes:textfield
 * com.atlassian.jira.plugins.proforma-managed-fields:forms-open-field-cftype
 * com.atlassian.servicedesk:sd-customer-organizations
 * timeoriginalestimate

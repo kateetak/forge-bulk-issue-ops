@@ -58,7 +58,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
         newSelectedIssues.push(issue);
       }
     }
-    console.log(` * IssueSelectionPanel: Computed new issue selection: ${newSelectedIssues.map(issue => issue.key).join(', ')}`);
+    // console.log(` * IssueSelectionPanel: Computed new issue selection: ${newSelectedIssues.map(issue => issue.key).join(', ')}`);
 
     const selectionValidity = props.computeSelectionValidity(newSelectedIssues);
     setStateValidity(selectionValidity);

@@ -12,12 +12,15 @@ import {
   JiraLabelsField,
   JiraLabelsInput,
   JiraMultipleSelectUserPickerField,
+  JiraMultiSelectComponentField,
   JiraNumberField,
   JiraPriorityField,
   JiraRichTextField,
   JiraSelectedOptionField,
+  JiraSingleLineTextField,
   JiraSingleSelectField,
-  JiraSingleSelectUserPickerField
+  JiraSingleSelectUserPickerField,
+  JiraSingleVersionPickerField
 } from "src/types/BulkIssueEditRequestData";
 import { BulkIssueEditRequestDataBuilder, JiraIssueFieldsBuilder } from "./BulkIssueEditRequestDataBuilder";
 import editedFieldsModel from "src/model/editedFieldsModel";
@@ -34,11 +37,12 @@ class IssueEditController {
   initiateBulkEdit = async (
     bulkIssueEditRequestData: BulkIssueEditRequestData = this.buildBulkIssueEditRequestData(),
   ): Promise<IssueMoveEditRequestOutcome> => {
+    // console.log(` * Initiating bulk issue edit with payload: ${JSON.stringify(bulkIssueEditRequestData, null, 2)}`);
     const invocationResult: InvocationResult<IssueMoveEditRequestOutcome> = await jiraDataModel.initiateBulkIssuesEdit(bulkIssueEditRequestData);
     if (invocationResult.ok && invocationResult.data) {
       const requestOutcome: IssueMoveEditRequestOutcome = invocationResult.data;
       if (requestOutcome.taskId) {
-        console.log(` * Initiated bulk issue edit with taskId: ${requestOutcome.taskId}`);
+        console.info(` * Initiated bulk issue edit with taskId: ${requestOutcome.taskId}`);
       } else {
         console.warn(` * Initiation of bulk issue edit resulted in an error: ${requestOutcome.errors}`);
       }
@@ -101,6 +105,7 @@ class IssueEditController {
         return;
       }
       selectedActions.push(field.id);
+      console.log(` * Setting "${field.type}" field (ID = ${field.id}) with value: ${editedFieldValue.value}...`);
       switch (field.type) {
         case 'issuetype':
           const jiraIssueTypeField: JiraIssueTypeField = {
@@ -153,6 +158,14 @@ class IssueEditController {
             labels: labels
           }
           editedFieldsInputBuilder.addLabelsField(jiraLabelsField);
+        case 'com.atlassian.jira.plugin.system.customfieldtypes:textfield':
+        case 'text':
+          const jiraTextField: JiraSingleLineTextField = {
+            fieldId: field.id,
+            text: editedFieldValue.value
+          }
+          editedFieldsInputBuilder.addSingleLineTextField(jiraTextField);
+          break;
         case 'comment':
           const jiraCommentField: JiraRichTextField = {
             fieldId: field.id,
@@ -161,6 +174,39 @@ class IssueEditController {
             }
           }
           editedFieldsInputBuilder.addRichTextField(jiraCommentField);
+          break;
+        case 'fixVersions':
+          const jiraSingleVersionPickerField: JiraSingleVersionPickerField = {
+            fieldId: field.id,
+            version: {
+              versionId: editedFieldValue.value as string
+            }
+          }
+          editedFieldsInputBuilder.addSingleVersionPickerField(jiraSingleVersionPickerField);
+          break;
+        case 'components':
+          // As per https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-bulk-operations/#api-rest-api-3-bulk-issues-fields-post,
+          // the shape of the payload is as follows:
+          /*
+                "multiselectComponents": {
+                  "bulkEditMultiSelectFieldOption": "ADD",
+                  "components": [
+                    {
+                      "componentId": 2154
+                    }
+                  ],
+                  "fieldId": "<string>"
+                },
+          */
+          const componentIds = editedFieldValue.value as string[];
+          const componentIdObjects = componentIds.map(id => ({ componentId: parseInt(id, 10) }));
+          const jiraMultiSelectComponentField: JiraMultiSelectComponentField = {
+            fieldId: field.id,
+            bulkEditMultiSelectFieldOption: editedFieldValue.multiSelectFieldOption,
+            components: componentIdObjects
+          }
+          console.log(`   - Built jiraMultiSelectComponentField: ${JSON.stringify(jiraMultiSelectComponentField)} from editedFieldValue ${JSON.stringify(editedFieldValue)}.`);
+          editedFieldsInputBuilder.setMultiselectComponents(jiraMultiSelectComponentField);
           break;
         case 'duedate':
           const jiraDueDateField: JiraDateField = {

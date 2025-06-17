@@ -10,6 +10,7 @@ import { ProjectCategory } from "src/types/ProjectCategory";
 import jiraDataModel from "src/model/jiraDataModel";
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueType } from "src/types/IssueType";
+import { filterEditFieldsImplementation } from "./filterEditFieldsImplementationTemplate";
 
 class BulkOperationRuleEnforcer {
 
@@ -99,6 +100,8 @@ class BulkOperationRuleEnforcer {
       return true;
     });
     return filteredFields;
+
+    // return filterEditFieldsImplementation(fields, issueTypes);
   }
 
   /**

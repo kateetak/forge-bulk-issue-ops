@@ -99,6 +99,7 @@ class EditedFieldsModel {
     if (issueSelectionState.selectionValidity === 'valid') {
       const issueTypeMap: Map<string, IssueType> = jiraUtil.getIssueTypesFromIssues(issueSelectionState.selectedIssues);
       const issueTypes = Array.from(issueTypeMap.values());
+      // console.log(`FieldEditsPanel.loadFields: Found ${issueTypes.length} issue types from selected issues;- ${issueTypes.map(it => it.name).join(', ')}`);
       const fields = await jiraDataModel.getAllIssueBulkEditFields(issueSelectionState.selectedIssues);
       // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
       const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields, issueTypes);

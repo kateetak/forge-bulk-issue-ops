@@ -6,6 +6,7 @@ import {
   IssueBulkEditField,
   IssueTypeField,
   LabelsField,
+  MultiSelectOption,
   NumberField,
   PriorityField,
   SelectField
@@ -26,8 +27,11 @@ import { OperationOutcome } from 'src/types/OperationOutcome';
 import { FlagOptions, showFlag } from '@forge/bridge';
 import { uuid } from 'src/model/util';
 import { requireFieldEditErrorAcknowledgement } from 'src/model/config';
-import { ObjectMapping } from 'src/types/ObjectMapping';
 import { CascadingSelect, CascadingSelectValue } from './CascadingSelect';
+import { IssueSelectionState } from './IssueSelectionPanel';
+import { FixVersionEditor, FixVersionEditorValue } from './FixVersionEditor';
+import { ComponentsEditor, ComponentsEditorValue } from './ComponentsEditor';
+import { EditOptionSelect } from './EditOptionSelect';
 
 // KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it. To extend
 //          support, start by setting the following constant to true since this will render the unsupported field types
@@ -38,6 +42,7 @@ export const renderUnsupportedFieldTypesDebug = false;
 
 export interface FieldEditorProps {
   field: IssueBulkEditField;
+  issueSelectionState: IssueSelectionState;
   enabled: boolean;
   maybeEditValue?: FieldEditValue;
   onChange: (value: FieldEditValue) => Promise<OperationOutcome>;
@@ -52,8 +57,11 @@ export const isFieldTypeEditingSupported = (fieldType: string): boolean => {
     case 'assignee':
     case 'labels':
     case 'priority':
+    case 'com.atlassian.jira.plugin.system.customfieldtypes:textfield':
     case 'text':
     case 'comment':
+    case 'fixVersions':
+    case 'components':
     case 'duedate':
     case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':
     case 'com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect':
@@ -95,6 +103,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
   }
 
   const onChange = async (value: FieldEditValue): Promise<OperationOutcome> => {
+    console.log(` * Setting "${field.type}" field (ID = ${field.id}) with value: ${JSON.stringify(value)}...`);
     const operationOutcome: OperationOutcome = await props.onChange(value);
     if (!operationOutcome) {
       throw new Error(`No operation outcome returned from onChange for field ${field.name}.`);
@@ -217,46 +226,24 @@ export const FieldEditor = (props: FieldEditorProps) => {
     // KNOWN-2: Filter out the 'REPLACE' option if it exists, as it is not supported in the UI.
     const supportedMultiSelectFieldOptions: MultiSelectFieldEditOption[] = multiSelectFieldOptions.filter(option => option !== 'REPLACE');
     const selectedMultiSelectFieldOption = props.maybeEditValue?.multiSelectFieldOption || 'ADD';
-    const selectedLabelOptions: Option[] = [];
-    const value = props.maybeEditValue?.value;
-    if (value && Array.isArray(value)) {
-      for (const label of value) {
-        const option: Option = {
-          value: label,
-          label: label,
-        };
-        selectedLabelOptions.push(option);
-      }
-    } else if (typeof value === 'string') {
-      const option: Option = {
-        value: value,
-        label: value,
-      };
-      selectedLabelOptions.push(option);
-    }
     const selectedLabels = props.maybeEditValue?.value;
     // KNOWN-3: Labels can not be created within the bulk edit form. The LabelsSelect component needs to be enhanced to support 
     //          this (the underlying Select component supports this. See https://atlassian.design/components/select/code).
     return (
       <div className='edit-options-panel'>
-        <div className='edit-options'>
-          <FixedOptionsSelect
-            label="Edit type"
-            allowMultiple={false}
-            isDisabled={!props.enabled}
-            isInvalid={!operationOutcome.success}
-            allOptionTexts={supportedMultiSelectFieldOptions}
-            selectedOptionTexts={[selectedMultiSelectFieldOption]}
-            onSelect={async (selectedOptionTexts: string[]): Promise<void> => {
-              const multiSelectFieldOption = selectedOptionTexts.length > 0 ? selectedOptionTexts[0] : undefined;
-              const newValue: FieldEditValue = {
-                value: value,
-                multiSelectFieldOption: multiSelectFieldOption as MultiSelectFieldEditOption,
-              }
-              onChange(newValue);
-            }}
-          />
-        </div>
+        <EditOptionSelect
+          multiSelectFieldOptions={supportedMultiSelectFieldOptions}
+          selectedMultiSelectFieldOption={selectedMultiSelectFieldOption}
+          isDisabled={!props.enabled}
+          isInvalid={!operationOutcome.success}
+          onChange={(multiSelectFieldOption: MultiSelectOption): void => {
+            const newValue: FieldEditValue = {
+              value: selectedLabels,
+              multiSelectFieldOption: multiSelectFieldOption as MultiSelectFieldEditOption,
+            }
+            onChange(newValue);
+          }}
+        />
         <div className='edit-value'>
           <LabelsSelect
             label="Labels"
@@ -337,7 +324,23 @@ export const FieldEditor = (props: FieldEditorProps) => {
   }
 
   const renderTextFieldEditor = () => {
-    return <input type="text" defaultValue={'Foo'} />;
+    // return <input type="text" defaultValue={''} />;
+    return (
+      <Textfield
+        name='text-field'
+        placeholder={undefined  }
+        defaultValue=''
+        isDisabled={!props.enabled}
+        isCompact={true}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          const newText = event.target.value;
+            const newValue: FieldEditValue = {
+              value: newText
+            }
+            onChange(newValue);
+        }}
+      />
+    );
   }
 
   const renderCommentFieldEditor = () => {
@@ -366,6 +369,74 @@ export const FieldEditor = (props: FieldEditorProps) => {
         />
       </div>
     )
+  }
+
+  const renderFixVersionsFieldEditor = () => {
+    const initialValue = props.maybeEditValue?.value;
+    const projectIds: string[] = [];
+    if (props.issueSelectionState && props.issueSelectionState.selectedIssues) {
+      for (const issue of props.issueSelectionState.selectedIssues) {
+        if (issue.fields.project.id && !projectIds.includes(issue.fields.project.id)) {
+          projectIds.push(issue.fields.project.id);
+        }
+      }
+    }
+    if (projectIds.length > 0) {
+      return (
+        <div>
+          <FixVersionEditor
+            field={field}
+            projectId={projectIds[0]}
+            isDisabled={!props.enabled}
+            isInvalid={!operationOutcome.success}
+            menuPortalTarget={document.body}
+            onChange={(fixVersionEditorValue: FixVersionEditorValue) => {
+              const newValue: FieldEditValue = {
+                value: fixVersionEditorValue.versionId,
+              }
+              onChange(newValue);
+            }}
+          />
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
+  const renderComponentsFieldEditor = () => {
+    const initialValue = props.maybeEditValue?.value;
+    const projectIds: string[] = [];
+    if (props.issueSelectionState && props.issueSelectionState.selectedIssues) {
+      for (const issue of props.issueSelectionState.selectedIssues) {
+        if (issue.fields.project.id && !projectIds.includes(issue.fields.project.id)) {
+          projectIds.push(issue.fields.project.id);
+        }
+      }
+    }
+    if (projectIds.length > 0) {
+      return (
+        <div>
+          <ComponentsEditor
+            field={field}
+            maybeEditValue={props.maybeEditValue}
+            projectId={projectIds[0]}
+            isDisabled={!props.enabled}
+            isInvalid={!operationOutcome.success}
+            menuPortalTarget={document.body}
+            onChange={(componentsEditorValue: ComponentsEditorValue) => {
+              const newValue: FieldEditValue = {
+                value: componentsEditorValue.componentIds,
+                multiSelectFieldOption: componentsEditorValue.multiSelectFieldOption
+              }
+              onChange(newValue);
+            }}
+          />
+        </div>
+      );
+    } else {
+      return null;
+    }
   }
 
   const renderDateFieldEditor = () => {
@@ -488,10 +559,16 @@ export const FieldEditor = (props: FieldEditorProps) => {
         return renderLabelsFieldEditor();
       case 'priority':
         return renderPriorityFieldEditor();
+      case 'com.atlassian.jira.plugin.system.customfieldtypes:textfield':
+        return renderTextFieldEditor();
       case 'text':
         return renderTextFieldEditor();
       case 'comment':
         return renderCommentFieldEditor();
+      case 'fixVersions':
+        return renderFixVersionsFieldEditor();
+      case 'components':
+        return renderComponentsFieldEditor();
       case 'duedate':
         return renderDateFieldEditor();
       case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':

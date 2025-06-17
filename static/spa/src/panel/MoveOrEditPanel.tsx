@@ -79,12 +79,15 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
         setIssueMoveEditCompletionTime(Date.now());
         if (taskId !== lastMoveEditCompletionTaskId) {
           setLastMoveEditCompletionTaskId(taskId);
+          const description = outcome.status === 'COMPLETE' ?
+            `Work items ${props.bulkOperationMode === 'Move' ? 'moved' : 'edited'} successfully.` :
+            `There were problems ${props.bulkOperationMode === 'Move' ? 'moving' : 'editing'} the work items.`;
           // console.log(`BulkOperationPanel: pollPollMoveOutcome: Move completed with taskId ${taskId}`);
           const flagOptions: FlagOptions = {
             id: taskId,
             type: outcome.status === 'COMPLETE' ? 'info' : 'error',
             title: outcome.status === 'COMPLETE' ? 'Move completed' : `Move ended with status ${outcome.status}`,
-            description: outcome.status === 'COMPLETE' ? 'The issues have been moved successfully.' : 'There were problems moving the issues.',
+            description: description,
             isAutoDismiss: outcome.status === 'COMPLETE',
             actions: outcome.status === 'COMPLETE' ? [] : [{
               text: 'Got it',

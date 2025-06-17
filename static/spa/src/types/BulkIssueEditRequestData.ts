@@ -98,7 +98,7 @@ export type JiraMultipleVersionPickerField = {
 }
 
 export type JiraComponentField = {
-  componentId: string;
+  componentId: number;
 }
 
 export type JiraMultiSelectComponentField = {
@@ -174,7 +174,7 @@ export type JiraIssueFields = {
   multipleSelectClearableUserPickerFields?: JiraMultipleSelectUserPickerField[];
   multipleSelectFields?: JiraMultipleSelectField[];
   multipleVersionPickerFields?: JiraMultipleVersionPickerField[];
-  multiselectComponents?: JiraMultiSelectComponentField[];
+  multiselectComponents?: JiraMultiSelectComponentField;
   originalEstimateField?: JiraDurationField;
   priority?: JiraPriorityField;
   richTextFields?: JiraRichTextField[];
