@@ -658,6 +658,8 @@ class JiraDataModel {
           loadMoreFields = false;
           errorDetected = true;
         }
+        // Delay to avoid hitting API rate limits...
+        await this.delay(100);
       }
       if (!errorDetected) {
         this.projectAndIssueTypeIdsToIssueBulkEditFields.set(key, fields);
@@ -667,6 +669,10 @@ class JiraDataModel {
       // console.log(`getAllIssueBulkEditFields: Loaded task fields ${JSON.stringify(taskFields, null, 2)}`);
       return fields;
     }
+  }
+
+  private delay = (ms: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private pageOfIssueBulkEditFieldApiResponse = async (issues: Issue[], startingAfter: string): Promise<InvocationResult<IssueBulkEditFieldApiResponse>> => {

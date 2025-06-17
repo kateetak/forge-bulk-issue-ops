@@ -11,6 +11,7 @@ import editedFieldsModel, { EditState } from 'src/model/editedFieldsModel';
 import { FieldEditValue } from 'src/types/FieldEditValue';
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 import { OperationOutcome } from 'src/types/OperationOutcome';
+import { IssueSelectionState } from 'src/widget/IssueSelectionPanel';
 
 const currentIssuesDebugEnabled = false;
 const editedFieldsDebugEnabled = false;
@@ -20,7 +21,8 @@ const fieldInfoDebugEnabled = false;
 const toggleColumnWidth = '10px';
 
 export type FieldEditsPanelProps = {
-  selectedIssues: Issue[];
+  // selectedIssues: Issue[];
+  issueSelectionState: IssueSelectionState;
   selectedIssuesTime: number;
   onEditsValidityChange: (editsValid: boolean) => void;
 }
@@ -32,18 +34,19 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   const [fieldIdsToValues, setFieldIdsToValues] = useState<ObjectMapping<FieldEditValue>>({});
   const [fields, setFields] = useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
-  const initialiseStateFromIssues = async (issues: Issue[]): Promise<void> => {
-    await editedFieldsModel.setIssues(issues);
+  const initialiseStateFromIssues = async (issueSelectionState: IssueSelectionState): Promise<void> => {
+    // await editedFieldsModel.setIssues(issues);
+    await editedFieldsModel.setIssueSelectionState(issueSelectionState);
     setFields(editedFieldsModel.getFields());
   }
 
   useEffect(() => {
-    initialiseStateFromIssues(props.selectedIssues);
+    initialiseStateFromIssues(props.issueSelectionState);
   }, []);
 
   useEffect(() => {
-    initialiseStateFromIssues(props.selectedIssues);
-  }, [props.selectedIssues]);
+    initialiseStateFromIssues(props.issueSelectionState);
+  }, [props.issueSelectionState]);
 
   const isSelectedForChange = (fieldId: string): boolean => {
     const editState = fieldIdsToEditStates[fieldId];
@@ -108,7 +111,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   }
 
   const renderFields = () => {
-    if (fields.length === 0 || editedFieldsModel.getIssues().length === 0) {
+    if (fields.length === 0 || editedFieldsModel.getCurrentIssues().length === 0) {
       return <div>No fields available.</div>;
     }
     const filteredFields = fields.filter(field => {

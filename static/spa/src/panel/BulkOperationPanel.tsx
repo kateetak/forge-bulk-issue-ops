@@ -892,7 +892,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             completionState={getStepCompletionState('edit-fields')}
           />
           <FieldEditsPanel
-            selectedIssues={issueSelectionState.selectedIssues}
+            issueSelectionState={issueSelectionState}
             selectedIssuesTime={issueSearchInfoTime}
             onEditsValidityChange={onEditsValidityChange}
           />

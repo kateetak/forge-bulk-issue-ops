@@ -8,6 +8,7 @@ import { FieldEditValue } from "src/types/FieldEditValue";
 import { OperationOutcome } from "src/types/OperationOutcome";
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueType } from "src/types/IssueType";
+import { IssueSelectionState } from "src/widget/IssueSelectionPanel";
 
 export type EditedFieldsModelIteratorCallback = (field: IssueBulkEditField, editedFieldValue: FieldEditValue) => void;
 
@@ -18,13 +19,16 @@ class EditedFieldsModel {
 
   private valueEditsListenerGroup = new ListenerGroup('EditedFieldsModel-value-edits');
   private sendBulkNotification: boolean = false;
-  private issues: Issue[] = [];
+  private issueSelectionState: IssueSelectionState = {
+    selectedIssues: [],
+    selectionValidity: 'invalid-no-issues-selected'
+  };
   private fieldIdsToEditStates: ObjectMapping<EditState> = {};
   private fieldIdsToFields: ObjectMapping<IssueBulkEditField> = {};
   private fieldIdsToValues: ObjectMapping<FieldEditValue> = {};
 
   getCurrentIssues = (): Issue[] => {
-    return this.issues;
+    return this.issueSelectionState.selectedIssues;
   }
 
   getEditedFields = (): ObjectMapping<FieldEditValue> => {
@@ -48,10 +52,6 @@ class EditedFieldsModel {
   getEditCount = (): number => {
     const editedFields = this.getEditedFields();
     return Object.keys(editedFields).length;
-  }
-
-  getIssues = (): Issue[] => {
-    return this.issues;
   }
 
   getFields = (): IssueBulkEditField[] => {
@@ -94,16 +94,20 @@ class EditedFieldsModel {
     }
   }
 
-  setIssues = async (issues: Issue[]) => {
+  setIssueSelectionState = async (issueSelectionState: IssueSelectionState) => {
     // console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
-    const issueTypeMap: Map<string, IssueType> = jiraUtil.getIssueTypesFromIssues(issues);
-    const issueTypes = Array.from(issueTypeMap.values());
-    const fields = await jiraDataModel.getAllIssueBulkEditFields(issues);
-    // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
-    const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields, issueTypes);
-    const sortedFields = this.sortFields(filteredFields);
-    this.setFields(sortedFields);
-    this.issues = issues;
+    if (issueSelectionState.selectionValidity === 'valid') {
+      const issueTypeMap: Map<string, IssueType> = jiraUtil.getIssueTypesFromIssues(issueSelectionState.selectedIssues);
+      const issueTypes = Array.from(issueTypeMap.values());
+      const fields = await jiraDataModel.getAllIssueBulkEditFields(issueSelectionState.selectedIssues);
+      // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
+      const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields, issueTypes);
+      const sortedFields = this.sortFields(filteredFields);
+      this.setFields(sortedFields);
+    } else {
+      this.setFields([]);
+    }
+    this.issueSelectionState = issueSelectionState;
   }
 
   setFieldValue = async (field: IssueBulkEditField, value: FieldEditValue): Promise<OperationOutcome> => {
