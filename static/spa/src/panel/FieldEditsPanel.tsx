@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { LinearProgress } from '@mui/material';
 import Toggle from '@atlaskit/toggle';
 import Textfield from '@atlaskit/textfield';
 import { IconButton } from '@atlaskit/button/new';
 import { Label } from '@atlaskit/form';
-import { Issue } from 'src/types/Issue';
 import { IssueBulkEditField } from 'src/types/IssueBulkEditFieldApiResponse';
 import { FieldEditor, isFieldTypeEditingSupported, renderUnsupportedFieldTypesDebug } from 'src/widget/FieldEditor';
 import { ObjectMapping } from 'src/types/ObjectMapping';
@@ -29,15 +29,20 @@ export type FieldEditsPanelProps = {
 
 export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
+  const [loadingFields, setLoadingFields] = useState<boolean>(true);
   const [fieldNameFilter, setFieldNameFilter] = useState<string>('');
   const [fieldIdsToEditStates, setFieldIdsToEditStates] = useState<ObjectMapping<EditState>>({});
   const [fieldIdsToValues, setFieldIdsToValues] = useState<ObjectMapping<FieldEditValue>>({});
   const [fields, setFields] = useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
   const initialiseStateFromIssues = async (issueSelectionState: IssueSelectionState): Promise<void> => {
-    // await editedFieldsModel.setIssues(issues);
-    await editedFieldsModel.setIssueSelectionState(issueSelectionState);
-    setFields(editedFieldsModel.getFields());
+    setLoadingFields(true);
+    try {
+      await editedFieldsModel.setIssueSelectionState(issueSelectionState);
+      setFields(editedFieldsModel.getFields());
+    } finally {
+      setLoadingFields(false);
+    }
   }
 
   useEffect(() => {
@@ -176,6 +181,19 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     );
   }
 
+  const renderLoadingIndicator = () => {
+    if (loadingFields) {
+      return (
+        <div style={{marginTop: '20px', marginBottom: '20px'}}>
+          <Label htmlFor={''}>Loading fields...</Label>
+          <LinearProgress variant="indeterminate" color="secondary" />
+        </div>
+      );
+    } else {
+      return null;
+    }
+  }
+
   const renderDataDebug = (label: string, data: any) => {
     if (fieldValuesDebugEnabled) {
       return (
@@ -209,6 +227,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
   return (
     <div style={{marginTop:  '20px'}}>
+      {renderLoadingIndicator()}
       {renderFields()}
       {currentIssuesDebugEnabled ? renderCurrentIssuesDebug() : null}
       {editedFieldsDebugEnabled ? renderEditedFieldsDebug() : null}

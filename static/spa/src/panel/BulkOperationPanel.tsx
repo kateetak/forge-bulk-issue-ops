@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Portal from '@atlaskit/portal';
 import Button from '@atlaskit/button/new';
 import LabelsSelect from '../widget/LabelsSelect';
 import { Project } from '../types/Project';
