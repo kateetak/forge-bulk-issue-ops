@@ -12,6 +12,7 @@ import { FieldEditValue } from 'src/types/FieldEditValue';
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 import { OperationOutcome } from 'src/types/OperationOutcome';
 import { IssueSelectionState } from 'src/widget/IssueSelectionPanel';
+import { PanelMessage } from 'src/widget/PanelMessage';
 
 const currentIssuesDebugEnabled = false;
 const editedFieldsDebugEnabled = false;
@@ -117,7 +118,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
 
   const renderFields = () => {
     if (fields.length === 0 || editedFieldsModel.getCurrentIssues().length === 0) {
-      return <div>No fields available.</div>;
+      return <PanelMessage message={'No fields available.'} />;
     }
     const filteredFields = fields.filter(field => {
       return field.name.toLowerCase().includes(fieldNameFilter);
