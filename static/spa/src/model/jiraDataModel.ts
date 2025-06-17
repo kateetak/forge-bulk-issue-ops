@@ -683,7 +683,7 @@ class JiraDataModel {
       queryOptions += `${separator}issueIdsOrKeys=${issue.key}`;
     }
     if (startingAfter) {
-      queryOptions += `&startingAfter=${startingAfter}`;
+      queryOptions += `&startingAfter=${encodeURIComponent(startingAfter)}`;
     }
     // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-bulk-operations/#api-rest-api-3-bulk-issues-fields-get
     const path = `/rest/api/3/bulk/issues/fields${queryOptions}`;
