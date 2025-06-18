@@ -45,8 +45,8 @@ permissions:
       #   - "*.hello.atlassian-dev.net"
     scripts:
       - cdn.jsdelivr.net
-    styles:
-      - cdn.jsdelivr.net
+    # styles:
+    #   - cdn.jsdelivr.net
   content:
     styles:
       - unsafe-inline
