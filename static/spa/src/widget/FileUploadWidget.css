@@ -1,12 +1,12 @@
 
 .drag-drop {
-  background: #fff;
+  background: var(--ds-surface);
   border: 1px solid var(--border-color);
   border-radius: 8px;
 }
 .document-uploader {
-  border: 2px dashed #0052CC;
-  background-color: #DEEBFF;
+  border: 2px dashed var(--ds-border-information);
+  background-color: var(--ds-surface);
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -17,8 +17,8 @@
   cursor: pointer;
 
   &.active {
-    border-color: #006644;
-  background-color: #ffffff;
+    border-color: var(--ds-border-success);
+    background-color: var(--ds-surface);
   }
 
   .upload-info {
@@ -74,7 +74,7 @@
       p {
         margin: 0;
         font-size: 14px;
-        color: #333;
+        /* color: #333; */
       }
     }
 
@@ -83,12 +83,12 @@
       cursor: pointer;
       svg {
         font-size: 18px;
-        color: #000;
+        /* color: #000; */
       }
       &:hover {
         svg {
-          color: #fff;
-          background-color: #BF2600;
+          color: var(--ds-text-inverse);
+          background-color: var(--ds-icon-danger);
         }
       }
     }
