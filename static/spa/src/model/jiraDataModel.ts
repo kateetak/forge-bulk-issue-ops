@@ -175,7 +175,7 @@ class JiraDataModel {
       const labelsPage = await response.json();
       // console.log(`Labels: ${JSON.stringify(labels, null, 2)}`);
       this.labelPagesToLabels[cacheKey] = labelsPage;
-      console.log(`getAllLabels: Page labels: ${JSON.stringify(labelsPage, null, 2)}`);
+      // console.log(`getAllLabels: Page labels: ${JSON.stringify(labelsPage, null, 2)}`);
       return labelsPage;
     }
   }
@@ -700,7 +700,7 @@ class JiraDataModel {
   }
 
   private pageOfIssueBulkEditFieldApiResponse = async (issues: Issue[], startingAfter: string): Promise<InvocationResult<IssueBulkEditFieldApiResponse>> => {
-    console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields after "${startingAfter}"...`);
+    // console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields after "${startingAfter}"...`);
     let queryOptions = '';
     for (const issue of issues) {
       const separator = queryOptions ? '&' : '?';
