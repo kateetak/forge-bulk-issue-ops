@@ -55,13 +55,6 @@ class JiraDataModel {
   // only makes sense for the entire set of results.
   private projectAndIssueTypeIdsToIssueBulkEditFields = new Map<string, IssueBulkEditField[]>();
 
-  constructor() {
-    // Eagerly load cachable data is separate threads in order for it to be faster to
-    // load when needed...
-    setTimeout(this.getissueTypes);
-    setTimeout(this.getAllFields);
-  }
-
   // TODO: Implement memoization
   public getissueTypes = async (): Promise<IssueType[]> => {
     if (this.cachedIssueTypes.length === 0) {
