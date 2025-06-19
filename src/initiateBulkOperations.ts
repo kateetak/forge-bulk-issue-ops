@@ -1,33 +1,56 @@
-import api, { APIResponse, route } from  '@forge/api'
+import api, { APIResponse, RequestProductMethods, route } from  '@forge/api'
 import { InvocationResult } from './types/InvocationResult';
 import { TaskRequestOutcome } from './types/TaskRequestOutcome';
-import { getBasicAuthHeader, getBulkOpsAppGroupId, getSiteDomain } from './userManagementConfig';
+import { getBasicAuthHeader, getBulkOpsAppGroupId } from './userManagementConfig';
+import { ServerInfo } from './types/ServerInfo';
 
 // This is set to false since the app user can't be authorized to add/remove users to/from groups.
-const manageUserGroupsUsingAppUserAccount = false
+const manageUserGroupsUsingAppUserAccount = false;
 
 export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
   const bulkOpsAppGroupId = getBulkOpsAppGroupId();
   let result: InvocationResult<TaskRequestOutcome>;
-  await addUserToGroup(accountId, bulkOpsAppGroupId);
-  try {
-    result = await doBulkMove(bulkIssueMoveRequestData);
-  } finally {
-    await removeUserFromGroup(accountId, bulkOpsAppGroupId);
+  const serverInfoResult = await getServerInfo(api.asUser());
+  if (serverInfoResult.ok) {
+    const siteUrl = removeTrailingSlashIfExistent(serverInfoResult.data.baseUrl);
+    await addUserToGroup(siteUrl, accountId, bulkOpsAppGroupId);
+    try {
+      result = await doBulkMove(bulkIssueMoveRequestData);
+    } finally {
+      await removeUserFromGroup(siteUrl, accountId, bulkOpsAppGroupId);
+    }
+    return result;
+  } else {
+    console.error(`Failed to retrieve server info: ${serverInfoResult.errorMessage}`);
+    return {
+      ok: false,
+      status: serverInfoResult.status,
+      errorMessage: `Failed to retrieve server info: ${serverInfoResult.errorMessage}`
+    };
   }
-  return result;
 }
 
 export const initiateBulkEdit = async (accountId: string, bulkIssueEditRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
   const bulkOpsAppGroupId = getBulkOpsAppGroupId();
   let result: InvocationResult<TaskRequestOutcome>;
-  await addUserToGroup(accountId, bulkOpsAppGroupId);
-  try {
-    result = await doBulkEdit(bulkIssueEditRequestData);
-  } finally {
-    await removeUserFromGroup(accountId, bulkOpsAppGroupId);
+  const serverInfoResult = await getServerInfo(api.asUser());
+  if (serverInfoResult.ok) {
+    const siteUrl = removeTrailingSlashIfExistent(serverInfoResult.data.baseUrl);
+    await addUserToGroup(siteUrl, accountId, bulkOpsAppGroupId);
+    try {
+      result = await doBulkEdit(bulkIssueEditRequestData);
+    } finally {
+      await removeUserFromGroup(siteUrl, accountId, bulkOpsAppGroupId);
+    }
+    return result;
+  } else {
+    console.error(`Failed to retrieve server info: ${serverInfoResult.errorMessage}`);
+    return {
+      ok: false,
+      status: serverInfoResult.status,
+      errorMessage: `Failed to retrieve server info: ${serverInfoResult.errorMessage}`
+    };
   }
-  return result;
 }
 
 const doBulkMove = async (bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
@@ -62,7 +85,7 @@ const doBulkEdit = async (bulkIssueMoveRequestData: any): Promise<InvocationResu
   return invocationResult;
 }
 
-const addUserToGroup = async (accountId: string, groupId: string): Promise<any> => {
+const addUserToGroup = async (siteUrl: string, accountId: string, groupId: string): Promise<any> => {
   console.log(`Adding user with accountId: ${accountId} to group with groupId: ${groupId}`);
   const requestData = {
     accountId: accountId
@@ -79,7 +102,7 @@ const addUserToGroup = async (accountId: string, groupId: string): Promise<any> 
       body: JSON.stringify(requestData)
     });
   } else {
-    response = await fetch(`https://${getSiteDomain()}/rest/api/3/group/user?groupId=${groupId}`, {
+    response = await fetch(`${siteUrl}/rest/api/3/group/user?groupId=${groupId}`, {
       method: 'POST',
       headers: {
         'Authorization': `${getBasicAuthHeader()}`,
@@ -94,7 +117,7 @@ const addUserToGroup = async (accountId: string, groupId: string): Promise<any> 
   return result;
 }
 
-const removeUserFromGroup = async (accountId: string, groupId: string): Promise<number> => {
+const removeUserFromGroup = async (siteUrl: string, accountId: string, groupId: string): Promise<number> => {
   console.log(`Removing user with accountId: ${accountId} from group with groupId: ${groupId}`);
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-group-user-delete
   let response: APIResponse;
@@ -103,7 +126,7 @@ const removeUserFromGroup = async (accountId: string, groupId: string): Promise<
       method: 'DELETE'
     });
   } else {
-    response = await fetch(`https://${getSiteDomain()}/rest/api/3/group/user?groupId=${groupId}&accountId=${accountId}`, {
+    response = await fetch(`${siteUrl}/rest/api/3/group/user?groupId=${groupId}&accountId=${accountId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `${getBasicAuthHeader()}`,
@@ -112,6 +135,15 @@ const removeUserFromGroup = async (accountId: string, groupId: string): Promise<
   }
   console.log(` * Response status: ${response.status}`);
   return response.status;
+}
+
+const getServerInfo = async (asPrincipal: RequestProductMethods): Promise<InvocationResult<ServerInfo>> => {
+  const response = await asPrincipal.requestJira(route`/rest/api/3/serverInfo`, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  });
+  return await readResponse<ServerInfo>(response);
 }
 
 const readResponse = async <T>(response: any): Promise<InvocationResult<T>> => {
@@ -128,4 +160,12 @@ const readResponse = async <T>(response: any): Promise<InvocationResult<T>> => {
     invocationResult.errorMessage = errorMessage;
   }
   return invocationResult;
+}
+
+const removeTrailingSlashIfExistent = (url: string): string => {
+  if (url.endsWith('/')) {
+    return url.slice(0, -1);
+  } else {
+    return url;
+  }
 }

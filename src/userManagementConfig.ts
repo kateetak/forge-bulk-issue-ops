@@ -7,19 +7,6 @@ export const getBasicAuthHeader = (): string => {
 }
 
 /**
- * Returns something like "your-tenant.atlassian.net".
- * This must be configured as an environment variable as follows:
- * > forge variables set SITE_DOMAIN xxxxxx
- * > forge variables set --environment production SITE_DOMAIN xxxxxx
- * > export FORGE_USER_VAR_SITE_DOMAIN=xxxxxx
- * See https://developer.atlassian.com/platform/forge/environments-and-versions/.
- */
-export const getSiteDomain = (): string => {
-  console.log(`getSiteDomain() called, returning: ${process.env.SITE_DOMAIN}`);
-  return process.env.SITE_DOMAIN;
-}
-
-/**
  * Returns something like "some-bot@yourdomain.com".
  * This must be configured as an environment variable as follows:
  * > forge variables set MANAGE_USERS_USER_NAME xxxxxx
