@@ -151,7 +151,8 @@ Supported:
 * com.atlassian.jira.plugin.system.customfieldtypes:datetime
 * com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect
 
-As per KNOWN-5, the following fields are not supported, although there could be more unsupported fields:
+The following fields do not support bulk editing, some of which are due to lack of support from Jira (see https://support.atlassian.com/jira-software-cloud/docs/edit-multiple-issues/#Fields-that-can%E2%80%99t-be-bulk-edited), whilst others are due to lack of support from this app:
+
 * com.atlassian.jira.ext.charting:firstresponsedate
 * com.atlassian.jira.ext.charting:timeinstatus
 * com.atlassian.jira.plugins.service-entity:service-entity-field-cftype
