@@ -19,7 +19,13 @@ class IssueMoveController {
     sendBulkNotification: boolean,
   ): Promise<IssueMoveEditRequestOutcome> => {
     const allProjectsSearchInfo = await jiraDataModel.pageOfProjectSearchInfo('');
-    const allIssueTypes: IssueType[] = await jiraDataModel.getissueTypes();
+    const issueTypesInvocationResult: InvocationResult<IssueType[]> = await jiraDataModel.getIssueTypes();
+    if (!issueTypesInvocationResult.ok) {
+      await this.delay(2000);
+      return await this.initiateMove(destinationProjectId, issues, targetIssueTypeIdsToTargetMandatoryFields, sendBulkNotification);
+    }
+
+    const allIssueTypes: IssueType[] = issueTypesInvocationResult.data;
     const destinationProject = allProjectsSearchInfo.values.find(project => project.id === destinationProjectId);
     if (destinationProject) {
       const bulkIssueMoveRequestDataBuilder = new BulkIssueMoveRequestDataBuilder();
@@ -155,6 +161,10 @@ class IssueMoveController {
     } else {
       return false;
     }
+  }
+
+  private delay = (milliseconds: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
   }
 
 }

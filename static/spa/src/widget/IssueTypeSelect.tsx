@@ -25,7 +25,7 @@ const IssueTypeSelect = (props: IssueTypeSelectProps) => {
  
   const onChange = async (selectedOption: undefined | Option): Promise<void> => {
     // console.log(`IssueTypeSelect.onChange: `, selectedOptions);
-    const issueTypes: IssueType[] = props.selectableIssueTypes;;
+    const issueTypes: IssueType[] = props.selectableIssueTypes;
     const selectedIssueTypes: IssueType[] = [];
     const issueType = selectedOption ? issueTypes.find(issueType => issueType.id === selectedOption.value) : undefined;
     await props.onIssueTypeSelect(issueType);

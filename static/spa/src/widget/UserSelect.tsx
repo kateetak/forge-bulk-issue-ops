@@ -25,7 +25,7 @@ export type UsersSelectProps = {
 
 const UsersSelect = (props: UsersSelectProps) => {
 
-  const [loadingOption, setLoadingOption] = useState<boolean>(false);
+  const [loadingOptions, setLoadingOptions] = useState<boolean>(false);
   const [currentUsers, setCurrentUsers] = useState<User[]>([]);
   const lastInvocationNumberRef = useRef<number>(0);
 
@@ -70,21 +70,26 @@ const UsersSelect = (props: UsersSelectProps) => {
     lastInvocationNumberRef.current = lastInvocationNumberRef.current + 1;
     const myInvocationNumber = lastInvocationNumberRef.current;
     // console.log(`UsersSearhSelect: In promiseOptions(${inputValue})`);
-    setLoadingOption(true);
+    setLoadingOptions(true);
     try {
       let retrevedUsers = await jiraDataModel.searchUsers(inputValue);
       if (myInvocationNumber >= lastInvocationNumberRef.current) {
         if (props.filterUsers) {
           retrevedUsers = await props.filterUsers(retrevedUsers);
         }
-        setCurrentUsers(retrevedUsers);
-        return usersToOptions(retrevedUsers);
+        if (myInvocationNumber >= lastInvocationNumberRef.current) {
+          setCurrentUsers(retrevedUsers);
+          return usersToOptions(retrevedUsers);
+        } else {
+          // Return options from currentUsers since this invocation is stale.
+          return usersToOptions(currentUsers);
+        }
       } else {
         // Return options from currentUsers since this invocation is stale.
         return usersToOptions(currentUsers);
       }
     } finally {
-      setLoadingOption(false);
+      setLoadingOptions(false);
     } 
   }
 

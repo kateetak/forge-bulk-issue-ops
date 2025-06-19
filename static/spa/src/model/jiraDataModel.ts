@@ -35,7 +35,12 @@ import { ProjectComponent } from 'src/types/ProjectComponent';
 class JiraDataModel {
 
   private cachedProjectKeysToProjects = new Map<string, Project>();
-  private cachedIssueTypes: IssueType[] = [];
+  private cachedIssueTypesInvocationResult: InvocationResult<IssueType[]> = {
+    ok: false,
+    status: 0,
+    data: [],
+    errorMessage: 'Not yet fetched'
+  };
   private cachedFields: Field[] = [];
   private fieldAndContextIdsToCustomFieldContextOptions = new Map<string, CustomFieldContextOption[]>();
   private projectIdsToProjectCreateIssueMetadata = new Map<string, ProjectCreateIssueMetadata>();
@@ -56,11 +61,14 @@ class JiraDataModel {
   private projectAndIssueTypeIdsToIssueBulkEditFields = new Map<string, IssueBulkEditField[]>();
 
   // TODO: Implement memoization
-  public getissueTypes = async (): Promise<IssueType[]> => {
-    if (this.cachedIssueTypes.length === 0) {
-      this.cachedIssueTypes = await this.fetchIssueTypes();
+  public getIssueTypes = async (): Promise<InvocationResult<IssueType[]>> => {
+    if (this.cachedIssueTypesInvocationResult.ok && this.cachedIssueTypesInvocationResult.data.length > 0) {
+      // console.log(`JiraDataModel.getissueTypes: Returning cached issue types`);
+      return this.cachedIssueTypesInvocationResult;
+    } else {
+      this.cachedIssueTypesInvocationResult = await this.fetchIssueTypes();
+      return this.cachedIssueTypesInvocationResult;
     }
-    return this.cachedIssueTypes;
   }
 
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get
@@ -121,20 +129,18 @@ class JiraDataModel {
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get
-  public fetchIssueTypes = async () => {
+  public fetchIssueTypes = async (): Promise<InvocationResult<IssueType[]>> => {
     const response = await requestJira(`/rest/api/3/issuetype`, {
       headers: {
         'Accept': 'application/json'
       }
     });
-    const issueTypes = await response.json();
-    // console.log(`Issue Types: ${JSON.stringify(issueTypes, null, 2)}`);
-    return issueTypes;
+    const invocationResult: InvocationResult<IssueType[]> = await this.readResponse(response);
+    return invocationResult;
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-labels/#api-rest-api-3-label-get
   public getAllLabels = async () => {
-    // const maxResultsPerPage = 1000;
     const maxResultsPerPage = 1000;
     let startAt = 0;
     let allLabels: string[] = [];

@@ -56,28 +56,39 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
   }, [props.targetProjectsFilterConditionsChangeTime]);
 
   const onChange = async (selection: undefined | Option | Option[]): Promise<void> => {
-    // console.log(`ProjectsSelect.onChange: ${selection ? JSON.stringify(selection) : 'undefined'}`);
+    console.log(`ProjectsSelect.onChange: ${selection ? JSON.stringify(selection) : 'undefined'}`);
     let selectedProjects: Project[] = [];
     if (!selection) {
       selectedProjects = [];
     } else if (props.isMulti) {
       const selectedOptions = selection as Option[];
-      for (const selectedOption of selectedOptions) {
-        const project = filteredProjects.find(project => project.id === selectedOption.value);
-        if (project) {
-          selectedProjects.push(project);
-        }
-      }
+      selectedProjects = rebuildSelectedProjects(selectedOptions);
     } else {
       const selectedOption = selection as Option;
-      if (selectedOption.value) {
-        const selectedUser = filteredProjects.find(project => project.id === selectedOption.value);
-        selectedProjects = [selectedUser];
+      selectedProjects = rebuildSelectedProjects([selectedOption]);
+    }
+    
+    // Reset the user input since the UI clears the text in the select field...
+    setUserInput('');
+    await props.onProjectsSelect(selectedProjects);
+  }
+
+  const rebuildSelectedProjects = (selectedOptions: Option[]): Project[] => {
+    const selectedProjects: Project[] = [];
+    for (const selectedOption of selectedOptions) {
+      const projectInFilteredProjects = filteredProjects.find(project => project.id === selectedOption.value);
+      if (projectInFilteredProjects) {
+        selectedProjects.push(projectInFilteredProjects);
       } else {
-        selectedProjects = [];
+        const projectInExistingSelectedProjects = props.selectedProjects.find(project => project.id === selectedOption.value);
+        if (projectInExistingSelectedProjects) {
+          selectedProjects.push(projectInExistingSelectedProjects);
+        } else {
+          console.warn(`ProjectsSelect.rebuildSelectedProjects: Could not find project with id ${selectedOption.value} in filteredProjects or selectedProjects`);
+        }
       }
     }
-    await props.onProjectsSelect(selectedProjects);
+    return selectedProjects;
   }
 
   const projectToOption = (project: Project): Option => {
@@ -148,7 +159,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
 
   return (
     <>
-      <Label htmlFor="projects-select">{props.label}</Label>
+      <Label htmlFor="projects-select">{props.label} {userInput}</Label>
       {renderSelect()}
     </>
   );

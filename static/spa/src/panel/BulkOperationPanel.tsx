@@ -23,7 +23,7 @@ import FieldMappingPanel, { FieldMappingsState, nilFieldMappingsState } from './
 import targetProjectFieldsModel from 'src/controller/TargetProjectFieldsModel';
 import { IssueSelectionPanel, IssueSelectionState, IssueSelectionValidity } from '../widget/IssueSelectionPanel';
 import bulkOperationRuleEnforcer from 'src/extension/bulkOperationRuleEnforcer';
-import { allowBulkEditsAcrossMultipleProjects, allowBulkEditsFromMultipleProjects, allowBulkMovesFromMultipleProjects, filterModeDefault } from '../extension/bulkOperationStaticRules';
+import { allowBulkEditsAcrossMultipleProjects, allowBulkEditsFromMultipleProjects, allowBulkMovesFromMultipleProjects, filterModeDefault, showLabelsSelect } from '../extension/bulkOperationStaticRules';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
@@ -44,6 +44,7 @@ import ImportIssuesPanel from './ImportIssuesPanel';
 import ImportProjectAndIssueTypeSelectionPanel from './ImportProjectAndIssueTypeSelectionPanel';
 import importModel from 'src/model/importModel';
 import { bulkImportEnabled } from 'src/model/config';
+import { InvocationResult } from 'src/types/InvocationResult';
 
 const showDebug = false;
 const showCompletionStateDebug = false;
@@ -215,29 +216,38 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }
 
   const retrieveAndSetDebugInfo = async (): Promise<void> => {
+    const projectSearchInfo = await jiraDataModel.pageOfProjectSearchInfo();
+    const issueTypesInvocationResult: InvocationResult<IssueType[]> = await jiraDataModel.getIssueTypes();
     const debugInfo: DebugInfo = {
-      projects: (await jiraDataModel.pageOfProjectSearchInfo()).values,
-      issueTypes: await jiraDataModel.getissueTypes()
+      projects: projectSearchInfo.values,
+      issueTypes: issueTypesInvocationResult.ok ? issueTypesInvocationResult.data : []
     }
     setDebugInfo(debugInfo);
   }
 
-  const initialiseSelectedIssueTypes = async (): Promise<void> => {
-    const allIssueTypes: IssueType[] = await jiraDataModel.getissueTypes();
-    setAllIssueTypes(allIssueTypes);
-    // setAllIssueTypesTime(Date.now());
-    setLastDataLoadTime(Date.now());
-    if (selectedIssueTypesTime === 0) {
-      setSelectedIssueTypes(allIssueTypes);
+  const initialiseSelectedIssueTypes = async (allowedRetryCount: number): Promise<void> => {
+    const issueTypesInvocationResult: InvocationResult<IssueType[]> = await jiraDataModel.getIssueTypes();
+    if (issueTypesInvocationResult.ok) {
+      setAllIssueTypes(allIssueTypes);
+      setLastDataLoadTime(Date.now());
+      if (selectedIssueTypesTime === 0) {
+        setSelectedIssueTypes(allIssueTypes);
+      } else {
+        // Don't override if there's already a selection
+      }
+    } else if (allowedRetryCount > 0) {
+      console.warn(`BulkOperationPanel: initialiseSelectedIssueTypes: Error retrieving issue types: ${issueTypesInvocationResult.errorMessage}`);
+      // Delay and retry...
+      setTimeout(() => initialiseSelectedIssueTypes(allowedRetryCount - 1), 2000);
     } else {
-      // Don't override if there's already a selection
+      console.error(`BulkOperationPanel: initialiseSelectedIssueTypes: Max retries exceeded: ${issueTypesInvocationResult.errorMessage}`);
     }
   }
 
   useEffect(() => {
     defineSteps();
     // updateAllProjectInfo();
-    initialiseSelectedIssueTypes();
+    initialiseSelectedIssueTypes(2);
     if (showDebug) {
       retrieveAndSetDebugInfo();
     }
@@ -616,7 +626,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
         <>
           {renderFromProjectSelect()}
           {selectedFromProjects.length ? renderIssueTypesSelect() : null}
-          {renderLabelsSelect()}
+          {showLabelsSelect ? renderLabelsSelect() : null}
         </>
       );  
     }
