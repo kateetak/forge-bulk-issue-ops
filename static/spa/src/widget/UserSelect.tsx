@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Label } from '@atlaskit/form';
 import Select from '@atlaskit/select';
 import { Option } from '../types/Option'
@@ -27,6 +27,7 @@ const UsersSelect = (props: UsersSelectProps) => {
 
   const [loadingOption, setLoadingOption] = useState<boolean>(false);
   const [currentUsers, setCurrentUsers] = useState<User[]>([]);
+  const lastInvocationNumberRef = useRef<number>(0);
 
   const onChange = async (selection: undefined | Option | Option[]): Promise<void> => {
     // console.log(`UsersSelect.onChange: `, selectedOptions);
@@ -66,15 +67,22 @@ const UsersSelect = (props: UsersSelectProps) => {
   }
 
   const promiseOptions = async (inputValue: string): Promise<Option[]> => {
+    lastInvocationNumberRef.current = lastInvocationNumberRef.current + 1;
+    const myInvocationNumber = lastInvocationNumberRef.current;
     // console.log(`UsersSearhSelect: In promiseOptions(${inputValue})`);
     setLoadingOption(true);
     try {
       let retrevedUsers = await jiraDataModel.searchUsers(inputValue);
-      if (props.filterUsers) {
-        retrevedUsers = await props.filterUsers(retrevedUsers);
+      if (myInvocationNumber >= lastInvocationNumberRef.current) {
+        if (props.filterUsers) {
+          retrevedUsers = await props.filterUsers(retrevedUsers);
+        }
+        setCurrentUsers(retrevedUsers);
+        return usersToOptions(retrevedUsers);
+      } else {
+        // Return options from currentUsers since this invocation is stale.
+        return usersToOptions(currentUsers);
       }
-      setCurrentUsers(retrevedUsers);
-      return usersToOptions(retrevedUsers);
     } finally {
       setLoadingOption(false);
     } 

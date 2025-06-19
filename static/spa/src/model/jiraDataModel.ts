@@ -277,12 +277,17 @@ class JiraDataModel {
     if (mockGetProjects) {
       return await getMockProjectSearchInfo(query, maxResults);
     } else {
-      const response = await requestJira(`/rest/api/3/project/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}&expand=issueTypes`, {
+      const url = `/rest/api/3/project/search?query=${encodeURIComponent(query)}&startAt=${startAt}&maxResults=${maxResults}&expand=issueTypes`;
+      // console.log(`JiraDataModel.pageOfProjectSearchInfo: Fetching projects with URL: ${url}`);
+      const response = await requestJira(url, {
         headers: {
           'Accept': 'application/json'
         }
       });
       // console.log(`Response: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
+      }
       const projectSearchInfo = await response.json();
       this.cacheProjects(projectSearchInfo.values);
       // console.log(`Projects: ${JSON.stringify(projects, null, 2)}`);
@@ -711,7 +716,7 @@ class JiraDataModel {
     }
     // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-bulk-operations/#api-rest-api-3-bulk-issues-fields-get
     const path = `/rest/api/3/bulk/issues/fields${queryOptions}`;
-    console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields for ${issues.length} issues;- path="${path}"`);
+    // console.log(`JiraDataModel.pageOfIssueBulkEditFieldApiResponse: Fetching fields for ${issues.length} issues;- path="${path}"`);
     const response = await requestJira(path, {
       headers: {
         'Accept': 'application/json'

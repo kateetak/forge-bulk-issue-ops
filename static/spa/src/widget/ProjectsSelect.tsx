@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Label } from '@atlaskit/form';
 import Select from '@atlaskit/select';
 import { Option } from '../types/Option'
@@ -28,6 +28,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
   const [userInput, setUserInput] = useState<string>('');
   const [foundProjects, setFoundProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const lastInvocationNumberRef = useRef<number>(0);
 
   const filterProjects = async (projectsToFilter: Project[]): Promise<Project[]> => {
     let filteredProjects = projectsToFilter;
@@ -55,7 +56,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
   }, [props.targetProjectsFilterConditionsChangeTime]);
 
   const onChange = async (selection: undefined | Option | Option[]): Promise<void> => {
-    // console.log(`ProjectsSelect.onChange: `, selectedOptions);
+    // console.log(`ProjectsSelect.onChange: ${selection ? JSON.stringify(selection) : 'undefined'}`);
     let selectedProjects: Project[] = [];
     if (!selection) {
       selectedProjects = [];
@@ -92,15 +93,35 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
   }
 
   const promiseOptions = async (inputValue: string): Promise<Option[]> => {
-    // console.log(`ProjectsSearhSelect: In promiseOptions(${inputValue})`);
+    lastInvocationNumberRef.current = lastInvocationNumberRef.current + 1;
+    const myInvocationNumber = lastInvocationNumberRef.current;
+    // console.log(`ProjectsSearhSelect: In promiseOptions(inputValue = '${inputValue}')`);
     setLoadingOptions(true);
     try {
       setUserInput(inputValue);
-      const retrevedProjectsInfo = await jiraDataModel.pageOfProjectSearchInfo(userInput);
-      const foundProjects = retrevedProjectsInfo.values;
-      setFoundProjects(foundProjects);
-      const filteredProjects = await filterFoundProjects(foundProjects);
-      return projectsToOptions(filteredProjects);
+      const retrevedProjectsInfo = await jiraDataModel.pageOfProjectSearchInfo(inputValue);
+      // console.log(`ProjectsSelect.promiseOptions: retrevedProjectsInfo for inputValue = ${inputValue} (userInput = ${userInput})`);
+      if (myInvocationNumber >= lastInvocationNumberRef.current) {
+        console.log(`ProjectsSelect.promiseOptions: userInput is still '${inputValue}', applying results...`);
+        const foundProjects = retrevedProjectsInfo.values;
+        setFoundProjects(foundProjects);
+        const filteredProjects = await filterFoundProjects(foundProjects);
+        if (myInvocationNumber >= lastInvocationNumberRef.current) {
+          setFilteredProjects(filteredProjects);
+          const options = projectsToOptions(filteredProjects);
+          return options;
+        } else {
+          // Return options from filteredProjects since this invocation is stale.
+          // console.log(`ProjectsSelect.promiseOptions: after filtering, userInput changed from '${userInput}' to '${inputValue}', ignoring results`);
+          const options = projectsToOptions(filteredProjects);
+          return options;
+        }
+      } else {
+        // Return options from filteredProjects since this invocation is stale.
+        // console.log(`ProjectsSelect.promiseOptions: userInput changed from '${userInput}' to '${inputValue}', ignoring results`);
+        const options = projectsToOptions(filteredProjects);
+        return options;
+      }
     } finally {
       setLoadingOptions(false);
     } 
