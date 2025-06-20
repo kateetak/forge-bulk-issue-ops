@@ -300,8 +300,8 @@ const ImportColumnMappingPanel = (props: ImportColumnMappingPanelProps) => {
       );
     }
     return (
-      <div style={{margin: '20px 0px'}}>
-        <table>
+      <div className="data-table-container" style={{margin: '20px 0px'}}>
+        <table className="data-table">
           <thead>
             <tr>
               <th>Field Name</th>

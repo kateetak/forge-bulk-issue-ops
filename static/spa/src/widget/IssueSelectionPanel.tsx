@@ -240,11 +240,13 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     }) : props.issueSearchInfo.issues;
     const renderedIssueRows = hasIssues ? filterIssues.map(renderIssueRow) : null;
     const renderedIssuesTable = hasIssues ? (
-      <table className="issue-selection-table">
-        <tbody>
-          {renderedIssueRows}
-        </tbody>
-      </table>
+      <div  className="data-table-container">
+        <table className="issue-selection-table data-table">
+          <tbody>
+            {renderedIssueRows}
+          </tbody>
+        </table>
+      </div>
     ) : null;
     return (
       <>

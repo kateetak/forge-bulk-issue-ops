@@ -291,8 +291,8 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       }
     });
     const renderedTable = (
-      <div>
-        <table className="field-mapping-table">
+      <div className="data-table-container">
+        <table className="field-mapping-table data-table">
           <thead>
             <tr>
               <th className="no-break">Type</th>

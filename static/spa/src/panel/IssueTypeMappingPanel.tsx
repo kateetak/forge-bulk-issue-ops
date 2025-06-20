@@ -180,8 +180,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
 
   const renderMappings = () => {
     return (
-      <div>
-        <table>
+      <div className="data-table-container">
+        <table className="data-table">
           <thead>
             <tr>
               <th className="no-break">Project</th>

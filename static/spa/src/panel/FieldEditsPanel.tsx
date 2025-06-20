@@ -36,8 +36,10 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   const [fields, setFields] = useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
   const initialiseStateFromIssues = async (issueSelectionState: IssueSelectionState): Promise<void> => {
+    // console.log(`FieldEditsPanel.initialiseStateFromIssues: Initialising state from issue selection state: validity: '${issueSelectionState.selectionValidity}', issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}...`);
     setLoadingFields(true);
     try {
+      setFields([]);
       await editedFieldsModel.setIssueSelectionState(issueSelectionState);
       setFields(editedFieldsModel.getFields());
     } finally {
@@ -103,7 +105,7 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     return (
       <Textfield
         name='fieldNameFilter'
-        placeholder='Filter by field name...'
+        placeholder='Field'
         value={fieldNameFilter}
         isCompact={true}
         elemAfterInput={renderClearFilterControl()}
@@ -116,6 +118,9 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   }
 
   const renderFields = () => {
+    if (props.issueSelectionState.selectionValidity !== 'valid') {
+      return <PanelMessage message={'Waiting for a valid selection of issues.'} />;
+    }
     if (fields.length === 0 || editedFieldsModel.getCurrentIssues().length === 0) {
       if (loadingFields) {
         return (
@@ -134,14 +139,8 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
     const renderedTableHead = (
       <thead>
         <tr>
-          <th style={{ width: toggleColumnWidth }}></th>
-          <th>{renderFieldNameFilterControl()}</th>
-          <th></th>
-        </tr>
-        <tr>
-          <th style={{ width: toggleColumnWidth }}></th>
-          <th><Label htmlFor=''>Field name</Label></th>
-          <th><Label htmlFor=''>Field value</Label></th>
+          <th colSpan={2}>{renderFieldNameFilterControl()}</th>
+          <th style={{alignContent: 'center'}}><Label htmlFor=''>Field value</Label></th>
         </tr>
       </thead>
     );
@@ -180,8 +179,8 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
       }
     });
     return (
-      <div>
-        <table className="field-edit-table">
+      <div className="data-table-container">
+        <table className="field-edit-table data-table">
           {renderedTableHead}
           <tbody>
             {renderedTableRows}

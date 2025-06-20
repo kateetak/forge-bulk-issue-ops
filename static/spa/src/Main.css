@@ -130,19 +130,41 @@ div.content-panel {
   min-width: 300px;
 }
 
-table.issue-selection-table {
+div.data-table-container {
   width: 100%;
   display: block;
+  min-height: 300px;
+  max-height: 500px;
+  overflow: auto;
 }
 
-table.issue-selection-table > tbody {
-  border-bottom-width: 0px;
-  display: block;
-  overflow: auto;
-  min-height: 300px;
-  max-height: 400px;
+table.data-table {
   width: 100%;
+  /* display: block; */
 }
+
+/* table.data-table > thead {
+  display: table;
+  width: 100%;
+} */
+
+/* table.data-table > thead > tr {
+  position: sticky;
+  top: 0;
+} */
+
+table.data-table > tbody {
+  /* display: block; */
+  /* width: 100%; */
+  /* overflow: auto; */
+  /* min-height: 300px; */
+  /* max-height: 500px; */
+  border-bottom-width: 0px;
+}
+
+/* table.issue-selection-table > tbody {
+  display: block;
+} */
 
 div.issue-selection-panel {
   display: flex;

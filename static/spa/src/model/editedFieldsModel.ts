@@ -95,13 +95,14 @@ class EditedFieldsModel {
   }
 
   setIssueSelectionState = async (issueSelectionState: IssueSelectionState) => {
-    // console.log(`FieldEditsPanel.loadFields: Loading fields for ${issues.length} issues.`);
+    // console.log(`editedFieldsModel.setIssueSelectionState: Loading fields for state '${issueSelectionState.selectionValidity}', issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}...`);
     if (issueSelectionState.selectionValidity === 'valid') {
+      this.setFields([]);
       const issueTypeMap: Map<string, IssueType> = jiraUtil.getIssueTypesFromIssues(issueSelectionState.selectedIssues);
       const issueTypes = Array.from(issueTypeMap.values());
-      // console.log(`FieldEditsPanel.loadFields: Found ${issueTypes.length} issue types from selected issues;- ${issueTypes.map(it => it.name).join(', ')}`);
+      // console.log(`editedFieldsModel.setIssueSelectionState: Found ${issueTypes.length} issue types from selected issues;- ${issueTypes.map(it => it.name).join(', ')}`);
       const fields = await jiraDataModel.getAllIssueBulkEditFields(issueSelectionState.selectedIssues);
-      // console.log(`FieldEditsPanel.loadFields: Loaded ${fields.length} fields.`);
+      // console.log(`editedFieldsModel.setIssueSelectionState: Loaded ${fields.length} fields.`);
       const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields, issueTypes);
       const sortedFields = this.sortFields(filteredFields);
       this.setFields(sortedFields);
