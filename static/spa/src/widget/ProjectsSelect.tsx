@@ -166,7 +166,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
 
   return (
     <>
-      <Label htmlFor="projects-select">{props.label} [filtering by "{userInput}"]</Label>
+      <Label htmlFor="projects-select">{props.label}</Label>
       {renderSelect()}
     </>
   );
