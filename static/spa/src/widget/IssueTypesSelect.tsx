@@ -30,7 +30,7 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
     issueTypes: IssueType[],
     bulkOperationMode: BulkOperationMode
   ): Promise<void> => {
-      const selectableIssueTypes: IssueType[] = await bulkOperationRuleEnforcer.filterSourceProjectIssueTypes(issueTypes, bulkOperationMode);
+      const selectableIssueTypes: IssueType[] = await props.filterAllowedIssueTypes(issueTypes, bulkOperationMode);
       setSelectableIssueTypes(selectableIssueTypes);
   }
 

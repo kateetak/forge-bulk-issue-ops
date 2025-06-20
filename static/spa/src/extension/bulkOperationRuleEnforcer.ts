@@ -66,11 +66,21 @@ class BulkOperationRuleEnforcer {
     return filteredProjects;
   }
 
+  /**
+   * This method allows the selectable issue types in the originating project(s) to be filtered.
+   * @param issueTypes all the issues types for the selected source project(s)
+   * @param projects the source projects that the issues are being moved from
+   * @param bulkOperationMode the current bulk operations mode, e.g. 'move' or 'edit'
+   * @returns the filtered issue types. 
+   */
   public filterSourceProjectIssueTypes = async(
     issueTypes: IssueType[],
+    projects: Project[],
     bulkOperationMode: BulkOperationMode
   ): Promise<IssueType[]> => {
-    // Implement your filtering logic here
+    // console.log(`bulkOperationRuleEnforcer.filterSourceProjectIssueTypes: issueTypes = ${issueTypes.map(issueType => issueType.name).join(', ')}`);
+    // console.log(`bulkOperationRuleEnforcer.filterSourceProjectIssueTypes: projects = ${projects.map(project => project.name).join(', ')}`);
+
     return issueTypes;
   };
 

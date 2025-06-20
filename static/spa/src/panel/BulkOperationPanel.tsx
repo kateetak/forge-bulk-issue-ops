@@ -263,6 +263,13 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     return allowableToProjects;
   }
 
+  const filterSourceProjectIssueTypes = async (
+    issueTypes: IssueType[],
+    bulkOperationMode: BulkOperationMode
+  ): Promise<IssueType[]> => {
+    return await bulkOperationRuleEnforcer.filterSourceProjectIssueTypes(issueTypes, selectedFromProjects, bulkOperationMode);
+  }
+
   const onClearMainWarningMessage = () => {
     setMainWarningMessage('');
   }
@@ -578,7 +585,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           possiblySelectableIssueTypes={selectableIssueTypes}
           menuPortalTarget={document.body}
           bulkOperationMode={bulkOperationMode}
-          filterAllowedIssueTypes={bulkOperationRuleEnforcer.filterSourceProjectIssueTypes}
+          filterAllowedIssueTypes={filterSourceProjectIssueTypes}
           onIssueTypesSelect={onIssueTypesSelect}
         />
       </FormSection>
