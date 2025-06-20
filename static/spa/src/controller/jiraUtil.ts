@@ -6,6 +6,14 @@ import { ObjectMapping } from "src/types/ObjectMapping";
 import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 
 class JiraUtil {
+  
+  deduplicateIssueTypes(selectableIssueTypes: IssueType[]) {
+    const uniqueIssueTypes = new Map<string, IssueType>();
+    for (const issueType of selectableIssueTypes) {
+      uniqueIssueTypes.set(issueType.id, issueType);
+    }
+    return Array.from(uniqueIssueTypes.values());
+  }
 
   areSameProjectCategories = (projectCategoryA: undefined | ProjectCategory, projectCategoryB: undefined | ProjectCategory) => {
     if (projectCategoryA && projectCategoryB) {

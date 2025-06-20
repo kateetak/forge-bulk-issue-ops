@@ -578,13 +578,14 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     // console.log(`BulkOperationPanel: renderIssueTypesSelect: candidateIssueTypes: ${JSON.stringify(candidateIssueTypes, null, 2)}`);
     const selectedIssueTypeIds = candidateIssueTypes.length ? candidateIssueTypes.map(issueType => issueType.id) : [];
     // console.log(`BulkOperationPanel: renderIssueTypesSelect: selectedIssueTypeIds: ${JSON.stringify(selectedIssueTypeIds, null, 2)}`);
+    const deduplicatedIssueTypes = jiraUtil.deduplicateIssueTypes(selectableIssueTypes);
     return (
       <FormSection>
         <IssueTypesSelect 
           key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
           label="Work item types"
           selectedIssueTypeIds={selectedIssueTypeIds}
-          possiblySelectableIssueTypes={selectableIssueTypes}
+          possiblySelectableIssueTypes={deduplicatedIssueTypes}
           menuPortalTarget={document.body}
           bulkOperationMode={bulkOperationMode}
           filterAllowedIssueTypes={filterSourceProjectIssueTypes}
