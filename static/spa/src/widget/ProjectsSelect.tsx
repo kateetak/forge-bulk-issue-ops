@@ -56,7 +56,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
   }, [props.targetProjectsFilterConditionsChangeTime]);
 
   const onChange = async (selection: undefined | Option | Option[]): Promise<void> => {
-    console.log(`ProjectsSelect.onChange: ${selection ? JSON.stringify(selection) : 'undefined'}`);
+    // console.log(`ProjectsSelect.onChange: ${selection ? JSON.stringify(selection) : 'undefined'}`);
     let selectedProjects: Project[] = [];
     if (!selection) {
       selectedProjects = [];
@@ -119,7 +119,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
       const retrevedProjectsInfo = await jiraDataModel.pageOfProjectSearchInfo(inputValue);
       // console.log(`ProjectsSelect.promiseOptions: retrevedProjectsInfo for inputValue = ${inputValue} (userInput = ${userInput})`);
       if (myInvocationNumber >= lastInvocationNumberRef.current) {
-        console.log(`ProjectsSelect.promiseOptions: userInput is still '${inputValue}', applying results...`);
+        // console.log(`ProjectsSelect.promiseOptions: userInput is still '${inputValue}', applying results...`);
         const foundProjects = retrevedProjectsInfo.values;
         setFoundProjects(foundProjects);
         const filteredProjects = await filterFoundProjects(foundProjects);

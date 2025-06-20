@@ -680,6 +680,7 @@ class JiraDataModel {
     if (cachedIssueBulkEditFields) {
       return cachedIssueBulkEditFields;
     } else {
+      // console.log(`JiraDataModel.getAllIssueBulkEditFields: Fetching fields for issues: ${issues.map(issue => issue.key).join(', ')}`);
       const fields: IssueBulkEditField[] = [];
       if (issues.length === 0) {
         return fields;

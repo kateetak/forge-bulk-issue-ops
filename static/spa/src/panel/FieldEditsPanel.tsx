@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { LinearProgress } from '@mui/material';
 import Toggle from '@atlaskit/toggle';
 import Textfield from '@atlaskit/textfield';
@@ -34,14 +34,24 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   const [fieldIdsToEditStates, setFieldIdsToEditStates] = useState<ObjectMapping<EditState>>({});
   const [fieldIdsToValues, setFieldIdsToValues] = useState<ObjectMapping<FieldEditValue>>({});
   const [fields, setFields] = useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
+  const lastInvocationNumberRef = useRef<number>(0);
 
   const updateFieldsStateFromIssues = async (issueSelectionState: IssueSelectionState): Promise<void> => {
-    console.log(`FieldEditsPanel.updateFieldsStateFromIssues: Initialising state from issue selection state: validity: '${issueSelectionState.selectionValidity}', issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}...`);
+    // console.log(`FieldEditsPanel.updateFieldsStateFromIssues: Initialising state from issue selection state: validity: '${issueSelectionState.selectionValidity}', issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}...`);
     setLoadingFields(true);
+    lastInvocationNumberRef.current = lastInvocationNumberRef.current + 1;
+    const myInvocationNumber = lastInvocationNumberRef.current;
     try {
       setFields([]);
       await editedFieldsModel.setIssueSelectionState(issueSelectionState);
-      setFields(editedFieldsModel.getFields());
+      if (myInvocationNumber === lastInvocationNumberRef.current) {
+        // console.log(`FieldEditsPanel.updateFieldsStateFromIssues: Setting fields state from issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}`);
+        const fields = editedFieldsModel.getFields();
+        setFields(fields);
+      } else {
+        // This invocation is no longer the latest one, so we ignore it.
+        // console.log(`FieldEditsPanel.updateFieldsStateFromIssues: Ignoring stale invocation.`);
+      }
     } finally {
       setLoadingFields(false);
     }

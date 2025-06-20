@@ -3,6 +3,7 @@ import { IssueType } from "../types/IssueType";
 import { Project } from "../types/Project";
 import { ProjectCategory } from "src/types/ProjectCategory";
 import { ObjectMapping } from "src/types/ObjectMapping";
+import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 
 class JiraUtil {
 
@@ -137,14 +138,27 @@ class JiraUtil {
   }
 
   getIssueTypesFromIssues = (issues: Issue[]): Map<string, IssueType> => {
-      // console.log(`BulkIssueTypeMapping: computing is all issue types are mapped based on selected issues = ${issues.map(issue => issue.key).join(', ')}`);
-      const issueTypeIdsToIssueTypes = new Map<string, IssueType>();
-      for (const issue of issues) {
-        issueTypeIdsToIssueTypes.set(issue.fields.issuetype.id, issue.fields.issuetype);
-      }
-      return issueTypeIdsToIssueTypes;
+    // console.log(`BulkIssueTypeMapping: computing is all issue types are mapped based on selected issues = ${issues.map(issue => issue.key).join(', ')}`);
+    const issueTypeIdsToIssueTypes = new Map<string, IssueType>();
+    for (const issue of issues) {
+      issueTypeIdsToIssueTypes.set(issue.fields.issuetype.id, issue.fields.issuetype);
     }
+    return issueTypeIdsToIssueTypes;
+  }
+
+  findIsseueByKey = (issues: Issue[], issueKey: string): Issue | undefined => {
+    for (const issue of issues) {
+      if (issue.key === issueKey) {
+        return issue;
+      }
+    }
+    return undefined;
+  }
   
+  findFieldByName = (fields: IssueBulkEditField[], name: string) => {
+    return fields.find(field => field.name === name);
+  }
+
 }
 
 export default new JiraUtil();

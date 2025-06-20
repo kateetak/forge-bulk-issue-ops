@@ -106,6 +106,8 @@ class EditedFieldsModel {
       const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields, issueTypes);
       const sortedFields = this.sortFields(filteredFields);
       this.setFields(sortedFields);
+
+
     } else {
       this.setFields([]);
     }
@@ -169,11 +171,11 @@ class EditedFieldsModel {
   };
 
   private setFields = (fields: IssueBulkEditField[]): void => {
-    const newFieldIdsToValues: ObjectMapping<any> = {};
+    const newFieldIdsToFields: ObjectMapping<IssueBulkEditField> = {};
     for (const field of fields) {
-      this.fieldIdsToFields[field.id] = field;
+      newFieldIdsToFields[field.id] = field;
     }
-    this.fieldIdsToValues = newFieldIdsToValues;
+    this.fieldIdsToFields = newFieldIdsToFields;
     this.notifyValueEditsListeners();
   }
 
