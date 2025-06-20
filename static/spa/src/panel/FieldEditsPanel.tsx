@@ -35,8 +35,8 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   const [fieldIdsToValues, setFieldIdsToValues] = useState<ObjectMapping<FieldEditValue>>({});
   const [fields, setFields] = useState<IssueBulkEditField[]>(editedFieldsModel.getFields());
 
-  const initialiseStateFromIssues = async (issueSelectionState: IssueSelectionState): Promise<void> => {
-    // console.log(`FieldEditsPanel.initialiseStateFromIssues: Initialising state from issue selection state: validity: '${issueSelectionState.selectionValidity}', issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}...`);
+  const updateFieldsStateFromIssues = async (issueSelectionState: IssueSelectionState): Promise<void> => {
+    console.log(`FieldEditsPanel.updateFieldsStateFromIssues: Initialising state from issue selection state: validity: '${issueSelectionState.selectionValidity}', issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}...`);
     setLoadingFields(true);
     try {
       setFields([]);
@@ -48,11 +48,11 @@ export const FieldEditsPanel = (props: FieldEditsPanelProps) => {
   }
 
   useEffect(() => {
-    initialiseStateFromIssues(props.issueSelectionState);
+    updateFieldsStateFromIssues(props.issueSelectionState);
   }, []);
 
   useEffect(() => {
-    initialiseStateFromIssues(props.issueSelectionState);
+    updateFieldsStateFromIssues(props.issueSelectionState);
   }, [props.issueSelectionState]);
 
   const isSelectedForChange = (fieldId: string): boolean => {
