@@ -11,6 +11,7 @@ import jiraDataModel from "src/model/jiraDataModel";
 import jiraUtil from "src/controller/jiraUtil";
 import { IssueType } from "src/types/IssueType";
 import { filterEditFieldsImplementation } from "./filterEditFieldsImplementationTemplate";
+import { BulkOperationMode } from "src/types/BulkOperationMode";
 
 class BulkOperationRuleEnforcer {
 
@@ -52,10 +53,11 @@ class BulkOperationRuleEnforcer {
    * typing the name or key of the source project which results in a Jira API call to retrieve a set of matching
    * projects which is then passed to this function for filtering.
    * @param selectedSourceProjects 
-   * @returns 
+   * @returns the filtered source projects that are allowed to be selected as the source project for the bulk move operation.
    */
   public filterSourceProjects = async (
     selectedSourceProjects: Project[],
+    bulkOperationMode: BulkOperationMode
   ): Promise<Project[]> => {
     // console.log(`bulkOperationRuleEnforcer.filterSourceProjects: selectedSourceProjects = ${selectedSourceProjects.map(project => project.name).join(', ')}`);
     const filteredProjects = selectedSourceProjects.filter((project: Project) => {
@@ -70,7 +72,11 @@ class BulkOperationRuleEnforcer {
    * @param targetProject The target project for the bulk edit operation.
    * @returns The filtered issue types that are allowed to be selected as the target issue type.
    */
-  public filterIssueTypes = (issueTypes: IssueType[], targetProject: Project): IssueType[] => {
+  public filterIssueTypes = (
+    issueTypes: IssueType[],
+    targetProject: Project,
+    bulkOperationMode: BulkOperationMode
+  ): IssueType[] => {
     // console.log(`bulkOperationRuleEnforcer.filterIssueTypes: issueTypes = ${issueTypes.map(issueType => issueType.name).join(', ')}`);
     return issueTypes.filter(issueType => {
       // Apply your filtering logic here
@@ -90,7 +96,11 @@ class BulkOperationRuleEnforcer {
    * @param fields The fields to filter.
    * @returns the filtered fields that are allowed to be edited in the bulk edit operation.
    */
-  public filterEditFields = async (fields: IssueBulkEditField[], issueTypes: IssueType[]): Promise<IssueBulkEditField[]> => {
+  public filterEditFields = async (
+    fields: IssueBulkEditField[],
+    issueTypes: IssueType[],
+    // selectedProjects: Project[]
+  ): Promise<IssueBulkEditField[]> => {
     // console.log(`bulkOperationRuleEnforcer.filterEditFields: fields = ${fields.map(field => field.name).join(', ')}`);
     const filteredFields = fields.filter(field => {
       if (field.id === 'reporter') {

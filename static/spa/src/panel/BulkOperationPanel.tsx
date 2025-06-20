@@ -254,7 +254,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }, []);
 
   const filterProjectsForFromSelection = async (projectsToFilter: Project[]): Promise<Project[]> => {
-    const allowableToProjects = await bulkOperationRuleEnforcer.filterSourceProjects(projectsToFilter);
+    const allowableToProjects = await bulkOperationRuleEnforcer.filterSourceProjects(projectsToFilter, bulkOperationMode);
     return allowableToProjects;
   }
 
@@ -854,6 +854,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             key={`issue-type-mapping-panel-${lastDataLoadTime}-${issueSelectionState.selectedIssues.length}-${selectedToProjectTime}`}
             selectedIssues={issueSelectionState.selectedIssues}
             targetProject={selectedToProject}
+            bulkOperationMode={bulkOperationMode}
             filterIssueTypes={bulkOperationRuleEnforcer.filterIssueTypes}
             onIssueTypeMappingChange={onIssueTypeMappingChange}
           />
