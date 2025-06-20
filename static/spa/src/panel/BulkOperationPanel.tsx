@@ -561,8 +561,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }
 
   const renderIssueTypesSelect = () => {
-    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects)
-
     const issueTypesAlreadySelected = selectedIssueTypes.length !== allIssueTypes.length;
     // console.log(`BulkOperationPanel: renderIssueTypesSelect: issueTypesAlreadySelected: ${issueTypesAlreadySelected}`);
     const candidateIssueTypes: IssueType[] = issueTypesAlreadySelected ?
@@ -577,8 +575,10 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
           label="Work item types"
           selectedIssueTypeIds={selectedIssueTypeIds}
-          selectableIssueTypes={selectableIssueTypes}
+          possiblySelectableIssueTypes={selectableIssueTypes}
           menuPortalTarget={document.body}
+          bulkOperationMode={bulkOperationMode}
+          filterAllowedIssueTypes={bulkOperationRuleEnforcer.filterSourceProjectIssueTypes}
           onIssueTypesSelect={onIssueTypesSelect}
         />
       </FormSection>

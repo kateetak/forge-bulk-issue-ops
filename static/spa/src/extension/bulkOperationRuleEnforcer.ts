@@ -66,6 +66,14 @@ class BulkOperationRuleEnforcer {
     return filteredProjects;
   }
 
+  public filterSourceProjectIssueTypes = async(
+    issueTypes: IssueType[],
+    bulkOperationMode: BulkOperationMode
+  ): Promise<IssueType[]> => {
+    // Implement your filtering logic here
+    return issueTypes;
+  };
+
   /**
    * Filters the issue types that are allowed to be mapped to in the bulk move operation.
    * @param issueTypes The issue types to filter.
