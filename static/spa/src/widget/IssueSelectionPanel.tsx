@@ -240,21 +240,21 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     }) : props.issueSearchInfo.issues;
     const renderedIssueRows = hasIssues ? filterIssues.map(renderIssueRow) : null;
     const renderedIssuesTable = hasIssues ? (
-      <div  className="data-table-container">
-        <table className="issue-selection-table data-table">
-          <tbody>
-            {renderedIssueRows}
-          </tbody>
-        </table>
-      </div>
+      <table className="issue-selection-table data-table">
+        <tbody>
+          {renderedIssueRows}
+        </tbody>
+      </table>
     ) : null;
     return (
       <>
         {renderIssueLoading()}
         <FormSection>
           {renderStateValidityMessage()}
-          {renderGlobalSelectionControls()}
-          {renderedIssuesTable}
+          <div  className="data-table-container">
+            {renderGlobalSelectionControls()}
+            {renderedIssuesTable}
+          </div>
         </FormSection>
       </>
     );
