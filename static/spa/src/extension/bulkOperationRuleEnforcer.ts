@@ -153,8 +153,9 @@ class BulkOperationRuleEnforcer {
         return issueToMove.key.startsWith(`${project.key}-`);
       });
       if (candidateProject) {
-        const issueProject = await jiraDataModel.getProjectByKey(issueToMove.fields.project.key);
-        if (issueProject) {
+        const issueProjectInvocationResult = await jiraDataModel.getProjectByIdOrKey(issueToMove.fields.project.key);
+        if (issueProjectInvocationResult.ok) {
+          const issueProject = issueProjectInvocationResult.data;
           const issueProjectCategory = issueProject.projectCategory;
           if (issueProjectCategory) {
             issueProjectCategoryIdsToCategories.set(issueProjectCategory.id, issueProjectCategory);

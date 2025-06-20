@@ -62,18 +62,18 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
       selectedProjects = [];
     } else if (props.isMulti) {
       const selectedOptions = selection as Option[];
-      selectedProjects = rebuildSelectedProjects(selectedOptions);
+      selectedProjects = await rebuildSelectedProjects(selectedOptions);
     } else {
       const selectedOption = selection as Option;
-      selectedProjects = rebuildSelectedProjects([selectedOption]);
+      selectedProjects = await rebuildSelectedProjects([selectedOption]);
     }
     
     // Reset the user input since the UI clears the text in the select field...
-    setUserInput('');
+    await promiseOptions('');
     await props.onProjectsSelect(selectedProjects);
   }
 
-  const rebuildSelectedProjects = (selectedOptions: Option[]): Project[] => {
+  const rebuildSelectedProjects = async (selectedOptions: Option[]): Promise<Project[]> => {
     const selectedProjects: Project[] = [];
     for (const selectedOption of selectedOptions) {
       const projectInFilteredProjects = filteredProjects.find(project => project.id === selectedOption.value);
@@ -84,7 +84,13 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
         if (projectInExistingSelectedProjects) {
           selectedProjects.push(projectInExistingSelectedProjects);
         } else {
-          console.warn(`ProjectsSelect.rebuildSelectedProjects: Could not find project with id ${selectedOption.value} in filteredProjects or selectedProjects`);
+          // console.log(`ProjectsSelect.rebuildSelectedProjects: Could not find project with id ${selectedOption.value} in filteredProjects or selectedProjects`);
+          const projectInvocationResult = await jiraDataModel.getProjectByIdOrKey(selectedOption.value);
+          if (projectInvocationResult.ok) {
+            selectedProjects.push(projectInvocationResult.data);
+          } else {
+            console.error(`ProjectsSelect.rebuildSelectedProjects: Could not find project with id ${selectedOption.value} in filteredProjects or selectedProjects`);
+          }
         }
       }
     }
@@ -149,6 +155,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
         cacheOptions
         isDisabled={props.isDisabled}
         isClearable={props.isClearable}
+        isLoading={loadingOptions}
 				loadOptions={promiseOptions}
         placeholder={props.label}
         menuPortalTarget={props.menuPortalTarget}
@@ -159,7 +166,7 @@ const ProjectsSelect = (props: ProjectsSelectProps) => {
 
   return (
     <>
-      <Label htmlFor="projects-select">{props.label} {userInput}</Label>
+      <Label htmlFor="projects-select">{props.label} [filtering by "{userInput}"]</Label>
       {renderSelect()}
     </>
   );

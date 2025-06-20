@@ -34,7 +34,8 @@ import { ProjectComponent } from 'src/types/ProjectComponent';
 
 class JiraDataModel {
 
-  private cachedProjectKeysToProjects = new Map<string, Project>();
+  private cachedProjectIdsAndKeysToProjects = new Map<string, Project>();
+  private cachedUserAccountIdsToUsers = new Map<string, User>();
   private cachedIssueTypesInvocationResult: InvocationResult<IssueType[]> = {
     ok: false,
     status: 0,
@@ -241,29 +242,10 @@ class JiraDataModel {
     }
   }
 
-  public getProjectByKey = async (targetProjectKey: string): Promise<undefined | Project> => {
-    const cachedProject = this.cachedProjectKeysToProjects.get(targetProjectKey);
-    if (cachedProject) {
-      return cachedProject;
-    }
-    let loadMoreItems = true;
-    let startAt = 0;
-    let maxResultsPerPage = 50;
-    while (loadMoreItems) {
-      const projectSearchInfo = await this.pageOfProjectSearchInfo(targetProjectKey, startAt, maxResultsPerPage);
-      const cachedProject = this.cachedProjectKeysToProjects.get(targetProjectKey);
-      if (cachedProject) {
-        return cachedProject;
-      }
-      loadMoreItems = !projectSearchInfo.isLast;
-      startAt += maxResultsPerPage;
-    }
-    return undefined;
-  }
-
   private cacheProjects = (projects: Project[]) => {
     for (const project of projects) {
-      this.cachedProjectKeysToProjects.set(project.key, project);
+      this.cachedProjectIdsAndKeysToProjects.set(project.id, project);
+      this.cachedProjectIdsAndKeysToProjects.set(project.key, project);
     }
   }
 
@@ -307,6 +289,7 @@ class JiraDataModel {
     // console.log(`Response: ${response.status} ${response.statusText}`);
     const users = await response.json();
     const filteredUsers = users.filter((user: User) => {
+      this.cachedUserAccountIdsToUsers.set(user.accountId, user);
       if (!includeAppUsers && user.accountType === 'app') {
         return false;
       }
@@ -316,14 +299,49 @@ class JiraDataModel {
     return filteredUsers;
   }
 
+  public getUserByAccountId = async (accountId: string): Promise<InvocationResult<User>> => {
+    const cachedUser = this.cachedUserAccountIdsToUsers.get(accountId);
+    if (cachedUser) {
+      return {
+        ok: true,
+        status: 200,
+        data: cachedUser as User
+      };
+    }
+    const response = await requestJira(`/rest/api/3/user?accountId=${accountId}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const invocationResult = await this.readResponse<User>(response);
+    if (invocationResult.ok) {
+      const user = invocationResult.data;
+      this.cachedUserAccountIdsToUsers.set(user.accountId, user);
+    }
+    return invocationResult;
+  }
+
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-projectidorkey-get
-  public getProjectById = async (projectIdOrKey: string): Promise<InvocationResult<ProjectWithIssueTypes>> => {
+  public getProjectByIdOrKey = async (projectIdOrKey: string): Promise<InvocationResult<ProjectWithIssueTypes>> => {
+    const cachedProject = this.cachedProjectIdsAndKeysToProjects.get(projectIdOrKey);
+    if (cachedProject) {
+      return {
+        ok: true,
+        status: 200,
+        data: cachedProject as ProjectWithIssueTypes
+      };
+    }
     const response = await requestJira(`/rest/api/3/project/${projectIdOrKey}?expand=issueTypes`, {
       headers: {
         'Accept': 'application/json'
       }
     });
     const invocationResult = await this.readResponse<ProjectWithIssueTypes>(response);
+    if (invocationResult.ok) {
+      const project = invocationResult.data;
+      this.cachedProjectIdsAndKeysToProjects.set(project.id, project);
+      this.cachedProjectIdsAndKeysToProjects.set(project.key, project);
+    }
     return invocationResult;
   }
   

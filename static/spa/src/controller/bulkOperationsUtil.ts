@@ -6,15 +6,6 @@ import { IssueTypeFieldMappings, ProjectFieldMappings } from "../types/ProjectFi
 import { FieldMappingInfo } from "src/types/FieldMappingInfo";
 
 
-export const findProjectByKey = async (projectKey: string): Promise<DataRetrievalResponse<Project>> => {
-  try {
-    const project = await jiraDataModel.getProjectByKey(projectKey);
-    return new DataRetrievalResponseBuilder<Project>().setData(project).build();
-  } catch (error) {
-    return new DataRetrievalResponseBuilder<Project>().setErrorMessage(error.message).build();
-  }
-}
-
 export const buildFieldMappingsForProject = async (
   targetProjectId: string,
   onlyIncludeCustomFields: boolean,

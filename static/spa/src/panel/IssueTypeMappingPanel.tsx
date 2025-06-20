@@ -146,7 +146,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
   const loadTargetProjectIssueTypes = async () => {
     // console.log(`loadTargetProjectIssueTypes: Loading issue types for target project: ${props.targetProject ? props.targetProject.id : 'none'}`);
     if (props.targetProject) {
-      const projectInvocationResult = await jiraDataModel.getProjectById(props.targetProject.id);
+      const projectInvocationResult = await jiraDataModel.getProjectByIdOrKey(props.targetProject.id);
       if (projectInvocationResult.data) {
         const issueTypes = projectInvocationResult.data.issueTypes;
         setTargetProjectIssueTypes(issueTypes);

@@ -36,22 +36,36 @@ const UsersSelect = (props: UsersSelectProps) => {
       selectedUsers = [];
     } else if (props.isMulti) {
       const selectedOptions = selection as Option[];
-      for (const selectedOption of selectedOptions) {
-        const user = currentUsers.find(user => user.accountId === selectedOption.value);
-        if (user) {
-          selectedUsers.push(user);
-        }
-      }
+      selectedUsers = await rebuildSelectedUsers(selectedOptions);
     } else {
       const selectedOption = selection as Option;
-      if (selectedOption.value) {
-        const selectedUser = currentUsers.find(user => user.accountId === selectedOption.value);
-        selectedUsers = [selectedUser];
-      } else {
-        selectedUsers = [];
-      }
+      selectedUsers = await rebuildSelectedUsers([selectedOption]);
     }
     await props.onUsersSelect(selectedUsers);
+  }
+
+  const rebuildSelectedUsers = async (selectedOptions: Option[]): Promise<User[]> => {
+    const selectedUsers: User[] = [];
+    for (const selectedOption of selectedOptions) {
+      const user = currentUsers.find(user => user.accountId === selectedOption.value);
+      if (user) {
+        selectedUsers.push(user);
+      } else {
+        const userInExistingSelectedUsers = props.selectedUsers.find(user => user.accountId === selectedOption.value);
+        if (userInExistingSelectedUsers) {
+          selectedUsers.push(userInExistingSelectedUsers);
+        } else {
+          // console.log(`UsersSelect.rebuildSelectedUsers: Could not find user with id ${selectedOption.value} in filteredUsers or selectedUsers`);
+          const userInvocationResult = await jiraDataModel.getUserByAccountId(selectedOption.value);
+          if (userInvocationResult.ok) {
+            selectedUsers.push(userInvocationResult.data);
+          } else {
+            console.error(`UsersSelect.rebuildSelectedUsers: Could not find user with id ${selectedOption.value} in filteredUsers or selectedUsers`);
+          }
+        }
+      }
+    }
+    return Promise.resolve(selectedUsers);
   }
 
   const userToOption = (user: User): Option => {
@@ -105,6 +119,7 @@ const UsersSelect = (props: UsersSelectProps) => {
         isDisabled={props.isDisabled}
         isInvalid={props.isInvalid}
         isClearable={props.isClearable}
+        isLoading={loadingOptions}
 				loadOptions={promiseOptions}
         placeholder={props.label}
         menuPortalTarget={props.menuPortalTarget}
