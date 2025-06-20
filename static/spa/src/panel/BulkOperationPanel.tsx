@@ -392,7 +392,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }
 
   const onFromProjectsSelect = async (selectedProjects: Project[]): Promise<void> => {
-    // console.log(`onFromProjectsSelect.selectedProjects: ${JSON.stringify(selectedProjects, null, 2)}`);
+    // console.log(`BulkOperationPanel.onFromProjectsSelect: selectedProjects: ${JSON.stringify(selectedProjects, null, 2)}`);
     setIssueMoveOutcome(undefined);
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
@@ -402,7 +402,9 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     }
     setStepCompletionState('filter', selectedProjects.length > 0 ? 'complete' : 'incomplete');
     await onBasicModeSearchIssues(selectedProjects, selectedIssueTypes, selectedLabels);
-    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects)
+    // const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects);
+    const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedProjects);
+    // console.log(`BulkOperationPanel: onFromProjectsSelect: selectableIssueTypes: ${selectableIssueTypes.map(it => it.name).join(', ')}`);
     setSelectableIssueTypes(selectableIssueTypes);
   }
 
