@@ -80,7 +80,7 @@ const doBulkMove = async (bulkIssueMoveRequestData: any, retryNumber: number, tr
       console.log(`[${traceId}]: Retrying bulk move after ${retryDelay} milliseconds (${retryNumber} retries left) due to ${invocationResult.status} error status: ${invocationResult.errorMessage ? invocationResult.errorMessage : '[no error message provided]'}`);
       await delay(retryDelay);
       console.warn(`[${traceId}]: Bulk move failed with status ${invocationResult.status}. Retrying (${retryNumber} retries left)...`);
-      return doBulkMove(bulkIssueMoveRequestData, retryNumber + 1, traceId);
+      return await doBulkMove(bulkIssueMoveRequestData, retryNumber + 1, traceId);
     } else {
       console.error(`[${traceId}]: Bulk move failed after retries with status ${invocationResult.status}. Error message: ${invocationResult.errorMessage}`);
       return invocationResult;
@@ -112,7 +112,7 @@ const doBulkEdit = async (bulkIssueMoveRequestData: any, retryNumber: number, tr
       console.log(`[${traceId}]: Retrying bulk edit after ${retryDelay} milliseconds (${retryNumber} retries left) due to ${invocationResult.status} error status: ${invocationResult.errorMessage ? invocationResult.errorMessage : '[no error message provided]'}`);
       await delay(retryDelay);
       console.warn(`[${traceId}]: Bulk edit failed with status ${invocationResult.status}. Retrying (${retryNumber} retries left)...`);
-      return doBulkEdit(bulkIssueMoveRequestData, retryNumber + 1, traceId);
+      return await doBulkEdit(bulkIssueMoveRequestData, retryNumber + 1, traceId);
     } else {
       console.error(`[${traceId}]: Bulk edit failed after retries with status ${invocationResult.status}. Error message: ${invocationResult.errorMessage}`);
       return invocationResult;
