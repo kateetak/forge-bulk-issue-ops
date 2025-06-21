@@ -7,6 +7,9 @@ import { ServerInfo } from './types/ServerInfo';
 // This is set to false since the app user can't be authorized to add/remove users to/from groups.
 const manageUserGroupsUsingAppUserAccount = false;
 
+const maxBulkOperationRetries = 3;
+const initialRetryDelay = 2000; // 2 seconds
+
 export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
   const bulkOpsAppGroupId = getBulkOpsAppGroupId();
   let result: InvocationResult<TaskRequestOutcome>;
@@ -15,7 +18,7 @@ export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestDa
     const siteUrl = removeTrailingSlashIfExistent(serverInfoResult.data.baseUrl);
     await addUserToGroup(siteUrl, accountId, bulkOpsAppGroupId);
     try {
-      result = await doBulkMove(bulkIssueMoveRequestData);
+      result = await doBulkMove(bulkIssueMoveRequestData, 0, createTraceId());
     } finally {
       await removeUserFromGroup(siteUrl, accountId, bulkOpsAppGroupId);
     }
@@ -38,7 +41,7 @@ export const initiateBulkEdit = async (accountId: string, bulkIssueEditRequestDa
     const siteUrl = removeTrailingSlashIfExistent(serverInfoResult.data.baseUrl);
     await addUserToGroup(siteUrl, accountId, bulkOpsAppGroupId);
     try {
-      result = await doBulkEdit(bulkIssueEditRequestData);
+      result = await doBulkEdit(bulkIssueEditRequestData, 0, createTraceId());
     } finally {
       await removeUserFromGroup(siteUrl, accountId, bulkOpsAppGroupId);
     }
@@ -53,8 +56,8 @@ export const initiateBulkEdit = async (accountId: string, bulkIssueEditRequestDa
   }
 }
 
-const doBulkMove = async (bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
-  console.log(`Initiating bulk move with request data: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
+const doBulkMove = async (bulkIssueMoveRequestData: any, retryNumber: number, traceId: string): Promise<InvocationResult<TaskRequestOutcome>> => {
+  console.log(`[${traceId}]: Initiating bulk move with request data: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
   const response = await api.asUser().requestJira(route`/rest/api/3/bulk/issues/move`, {
     method: 'POST',
     headers: {
@@ -63,14 +66,30 @@ const doBulkMove = async (bulkIssueMoveRequestData: any): Promise<InvocationResu
     },
     body: JSON.stringify(bulkIssueMoveRequestData)
   });
-  console.log(` * Response status: ${response.status}`);
+  console.log(`[${traceId}]:  * Response status: ${response.status}`);
   const invocationResult = await readResponse<TaskRequestOutcome>(response);
-  console.log(`Bulk issue move invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
-  return invocationResult;
+  console.log(`[${traceId}]: Bulk issue move invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
+  if (invocationResult.ok) {
+    return invocationResult;
+  } else {
+    // A permission error can be the causse of an error due to the eventually consistent semantics of identity APIs, however,
+    // it's not easy to be absolutely sure if the error is due to a permission issue or not because it comes back as a 400 status
+    // code because it can also relate to fields being hidden. So, here we just assume we should retry all error.
+    if (retryNumber <= maxBulkOperationRetries) {
+      const retryDelay = computeRetryDelay(retryNumber);
+      console.log(`[${traceId}]: Retrying bulk move after ${retryDelay} milliseconds (${retryNumber} retries left) due to ${invocationResult.status} error status: ${invocationResult.errorMessage ? invocationResult.errorMessage : '[no error message provided]'}`);
+      await delay(retryDelay);
+      console.warn(`[${traceId}]: Bulk move failed with status ${invocationResult.status}. Retrying (${retryNumber} retries left)...`);
+      return doBulkMove(bulkIssueMoveRequestData, retryNumber + 1, traceId);
+    } else {
+      console.error(`[${traceId}]: Bulk move failed after retries with status ${invocationResult.status}. Error message: ${invocationResult.errorMessage}`);
+      return invocationResult;
+    }
+  }
 }
 
-const doBulkEdit = async (bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
-  console.log(`Initiating bulk edit with request data: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
+const doBulkEdit = async (bulkIssueMoveRequestData: any, retryNumber: number, traceId: string): Promise<InvocationResult<TaskRequestOutcome>> => {
+  console.log(`[${traceId}]: Initiating bulk edit with request data: ${JSON.stringify(bulkIssueMoveRequestData, null, 2)}`);
   const response = await api.asUser().requestJira(route`/rest/api/3/bulk/issues/fields`, {
     method: 'POST',
     headers: {
@@ -79,10 +98,42 @@ const doBulkEdit = async (bulkIssueMoveRequestData: any): Promise<InvocationResu
     },
     body: JSON.stringify(bulkIssueMoveRequestData)
   });
-  console.log(` * Response status: ${response.status}`);
+  console.log(`[${traceId}]:  * Response status: ${response.status}`);
   const invocationResult = await readResponse<TaskRequestOutcome>(response);
-  console.log(`Bulk issue edit invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
-  return invocationResult;
+  console.log(`[${traceId}]: Bulk issue edit invocation result: ${JSON.stringify(invocationResult, null, 2)}`);
+  if (invocationResult.ok) {
+    return invocationResult;
+  } else {
+    // A permission error can be the causse of an error due to the eventually consistent semantics of identity APIs, however,
+    // it's not easy to be absolutely sure if the error is due to a permission issue or not because it comes back as a 400 status
+    // code because it can also relate to fields being hidden. So, here we just assume we should retry all error.
+    if (retryNumber <= maxBulkOperationRetries) {
+      const retryDelay = computeRetryDelay(retryNumber);
+      console.log(`[${traceId}]: Retrying bulk edit after ${retryDelay} milliseconds (${retryNumber} retries left) due to ${invocationResult.status} error status: ${invocationResult.errorMessage ? invocationResult.errorMessage : '[no error message provided]'}`);
+      await delay(retryDelay);
+      console.warn(`[${traceId}]: Bulk edit failed with status ${invocationResult.status}. Retrying (${retryNumber} retries left)...`);
+      return doBulkEdit(bulkIssueMoveRequestData, retryNumber + 1, traceId);
+    } else {
+      console.error(`[${traceId}]: Bulk edit failed after retries with status ${invocationResult.status}. Error message: ${invocationResult.errorMessage}`);
+      return invocationResult;
+    }
+  }
+}
+
+const createTraceId = (): string => {
+  const randomPart = Math.floor(Math.random() * 100000); // Random number between 0 and 99999
+  return `${randomPart}`;
+}
+
+const computeRetryDelay = (retryNumber: number): number => {
+  // Exponential backoff with a maximum delay of 10 seconds starting with a 2 second delay, yielding delays of 2s, 4s, 8s, 10s, 10s, etc.
+  const maxDelay = 30000;
+  const delay = initialRetryDelay * Math.pow(2, retryNumber);
+  return Math.min(delay, maxDelay);
+}
+
+const delay = (milliseconds: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
 const addUserToGroup = async (siteUrl: string, accountId: string, groupId: string): Promise<any> => {
