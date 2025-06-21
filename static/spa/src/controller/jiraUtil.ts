@@ -6,7 +6,7 @@ import { ObjectMapping } from "src/types/ObjectMapping";
 import { IssueBulkEditField } from "src/types/IssueBulkEditFieldApiResponse";
 
 class JiraUtil {
-  
+
   deduplicateIssueTypes(selectableIssueTypes: IssueType[]) {
     const uniqueIssueTypes = new Map<string, IssueType>();
     for (const issueType of selectableIssueTypes) {
@@ -60,7 +60,9 @@ class JiraUtil {
         }
       }
     }
-    return Array.from(filteredIssueTypes);
+    const issueTypes = Array.from(filteredIssueTypes);
+    const deduplicatedIssueTypes = this.deduplicateIssueTypes(issueTypes);
+    return deduplicatedIssueTypes;
   }
 
   isIssueTypeInProjects = (issueType: IssueType, projects: Project[]): boolean => {

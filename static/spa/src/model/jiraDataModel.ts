@@ -109,7 +109,7 @@ class JiraDataModel {
   }
   
   public getIssueSearchInfoByJql = async (jql: string): Promise<IssueSearchInfo> => {
-    const maxResults = 100;
+    const maxResults = 100; // This is the maximum number supported by the API.
     // Note that the following limits the amount of fields to be returned for performance reasons, but
     // also could result in certain fields in the Issue type not being populated if these fields do 
     // not cover them all.

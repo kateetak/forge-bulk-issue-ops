@@ -97,6 +97,10 @@ div.bulk-move-main-panel > div > div {
   height: fit-content;
 }
 
+div.panel-message {
+  text-align: center;
+}
+
 div.panel-header {
   display: flex;
   flex-wrap: wrap;

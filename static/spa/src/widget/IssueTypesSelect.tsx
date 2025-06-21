@@ -5,7 +5,6 @@ import { Option } from '../types/Option'
 import { IssueType } from '../types/IssueType';
 import { formatIssueType } from 'src/controller/formatters';
 import { BulkOperationMode } from 'src/types/BulkOperationMode';
-import bulkOperationRuleEnforcer from 'src/extension/bulkOperationRuleEnforcer';
 
 /*
   Select docs: https://atlassian.design/components/select/examples
@@ -13,7 +12,7 @@ import bulkOperationRuleEnforcer from 'src/extension/bulkOperationRuleEnforcer';
 
 export type IssueTypesSelectProps = {
   label: string;
-  selectedIssueTypeIds: string[];
+  selectedIssueTypes: IssueType[];
   possiblySelectableIssueTypes: IssueType[];
   menuPortalTarget?: HTMLElement;
   bulkOperationMode: BulkOperationMode;
@@ -57,15 +56,16 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
   }
 
   const renderCheckboxSelect = () => {
-    const issueTypes: IssueType[] = selectableIssueTypes;;
-    // console.log(`Rendering issue types select. project ID = ${projectId}, issueTypes.length = ${issueTypes.length}`);
+    const issueTypes: IssueType[] = selectableIssueTypes;
+    // console.log(`Rendering issue types select where selected issue types are: ${props.selectedIssueTypes.map(issueType => issueType.name)}`);
     const options: Option[] = issueTypes.map((issueType: any) => ({
       label: formatIssueType(issueType),
       value: issueType.id,
     }));
     const initiallySelectedOptions: Option[] = [];
     for (const option of options) {
-      const selected = props.selectedIssueTypeIds.find(selectedIssueTypeId => selectedIssueTypeId === option.value);
+      // const selected = props.selectedIssueTypeIds.find(selectedIssueTypeId => selectedIssueTypeId === option.value);
+      const selected = props.selectedIssueTypes.find(selectedIssueType => selectedIssueType.id === option.value);
       // console.log(`Checking option ${option.label} / ${option.value} against ${JSON.stringify(props.selectedIssueTypeIds)}. selected = ${selected}`);
       if (selected) {
         initiallySelectedOptions.push(option);
@@ -76,7 +76,7 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
         key={`multi-issue-types-select-${issueTypeInfoRetrievalTime}`}
         inputId="checkbox-select-example"
         testId="issue-types-select"
-        defaultValue={initiallySelectedOptions}
+        value={initiallySelectedOptions}
         options={options}
         placeholder={props.label}
         menuPortalTarget={props.menuPortalTarget}

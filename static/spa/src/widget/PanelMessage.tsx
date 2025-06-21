@@ -8,8 +8,8 @@ export type PanelMessageProps = {
 export const PanelMessage = (props: PanelMessageProps) => {
 
   return (
-    <div className={props.className}>
-      <p style={{textAlign: 'center'}}>{props.message}</p>
+    <div className={`panel-message ${props.className}`}>
+      <p style={props.containerStyle}>{props.message}</p>
     </div>
   )
 

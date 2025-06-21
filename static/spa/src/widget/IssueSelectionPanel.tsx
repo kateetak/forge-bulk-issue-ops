@@ -13,6 +13,7 @@ import jiraUtil from "src/controller/jiraUtil";
 import { IssueLink } from "./IssueLink";
 import CrossCircleIcon from '@atlaskit/icon/core/cross-circle';
 import { PanelMessage, renderPanelMessage } from "./PanelMessage";
+import { BulkOperationMode } from "src/types/BulkOperationMode";
 
 export type IssueSelectionValidity = "valid" | "invalid-no-issues-selected" | "multiple-projects" | "multiple-issue-types";
 
@@ -25,6 +26,7 @@ export type IssueSelectionPanelProps = {
   loadingState: LoadingState;
   issueSearchInfo: IssueSearchInfo;
   selectedIssues: Issue[];
+  bulkOperationMode: BulkOperationMode;
   computeSelectionValidity: (selectedIssues: Issue[]) => IssueSelectionValidity;
   onIssuesSelectionChange: (issueSelectionState: IssueSelectionState) => Promise<void>;
 }
@@ -246,11 +248,33 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
         </tbody>
       </table>
     ) : null;
+
+    let renderedQuantityMessage: JSX.Element | null = null;
+    if (props.issueSearchInfo.issues.length) {
+      const containerStyle: any = {margin: '20px 0px'};
+      if (!props.issueSearchInfo.isLast) {
+        renderedQuantityMessage = (
+          <PanelMessage
+            containerStyle={containerStyle}
+            message={`Note: only ${props.issueSearchInfo.issues.length} work items can be ${props.bulkOperationMode === 'Edit' ? 'edited' : 'moved'} at a time, but more works items match the search criteria.`} 
+          />
+        );
+      } else {
+        renderedQuantityMessage = (
+          <PanelMessage
+            containerStyle={containerStyle}
+            message={`Found ${props.issueSearchInfo.issues.length} work items.`}
+          />
+        );
+      }
+    }
+
     return (
       <>
         {renderIssueLoading()}
         <FormSection>
           {renderStateValidityMessage()}
+          {renderedQuantityMessage}
           <div  className="data-table-container">
             {renderGlobalSelectionControls()}
             {renderedIssuesTable}

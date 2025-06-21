@@ -28,7 +28,7 @@ import { BulkOperationMode } from 'src/types/BulkOperationMode';
 import IssueTypeMappingPanel from './IssueTypeMappingPanel';
 import { ObjectMapping } from 'src/types/ObjectMapping';
 import bulkIssueTypeMappingModel from 'src/model/bulkIssueTypeMappingModel';
-import { renderPanelMessage } from 'src/widget/PanelMessage';
+import { PanelMessage, renderPanelMessage } from 'src/widget/PanelMessage';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
 import PanelHeader from 'src/widget/PanelHeader';
 import { CompletionState } from 'src/types/CompletionState';
@@ -405,7 +405,13 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     // const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedFromProjects);
     const selectableIssueTypes: IssueType[] = jiraUtil.filterProjectsIssueTypes(selectedProjects);
     // console.log(`BulkOperationPanel: onFromProjectsSelect: selectableIssueTypes: ${selectableIssueTypes.map(it => it.name).join(', ')}`);
+
+
     setSelectableIssueTypes(selectableIssueTypes);
+
+
+    // const deduplicatedIssueTypes = jiraUtil.deduplicateIssueTypes(selectableIssueTypes);
+    // setSelectableIssueTypes(deduplicatedIssueTypes);
   }
 
   const updateFieldMappingState = (selectedargetProject: Project) => {
@@ -570,22 +576,13 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }
 
   const renderIssueTypesSelect = () => {
-    const issueTypesAlreadySelected = selectedIssueTypes.length !== allIssueTypes.length;
-    // console.log(`BulkOperationPanel: renderIssueTypesSelect: issueTypesAlreadySelected: ${issueTypesAlreadySelected}`);
-    const candidateIssueTypes: IssueType[] = issueTypesAlreadySelected ?
-      selectedIssueTypes :
-      [];
-    // console.log(`BulkOperationPanel: renderIssueTypesSelect: candidateIssueTypes: ${JSON.stringify(candidateIssueTypes, null, 2)}`);
-    const selectedIssueTypeIds = candidateIssueTypes.length ? candidateIssueTypes.map(issueType => issueType.id) : [];
-    // console.log(`BulkOperationPanel: renderIssueTypesSelect: selectedIssueTypeIds: ${JSON.stringify(selectedIssueTypeIds, null, 2)}`);
-    const deduplicatedIssueTypes = jiraUtil.deduplicateIssueTypes(selectableIssueTypes);
     return (
       <FormSection>
-        <IssueTypesSelect 
+        <IssueTypesSelect
           key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
           label="Work item types"
-          selectedIssueTypeIds={selectedIssueTypeIds}
-          possiblySelectableIssueTypes={deduplicatedIssueTypes}
+          selectedIssueTypes={selectedIssueTypes}
+          possiblySelectableIssueTypes={selectableIssueTypes}
           menuPortalTarget={document.body}
           bulkOperationMode={bulkOperationMode}
           filterAllowedIssueTypes={filterSourceProjectIssueTypes}
@@ -773,9 +770,6 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
       .addCheck(arePrerequisiteStepsComplete('issue-selection'), 'Waiting for previous step to be completed.')
       .build();
     let panelLabel = `Select work items to ${bulkOperationMode.toLowerCase()}`;
-    if (issueSearchInfo.issues.length > 0) {
-      panelLabel += ` (${issueSearchInfo.issues.length} found)`;
-    }
     return (
       <div className="padding-panel">
         <div className="content-panel">
@@ -789,6 +783,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
             loadingState={issueLoadingState}
             issueSearchInfo={issueSearchInfo}
             selectedIssues={issueSelectionState.selectedIssues}
+            bulkOperationMode={bulkOperationMode}
             computeSelectionValidity={computeSelectionValidity}
             onIssuesSelectionChange={onIssuesSelectionChange}
           />
