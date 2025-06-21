@@ -204,7 +204,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     } else if (selectionValidity === 'multiple-issue-types') {
       return (
         <PanelMessage
-          message={`The selected work items are of multiple issue types, but this is not supported. Please select work items of a single issue type.`}
+          message={`The selected work items are of multiple work item types, but this is not supported. Please select work items of a single work item type.`}
           className="warning-banner"
         />
       );
