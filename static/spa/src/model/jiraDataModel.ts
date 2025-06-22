@@ -31,6 +31,9 @@ import { ObjectMapping } from 'src/types/ObjectMapping';
 import { ProjectCategory } from 'src/types/ProjectCategory';
 import { ProjectVersion } from 'src/types/ProjectVersion';
 import { ProjectComponent } from 'src/types/ProjectComponent';
+import { encode } from 'punycode';
+import { JiraLabel, LabelsQueryResponse } from 'src/types/JiraLabel';
+import { encodeAndQuoteLabel, filterProblematicLabels } from './labelsUtil';
 
 class JiraDataModel {
 
@@ -91,23 +94,26 @@ class JiraDataModel {
   public getIssueSearchInfo = async (issueSearchParameters: IssueSearchParameters): Promise<IssueSearchInfo> => {
     // console.log(`getIssueSearchInfo: building JQL from ${JSON.stringify(issueSearchParameters, null, 2)}`);
     let jql = '';
+    let nextSeparator = '';
     if (issueSearchParameters.projects.length) {
       const projectIdsCsv = issueSearchParameters.projects.map(project => project.id).join(',');
-      jql += `project in (${projectIdsCsv})`;
+      jql += `${nextSeparator}project in (${projectIdsCsv})`;
+      nextSeparator = ' and ';
     }
     if (issueSearchParameters.issueTypes.length) {
       const issueTypeIdsCsv = issueSearchParameters.issueTypes.map(issueType => issueType.id).join(',');
-      jql += ` and issuetype in (${issueTypeIdsCsv})`;
+      jql += `${nextSeparator}issuetype in (${issueTypeIdsCsv})`;
     }
 
     if (issueSearchParameters.labels.length) {
-      const labelsCsv = issueSearchParameters.labels.join(',');
-      jql += ` and labels in (${labelsCsv})`;
+      // const labelsCsv = issueSearchParameters.labels.join(',');
+      const labelsCsv = issueSearchParameters.labels.map(label => encodeAndQuoteLabel(label)).join(',');
+      jql += `${nextSeparator}labels in (${labelsCsv})`;
     }
     // console.log(` * built JQL: ${jql}`);
     return await this.getIssueSearchInfoByJql(jql);
   }
-  
+
   public getIssueSearchInfoByJql = async (jql: string): Promise<IssueSearchInfo> => {
     const maxResults = 100; // This is the maximum number supported by the API.
     // Note that the following limits the amount of fields to be returned for performance reasons, but
@@ -118,15 +124,29 @@ class JiraDataModel {
     // console.log(` * jql=${jql}`);
     const paramsString = `jql=${encodeURIComponent(jql)}&maxResults=${maxResults}&fields=${fields}&expand=${expand}`;
     // console.log(` * paramsString = ${paramsString}`);
+    // console.log(` * url = /rest/api/3/search/jql?${paramsString}`);
     const queryParams = new URLSearchParams(paramsString);
     const response = await requestJira(`/rest/api/3/search/jql?${queryParams}`, {
       headers: {
         'Accept': 'application/json'
       }
     });
-    const issuesSearchInfo = await response.json();
-    // console.log(`issuesSearchInfo: ${JSON.stringify(issuesSearchInfo, null, 2)}`);
-    return issuesSearchInfo;
+    if (response.ok) {
+      const issuesSearchInfo = await response.json();
+      // console.log(`issuesSearchInfo: ${JSON.stringify(issuesSearchInfo, null, 2)}`);
+      return issuesSearchInfo;
+    } else {
+      const errorText = await response.text();
+      console.error(`Failed to fetch issues search info: ${response.status}: ${errorText}`);
+      const issueSearchInfo: IssueSearchInfo = {
+        maxResults: 0,
+        startAt: 0,
+        total: 0,
+        isLast: false,
+        issues: []
+      };
+      return issueSearchInfo;
+    }
   }
   
   // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get
@@ -139,45 +159,24 @@ class JiraDataModel {
     const invocationResult: InvocationResult<IssueType[]> = await this.readResponse(response);
     return invocationResult;
   }
-  
-  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-labels/#api-rest-api-3-label-get
-  public getAllLabels = async () => {
-    const maxResultsPerPage = 1000;
-    let startAt = 0;
-    let allLabels: string[] = [];
-    let index = 0;
-    while (true && index < 3) {
-      const labelsPage = await this.pageOfLabels(startAt, maxResultsPerPage);
-      allLabels = allLabels.concat(labelsPage.values);
-      if (labelsPage.isLast) {
-        break;
-      }
-      startAt += maxResultsPerPage;
-      index++;
-    }
-    // console.log(`getAllLabels: All labels: ${JSON.stringify(allLabels, null, 2)}`);
-    return allLabels;
-  }
 
-  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-labels/#api-rest-api-3-label-get
-  private pageOfLabels = async (startAt: number, maxResults: number) => {
-    const cacheKey = `page-${startAt}-${maxResults}`;
-    const cachedLabels = this.labelPagesToLabels[cacheKey];
-    if (cachedLabels) {
-      return cachedLabels;
+  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-search-get
+  public suggestLabels = async (query: string): Promise<InvocationResult<LabelsQueryResponse>> => {
+    const url = `/rest/api/3/jql/autocompletedata/suggestions?fieldName=labels&fieldValue=${encodeURIComponent(query)}`;
+    // console.log(`JiraDataModel.pageOfProjectSearchInfo: Fetching projects with URL: ${url}`);
+    const response = await requestJira(url, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    const invocationResult = await this.readResponse<LabelsQueryResponse>(response);
+    if (invocationResult.ok) {
+      invocationResult.data.results = filterProblematicLabels(invocationResult.data.results);
+      // console.log(`JiraDataModel.suggestLabels: Fetched labels: ${JSON.stringify(invocationResult.data, null, 2)}`);
     } else {
-      const response = await requestJira(`/rest/api/3/label?startAt=${startAt}&maxResults=${maxResults}`, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      // console.log(`Response: ${response.status} ${response.statusText}`);
-      const labelsPage = await response.json();
-      // console.log(`Labels: ${JSON.stringify(labels, null, 2)}`);
-      this.labelPagesToLabels[cacheKey] = labelsPage;
-      // console.log(`getAllLabels: Page labels: ${JSON.stringify(labelsPage, null, 2)}`);
-      return labelsPage;
+      console.error(`JiraDataModel.suggestLabels: Failed to fetch labels: ${invocationResult.errorMessage}`);
     }
+    return invocationResult;
   }
 
   public getAllProjectCategories = async (): Promise<InvocationResult<ProjectCategory[]>> => {

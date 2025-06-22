@@ -158,6 +158,7 @@ class IssueEditController {
             labels: labels
           }
           editedFieldsInputBuilder.addLabelsField(jiraLabelsField);
+          break;
         case 'com.atlassian.jira.plugin.system.customfieldtypes:textfield':
         case 'text':
           const jiraTextField: JiraSingleLineTextField = {

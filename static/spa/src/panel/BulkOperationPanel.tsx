@@ -346,26 +346,24 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     setIssueMoveOutcome(undefined);
     const noIssues = nilIssueSearchInfo();
     onIssuesLoaded(true, noIssues);
-    if (projects.length === 0) {
-      onIssuesLoaded(true, nilIssueSearchInfo());
-    } else {
-      setIssueLoadingState('busy');
-      setTimeout(async () => {
-        const issueSearchParameters: IssueSearchParameters = {
-          projects: projects,
-          issueTypes: issueTypes,
-          labels: labels
-        }
-        const issueSearchInfo = await jiraDataModel.getIssueSearchInfo(issueSearchParameters) as IssueSearchInfo;
-        if (issueSearchInfo.errorMessages && issueSearchInfo.errorMessages.length) {
-          const joinedErrors = issueSearchInfo.errorMessages.join( );
-          setMainWarningMessage(joinedErrors);
-        } else {
-          onIssuesLoaded(true, issueSearchInfo);
-        }
-        setIssueLoadingState('idle');
-      }, 0);
-    }
+    setIssueLoadingState('busy');
+    setTimeout(async () => {
+      const issueSearchParameters: IssueSearchParameters = {
+        projects: projects,
+        issueTypes: issueTypes,
+        labels: labels
+      }
+      const issueSearchInfo = await jiraDataModel.getIssueSearchInfo(issueSearchParameters) as IssueSearchInfo;
+      if (issueSearchInfo.errorMessages && issueSearchInfo.errorMessages.length) {
+        const joinedErrors = issueSearchInfo.errorMessages.join( );
+        setMainWarningMessage(joinedErrors);
+      } else {
+        onIssuesLoaded(true, issueSearchInfo);
+      }
+      const issueCount = issueSearchInfo.issues.length;
+      setStepCompletionState('filter', issueCount > 0 ? 'complete' : 'incomplete');
+      setIssueLoadingState('idle');
+    }, 0);
   }
 
   const onAdvancedModeSearchIssues = async (jql: string): Promise<void> => {
@@ -447,7 +445,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }
 
   const onLabelsSelect = async (selectedLabels: string[]): Promise<void> => {
-    console.log(`selectedLabels: `, selectedLabels);
+    // console.log(`BulkOperationPanel.onLabelsSelect: selectedLabels: `, selectedLabels);
     setSelectedLabels(selectedLabels);
     setSelectedLabelsTime(Date.now());
     await onBasicModeSearchIssues(selectedFromProjects, selectedIssueTypes, selectedLabels);

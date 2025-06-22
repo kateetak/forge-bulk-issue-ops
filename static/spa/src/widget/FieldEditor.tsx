@@ -32,6 +32,7 @@ import { IssueSelectionState } from './IssueSelectionPanel';
 import { FixVersionEditor, FixVersionEditorValue } from './FixVersionEditor';
 import { ComponentsEditor, ComponentsEditorValue } from './ComponentsEditor';
 import { EditOptionSelect } from './EditOptionSelect';
+import { showLabelsEditField } from 'src/extension/bulkOperationStaticRules';
 
 // KNOWN-5: Note all fields types are supported since each type of field requires custome UI to edit it. To extend
 //          support, start by setting the following constant to true since this will render the unsupported field types
@@ -55,7 +56,6 @@ export const isFieldTypeEditingSupported = (fieldType: string): boolean => {
     case 'com.atlassian.jira.plugin.system.customfieldtypes:select':
     case 'reporter':
     case 'assignee':
-    case 'labels':
     case 'priority':
     case 'com.atlassian.jira.plugin.system.customfieldtypes:textfield':
     case 'text':
@@ -66,6 +66,9 @@ export const isFieldTypeEditingSupported = (fieldType: string): boolean => {
     case 'com.atlassian.jira.plugin.system.customfieldtypes:datetime':
     case 'com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect':
       return true;
+    case 'labels':
+      // KNOWN-16: The labels field is only supported if the showLabelsEditField constant is set to true.
+      return showLabelsEditField;
   }
   return false;
 }
