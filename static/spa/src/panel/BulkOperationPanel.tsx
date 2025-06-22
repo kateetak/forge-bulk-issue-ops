@@ -933,7 +933,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           <MoveOrEditPanel
             bulkOperationMode={bulkOperationMode}
             fieldMappingsComplete={fieldMappingsComplete}
-            selectedIssues={issueSelectionState.selectedIssues}
+            issueSelectionState={issueSelectionState}
             selectedToProject={selectedToProject}
             allDefaultValuesProvided={allDefaultValuesProvided}
             lastInputConditionsChangeTime={lastInputConditionsChangeTime}

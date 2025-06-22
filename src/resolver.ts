@@ -24,4 +24,26 @@ resolver.define('initiateBulkEdit', async (request: any) => {
   return await initiateBulkEdit(accountId, bulkIssueEditRequestData);
 });
 
+/**
+ *  This resolver is used to log messages from the client side. This is generally only used to log errors or warnings.
+ */
+resolver.define('logMessage', async (request: any): Promise<void> => {
+  // console.log(`initiateBulkEdit request: ${JSON.stringify(request, null, 2)}`);
+  const context = request.context;
+  const payload = request.payload;
+  const accountId = context.accountId;
+  const message = payload.message;
+  const level = context.level;
+  const formattedMessage = `[${accountId}] ${message}`;
+  if (level === 'error') {
+    console.error(formattedMessage);
+  } else if (level === 'warn') {
+    console.warn(formattedMessage);
+  } else if (level === 'info') {
+    console.info(formattedMessage);
+  } else {
+    console.log(formattedMessage);
+  }
+});
+
 export const handler = resolver.getDefinitions();

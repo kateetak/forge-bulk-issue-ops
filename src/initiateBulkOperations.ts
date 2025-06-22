@@ -8,7 +8,7 @@ import { ServerInfo } from './types/ServerInfo';
 const manageUserGroupsUsingAppUserAccount = false;
 
 const maxBulkOperationRetries = 3;
-const initialRetryDelay = 2000; // 2 seconds
+const initialRetryDelay = 2000;
 
 export const initiateBulkMove = async (accountId: string, bulkIssueMoveRequestData: any): Promise<InvocationResult<TaskRequestOutcome>> => {
   const bulkOpsAppGroupId = getBulkOpsAppGroupId();
@@ -75,7 +75,7 @@ const doBulkMove = async (bulkIssueMoveRequestData: any, retryNumber: number, tr
     // A permission error can be the causse of an error due to the eventually consistent semantics of identity APIs, however,
     // it's not easy to be absolutely sure if the error is due to a permission issue or not because it comes back as a 400 status
     // code because it can also relate to fields being hidden. So, here we just assume we should retry all error.
-    if (retryNumber <= maxBulkOperationRetries) {
+    if (retryNumber < maxBulkOperationRetries) {
       const retryDelay = computeRetryDelay(retryNumber);
       console.log(`[${traceId}]: Retrying bulk move after ${retryDelay} milliseconds (${retryNumber} retries left) due to ${invocationResult.status} error status: ${invocationResult.errorMessage ? invocationResult.errorMessage : '[no error message provided]'}`);
       await delay(retryDelay);
@@ -107,7 +107,7 @@ const doBulkEdit = async (bulkIssueMoveRequestData: any, retryNumber: number, tr
     // A permission error can be the causse of an error due to the eventually consistent semantics of identity APIs, however,
     // it's not easy to be absolutely sure if the error is due to a permission issue or not because it comes back as a 400 status
     // code because it can also relate to fields being hidden. So, here we just assume we should retry all error.
-    if (retryNumber <= maxBulkOperationRetries) {
+    if (retryNumber < maxBulkOperationRetries) {
       const retryDelay = computeRetryDelay(retryNumber);
       console.log(`[${traceId}]: Retrying bulk edit after ${retryDelay} milliseconds (${retryNumber} retries left) due to ${invocationResult.status} error status: ${invocationResult.errorMessage ? invocationResult.errorMessage : '[no error message provided]'}`);
       await delay(retryDelay);

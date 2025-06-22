@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FormSection, Label } from '@atlaskit/form';
 import Button from '@atlaskit/button/new';
 import Toggle from '@atlaskit/toggle';
-import { FlagOptions, showFlag } from '@forge/bridge';
+import { FlagOptions, showFlag, invoke } from '@forge/bridge';
 import { LinearProgress } from '@mui/material';
 import issueMoveController from 'src/controller/issueMoveController';
 import { WaitingMessageBuilder } from 'src/controller/WaitingMessageBuilder';
@@ -24,13 +24,14 @@ import { TaskStatusLozenge } from 'src/widget/TaskStatusLozenge';
 import { formatProject } from 'src/controller/formatters';
 import issueEditController from 'src/controller/issueEditController';
 import { uuid } from 'src/model/util';
+import { IssueSelectionState } from 'src/widget/IssueSelectionPanel';
 
 const showDebug = false;
 
 export type MoveOrEditPanelProps = {
   bulkOperationMode: BulkOperationMode;
   fieldMappingsComplete: boolean;
-  selectedIssues: Issue[];
+  issueSelectionState: IssueSelectionState,
   selectedToProject: Project | undefined;
   allDefaultValuesProvided: boolean;
   lastInputConditionsChangeTime: number;
@@ -46,6 +47,20 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
   const [issueMoveEditOutcome, setIssueMoveEditOutcome] = useState<undefined | TaskOutcome>(undefined);
   const [issueMoveEditCompletionTime, setIssueMoveEditCompletionTime] = useState<number>(0);
   const [lastMoveEditCompletionTaskId, setLastMoveEditCompletionTaskId] = useState<string>('none');
+
+  const crossCheckIssueSelectionState = (): boolean => {
+    const issueSelectionState = editedFieldsModel.getIssueSelectionState();
+    const providedIssues = props.issueSelectionState.selectedIssues;
+    if (providedIssues.length !== issueSelectionState.selectedIssues.length) {
+      console.warn(`BulkOperationPanel: crossCheckIssueSelectionState: Provided issues length (${providedIssues.length}) does not match selected issues length (${issueSelectionState.selectedIssues.length}).`);
+      console.warn(`BulkOperationPanel: providedIssues                     = ${JSON.stringify(providedIssues.map(issue => issue.key))}`);
+      console.warn(`BulkOperationPanel: issueSelectionState.selectedIssues = ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}`);
+      return false;
+    } else {
+      console.log(`BulkOperationPanel: crossCheckIssueSelectionState: Provided issues length matches selected issues length (${providedIssues.length}).`);
+      return true;
+    }
+  }
 
   useEffect(() => {
     if (issueMoveEditCompletionTime < props.lastInputConditionsChangeTime) {
@@ -120,7 +135,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     const targetIssueTypeIdsToTargetMandatoryFields = targetProjectFieldsModel.buildIssueTypeIdsToTargetMandatoryFields();
     const initiateOutcome: IssueMoveEditRequestOutcome = await issueMoveController.initiateMove(
       destinationProjectId,
-      props.selectedIssues,
+      props.issueSelectionState.selectedIssues,
       targetIssueTypeIdsToTargetMandatoryFields,
       sendBulkNotification
     );
@@ -141,9 +156,17 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     }
   }
 
-  const onEditIssues = async (): Promise<void> => {
+  const onEditIssues = async (issueSelectionState: IssueSelectionState): Promise<void> => {
     // Step 1: Update the model with final inputs...
     editedFieldsModel.setSendBulkNotification(sendBulkNotification);
+
+    const crossCheckOk = crossCheckIssueSelectionState();
+    if (!crossCheckOk) {
+      const errorMessage = `BulkOperationPanel.onEditIssues: Selected issues do not match the issues in the edited fields model. Please check your selection.`;
+      console.warn(errorMessage);
+      await invoke('logMessage', { message: errorMessage, level: 'warn' });
+      await editedFieldsModel.setIssueSelectionState(issueSelectionState);
+    }
 
     // Step 2: Initiate the bulk edit request...
     setIssueMoveEditRequestOutcome(undefined);
@@ -173,10 +196,10 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
   }
 
   const buildButtonLabel = (): string => {
-    if (props.selectedIssues.length === 0) {
+    if (props.issueSelectionState.selectedIssues.length === 0) {
       return `${props.bulkOperationMode} issues`;
     } else if (props.bulkOperationMode === 'Move') {
-      let label = `Move ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
+      let label = `Move ${props.issueSelectionState.selectedIssues.length} issue${props.issueSelectionState.selectedIssues.length > 1 ? 's' : ''}`;
       if (props.selectedToProject) {
         label += ` to ${formatProject(props.selectedToProject)}`;
       }
@@ -187,8 +210,8 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
       if (editedFieldsCount > 0) {
         label += ` ${editedFieldsCount} field${editedFieldsCount > 1 ? 's' : ''} for`;
       }
-      if (props.selectedIssues.length > 0) {
-        label += ` ${props.selectedIssues.length} issue${props.selectedIssues.length > 1 ? 's' : ''}`;
+      if (props.issueSelectionState.selectedIssues.length > 0) {
+        label += ` ${props.issueSelectionState.selectedIssues.length} issue${props.issueSelectionState.selectedIssues.length > 1 ? 's' : ''}`;
       }
       return label;
     }
@@ -292,7 +315,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
             if (props.bulkOperationMode === 'Move') {
               onMoveIssues();
             } else if (props.bulkOperationMode === 'Edit') {
-              onEditIssues();
+              onEditIssues(props.issueSelectionState);
             }
           }}
         >

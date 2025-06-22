@@ -94,8 +94,13 @@ class EditedFieldsModel {
     }
   }
 
+  getIssueSelectionState = (): IssueSelectionState => {
+    return this.issueSelectionState;
+  }
+
   setIssueSelectionState = async (issueSelectionState: IssueSelectionState) => {
     // console.log(`editedFieldsModel.setIssueSelectionState: Loading fields for state '${issueSelectionState.selectionValidity}', issues: ${JSON.stringify(issueSelectionState.selectedIssues.map(issue => issue.key))}...`);
+    this.issueSelectionState = issueSelectionState;
     if (issueSelectionState.selectionValidity === 'valid') {
       this.setFields([]);
       const issueTypeMap: Map<string, IssueType> = jiraUtil.getIssueTypesFromIssues(issueSelectionState.selectedIssues);
@@ -106,12 +111,9 @@ class EditedFieldsModel {
       const filteredFields = await bulkOperationRuleEnforcer.filterEditFields(fields, issueTypes);
       const sortedFields = this.sortFields(filteredFields);
       this.setFields(sortedFields);
-
-
     } else {
       this.setFields([]);
     }
-    this.issueSelectionState = issueSelectionState;
   }
 
   setFieldValue = async (field: IssueBulkEditField, value: FieldEditValue): Promise<OperationOutcome> => {
