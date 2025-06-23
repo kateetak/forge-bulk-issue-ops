@@ -114,6 +114,11 @@ class JiraDataModel {
     return await this.getIssueSearchInfoByJql(jql);
   }
 
+  public getIssuesJQL = (): string => {
+    const excludedStatuses  = ['DONE', 'ON HOLD', 'CANCELLED']; 
+    return `status NOT IN (${excludedStatuses.map(status => `"${status}"`).join(',')})`;
+  };
+
   public getIssueSearchInfoByJql = async (jql: string): Promise<IssueSearchInfo> => {
     const maxResults = 100; // This is the maximum number supported by the API.
     // Note that the following limits the amount of fields to be returned for performance reasons, but
@@ -121,10 +126,16 @@ class JiraDataModel {
     // not cover them all.
     const fields = 'summary,description,issuetype,project';
     const expand = 'renderedFields';
-    // console.log(` * jql=${jql}`);
-    const paramsString = `jql=${encodeURIComponent(jql)}&maxResults=${maxResults}&fields=${fields}&expand=${expand}`;
-    // console.log(` * paramsString = ${paramsString}`);
-    // console.log(` * url = /rest/api/3/search/jql?${paramsString}`);
+    //console.log(` * jql=${jql}`);
+    
+    // retrieve JQL for list of status to be excluded
+    const excludedStatusesJQL = this.getIssuesJQL();
+    const updatedJql = `${jql} AND ${excludedStatusesJQL}`;
+    //console.log(` * updatedJql=${updatedJql}`);
+
+    const paramsString = `jql=${encodeURIComponent(updatedJql)}&maxResults=${maxResults}&fields=${fields}&expand=${expand}`;
+    //console.log(` * paramsString = ${paramsString}`);
+    //console.log(` * url = /rest/api/3/search/jql?${paramsString}`);
     const queryParams = new URLSearchParams(paramsString);
     const response = await requestJira(`/rest/api/3/search/jql?${queryParams}`, {
       headers: {
@@ -759,5 +770,4 @@ class JiraDataModel {
 }
 
 export default new JiraDataModel();
-
 
