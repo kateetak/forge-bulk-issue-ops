@@ -160,67 +160,27 @@ class BulkOperationRuleEnforcer {
     issuesToMove: Issue[],
     candidateTargetProjects: Project[]
   ): Promise<Project[]> => {
-    // console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves...`);
-    const filteredProjectKeysToProjects = new Map<string, Project>();
-    for (const candidateTargetProject of candidateTargetProjects) {
-      filteredProjectKeysToProjects.set(candidateTargetProject.key, candidateTargetProject);
+    const undefinedCategoryId = '[undefined]';
+    const sourceProjectCategoryIds = new Set<string>();
+    for (const issue of issuesToMove) {
+      const projectCategory = issue.fields.project?.projectCategory;
+      const projectCategoryId = projectCategory ? projectCategory.id : undefinedCategoryId;
+      console.log(`bulkOperationRuleEnforcer.buildProjectCategoryIdsToCategories: adding project category ${projectCategoryId} for issue ${issue.key}.`);
+      sourceProjectCategoryIds.add(projectCategoryId);
     }
-    const issueProjectCategoryIdsToCategories = new Map<string, ProjectCategory>();
-    for (const issueToMove of issuesToMove) {
-      const candidateProject: Project = candidateTargetProjects.find((project: Project) => {
-        return issueToMove.key.startsWith(`${project.key}-`);
-      });
-      if (candidateProject) {
-        const issueProjectInvocationResult = await jiraDataModel.getProjectByIdOrKey(issueToMove.fields.project.key);
-        if (issueProjectInvocationResult.ok) {
-          const issueProject = issueProjectInvocationResult.data;
-          const issueProjectCategory = issueProject.projectCategory;
-          if (issueProjectCategory) {
-            issueProjectCategoryIdsToCategories.set(issueProjectCategory.id, issueProjectCategory);
-          } else {
-
-          }
-          const sameProjectCategories = jiraUtil.areSameProjectCategories(issueProjectCategory, candidateProject.projectCategory);
-          // console.log(` * sameProjectCategories ${sameProjectCategories} for issue ${issueToMove.key}.`);
-          if (sameProjectCategories) {
-            // Do nothing
-          } else {
-            // The issue to move is not in the same project category as the candidate project, so remove the 
-            // project from the filter set.
-            filteredProjectKeysToProjects.delete(issueToMove.fields.project.key);
-          }
-        } else {
-          console.warn(` * project with key ${issueToMove.fields.project.key} not found.`);
-        }
-      } else {
-        // console.log(` * no candidate project found for issue ${issueToMove.key}.`);
-      }
-    }
-
-    if (issueProjectCategoryIdsToCategories.size === 0) {
-      // console.log(` * no issue project categories found, returning no target projects.`);
-      // return [];
-    } else if (issueProjectCategoryIdsToCategories.size === 1) {
-      issueProjectCategoryIdsToCategories.forEach((issueProjectCategory: ProjectCategory, issueProjectCategoryId: string) => {
-        for (const candidateTargetProject of candidateTargetProjects) {
-          const sameProjectCategories = jiraUtil.areSameProjectCategories(issueProjectCategory, candidateTargetProject.projectCategory);
-          // console.log(` * sameProjectCategories ${sameProjectCategories} for issueProjectCategory ${issueProjectCategory.name}.`);
-          if (sameProjectCategories) {
-            // Do nothing
-          } else {
-            // The issue to move is not in the same project category as the candidate project, so remove the 
-            // project from the filter set.
-            filteredProjectKeysToProjects.delete(candidateTargetProject.key);
-          }
-        }
-      });
-    } else {
-      // console.log(` * multiple issue project categories found, returning no target projects.`);
+    if (sourceProjectCategoryIds.size > 1) {
+      console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves: multiple source project categories found, returning no target projects.`);
       return [];
     }
-
-    const issueProjectCategories = Array.from(issueProjectCategoryIdsToCategories.values());
-
+    const filteredProjectKeysToProjects = new Map<string, Project>();
+    for (const candidateTargetProject of candidateTargetProjects) {
+      const projectCategory = candidateTargetProject.projectCategory;
+      const projectCategoryId = projectCategory ? projectCategory.id : undefinedCategoryId;
+      if (sourceProjectCategoryIds.has(projectCategoryId)) {
+        console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves: adding candidate target project ${candidateTargetProject.key}.`);
+        filteredProjectKeysToProjects.set(candidateTargetProject.key, candidateTargetProject);
+      }
+    }
     const filteredProjects: Project[] = Array.from(filteredProjectKeysToProjects.values());
     return filteredProjects;
   }
