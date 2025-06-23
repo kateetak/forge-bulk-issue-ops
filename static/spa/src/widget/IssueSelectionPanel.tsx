@@ -112,6 +112,15 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
     );
   }
 
+  const renderInfoPanel = () => {
+    return (
+      <PanelMessage
+          message={`Moving or Editing issues in one of the following statuses is not supported 'DONE', 'ON HOLD', 'CANCELLED'`}
+          className="info-banner"
+        />
+    );
+  };
+
   const renderClearFilterControl = () => {
     return (
       <IconButton
@@ -256,7 +265,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
         renderedQuantityMessage = (
           <PanelMessage
             containerStyle={containerStyle}
-            message={`Note: only ${props.issueSearchInfo.issues.length} work items can be ${props.bulkOperationMode === 'Edit' ? 'edited' : 'moved'} at a time, but more works items match the search criteria.`} 
+            message={`Note: only ${props.issueSearchInfo.issues.length} work items can be ${props.bulkOperationMode === 'Edit' ? 'edited' : 'moved'} at a time, but more works items match the search criteria.`}
           />
         );
       } else {
@@ -273,6 +282,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
       <>
         {renderIssueLoading()}
         <FormSection>
+          {renderInfoPanel()}
           {renderStateValidityMessage()}
           {renderedQuantityMessage}
           <div  className="data-table-container">

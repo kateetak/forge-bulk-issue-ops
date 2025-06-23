@@ -58,6 +58,19 @@ div.warning-banner {
   color: var(--ds-text-inverse);
 }
 
+div.info-banner {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+  background-color: token('color.background.accent.blue.subtlest');
+  color: var(--ds-text);
+}
+
 div.edit-options-panel {
   display: flex;
   flex-wrap: nowrap;
