@@ -86,7 +86,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     }
   }
 
-  const pollPollMoveOutcome = async (taskId: string): Promise<void> => {
+  const pollPollMoveOrEditOutcome = async (taskId: string): Promise<void> => {
     if (taskId) {
       const outcome: TaskOutcome = await issueMoveController.pollMoveProgress(taskId);
       setIssueMoveEditOutcome(outcome);
@@ -101,7 +101,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
           const flagOptions: FlagOptions = {
             id: taskId,
             type: outcome.status === 'COMPLETE' ? 'info' : 'error',
-            title: outcome.status === 'COMPLETE' ? 'Move completed' : `Move ended with status ${outcome.status}`,
+            title: outcome.status === 'COMPLETE' ? `${props.bulkOperationMode} completed` : `${props.bulkOperationMode} ended with status ${outcome.status}`,
             description: description,
             isAutoDismiss: outcome.status === 'COMPLETE',
             actions: outcome.status === 'COMPLETE' ? [] : [{
@@ -116,7 +116,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
         setCurrentMoveEditActivity(undefined);
         props.onSetStepCompletionState('move-or-edit', 'complete');
       } else {
-        asyncPollMoveOutcome(taskId);
+        asyncPollMoveOrEditOutcome(taskId);
         props.onSetStepCompletionState('move-or-edit', 'incomplete');
       }
     } else {
@@ -152,7 +152,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     } else {
       // Step 2: Start polling for the outcome...
       setCurrentMoveEditActivity({taskId: initiateOutcome.taskId, description: 'Polling for bulk move outcome...'});
-      pollPollMoveOutcome(initiateOutcome.taskId);
+      pollPollMoveOrEditOutcome(initiateOutcome.taskId);
     }
   }
 
@@ -185,13 +185,13 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
     } else {
       // Step 3: Start polling for the outcome...
       setCurrentMoveEditActivity({taskId: initiateOutcome.taskId, description: 'Polling for bulk move outcome...'});
-      pollPollMoveOutcome(initiateOutcome.taskId);
+      pollPollMoveOrEditOutcome(initiateOutcome.taskId);
     }
   }
 
-  const asyncPollMoveOutcome = async (taskId: string): Promise<void> => {
+  const asyncPollMoveOrEditOutcome = async (taskId: string): Promise<void> => {
     setTimeout(async () => {
-      await pollPollMoveOutcome(taskId);
+      await pollPollMoveOrEditOutcome(taskId);
     }, taskStatusPollPeriodMillis);
   }
 
