@@ -169,7 +169,7 @@ class BulkOperationRuleEnforcer {
       sourceProjectCategoryIds.add(projectCategoryId);
     }
     if (sourceProjectCategoryIds.size > 1) {
-      console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves: multiple source project categories found, returning no target projects.`);
+      // console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves: multiple source project categories found, returning no target projects.`);
       return [];
     }
     const filteredProjectKeysToProjects = new Map<string, Project>();
@@ -177,7 +177,7 @@ class BulkOperationRuleEnforcer {
       const projectCategory = candidateTargetProject.projectCategory;
       const projectCategoryId = projectCategory ? projectCategory.id : undefinedCategoryId;
       if (sourceProjectCategoryIds.has(projectCategoryId)) {
-        console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves: adding candidate target project ${candidateTargetProject.key}.`);
+        // console.log(`bulkOperationRuleEnforcer.filterCrossCategoryMoves: adding candidate target project ${candidateTargetProject.key}.`);
         filteredProjectKeysToProjects.set(candidateTargetProject.key, candidateTargetProject);
       }
     }
