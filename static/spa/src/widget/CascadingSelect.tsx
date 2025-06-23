@@ -65,6 +65,27 @@ export const CascadingSelect = (props: CascadingSelectProps) => {
   const [optionContext, setOptionContext] = React.useState<OptionContext>(buildOptionContext());
   const [fieldValue, setFieldValue] = React.useState<CascadingSelectValue | undefined>(props.value);
 
+  const getSelectedParentOption = (optionContext: OptionContext): Option | undefined => {
+    const parentOption = optionContext.parentOptions.find(option => option.value === props.value?.id);
+    return parentOption;
+  }
+
+  const getSelectedChildOption = (optionContext: OptionContext): Option | undefined => {
+    const parentOptionId = fieldValue?.id;
+    if (parentOptionId) {
+      const parentOption = optionContext.parentOptions.find(option => option.value === parentOptionId);
+      if (parentOption) {
+        const childOptions = optionContext.parentOptionValuesToChildOptions[parentOption.value];
+        const selectedChildOption = childOptions.find(option => option.value === fieldValue?.child.id);
+        if (selectedChildOption) {
+          return selectedChildOption;
+        }
+      }
+    } else {
+      return undefined;
+    }
+  }
+
   const notifyChange = (newValue: CascadingSelectValue) => {
     if (newValue && newValue.id && newValue.child && newValue.child.id) {
       // console.log(`CascadingSelect.maybeNotifyChange: newValue ${JSON.stringify(newValue, null, 2)}`);
@@ -143,6 +164,7 @@ export const CascadingSelect = (props: CascadingSelectProps) => {
           name={`cascading-select-parent-${props.field.id}`}
           isDisabled={props.isDisabled}
           isInvalid={props.isInvalid}
+          value={getSelectedParentOption(optionContext)}
           defaultOptions={optionContext.parentOptions}
           menuPortalTarget={props.menuPortalTarget}
           onChange={onParentOptionSelect}
@@ -153,6 +175,7 @@ export const CascadingSelect = (props: CascadingSelectProps) => {
           name={`cascading-select-chilet-${props.field.id}`}
           isDisabled={props.isDisabled}
           isInvalid={props.isInvalid}
+          value={getSelectedChildOption(optionContext)}
           defaultOptions={childOptions}
           menuPortalTarget={props.menuPortalTarget}
           onChange={onChildOptionSelect}

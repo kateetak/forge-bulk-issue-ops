@@ -12,7 +12,7 @@ import { User } from '../types/User';
 
 export type UsersSelectProps = {
   label: string;
-  selectedUsers: User[];
+  selectedUserAccountIds: string[];
   isMulti: boolean;
   isDisabled?: boolean;
   isInvalid?: boolean;
@@ -51,17 +51,13 @@ const UsersSelect = (props: UsersSelectProps) => {
       if (user) {
         selectedUsers.push(user);
       } else {
-        const userInExistingSelectedUsers = props.selectedUsers.find(user => user.accountId === selectedOption.value);
-        if (userInExistingSelectedUsers) {
-          selectedUsers.push(userInExistingSelectedUsers);
+        const userInExistingSelectedUsers = props.selectedUserAccountIds.find(userId => userId === selectedOption.value);
+        // console.log(`UsersSelect.rebuildSelectedUsers: Could not find user with id ${selectedOption.value} in filteredUsers or selectedUsers`);
+        const userInvocationResult = await jiraDataModel.getUserByAccountId(selectedOption.value);
+        if (userInvocationResult.ok) {
+          selectedUsers.push(userInvocationResult.data);
         } else {
-          // console.log(`UsersSelect.rebuildSelectedUsers: Could not find user with id ${selectedOption.value} in filteredUsers or selectedUsers`);
-          const userInvocationResult = await jiraDataModel.getUserByAccountId(selectedOption.value);
-          if (userInvocationResult.ok) {
-            selectedUsers.push(userInvocationResult.data);
-          } else {
-            console.error(`UsersSelect.rebuildSelectedUsers: Could not find user with id ${selectedOption.value} in filteredUsers or selectedUsers`);
-          }
+          console.error(`UsersSelect.rebuildSelectedUsers: Could not find user with id ${selectedOption.value} in filteredUsers or selectedUsers`);
         }
       }
     }
@@ -107,7 +103,28 @@ const UsersSelect = (props: UsersSelectProps) => {
     } 
   }
 
+  const buildInitiallySelectedOptions = (): any => {
+    // console.log(`UsersSelect.buildInitiallySelectedOptions: props.selectedUserAccountIds = ${JSON.stringify(props.selectedUserAccountIds)}`);
+    const selectedOptions: Option[] = [];
+    for (const userAccountId of props.selectedUserAccountIds) {
+      const user = currentUsers.find(user => user.accountId === userAccountId);
+      if (user) {
+        selectedOptions.push(userToOption(user));
+        // console.log(`UsersSelect.buildInitiallySelectedOptions: Found user with accountId ${userAccountId} in currentUsers`);
+      } else {
+        // console.log(`UsersSelect.buildInitiallySelectedOptions: Could not find user with accountId ${userAccountId} in currentUsers`);
+      }
+    }
+    if (props.isMulti) {
+      return selectedOptions;
+    } else {
+      return selectedOptions.length > 0 ? selectedOptions[0] : undefined;
+    }
+  }
+
   const renderSelect = () => {
+    const initiallySelectedOptions = buildInitiallySelectedOptions();
+    // console.log(`UsersSelect.renderSelect: initiallySelectedOptions = ${JSON.stringify(initiallySelectedOptions)}`);
     return (
       <Select
         inputId="checkbox-select-example"
@@ -120,6 +137,7 @@ const UsersSelect = (props: UsersSelectProps) => {
         isInvalid={props.isInvalid}
         isClearable={props.isClearable}
         isLoading={loadingOptions}
+        value={buildInitiallySelectedOptions()}
 				loadOptions={promiseOptions}
         placeholder={props.label}
         menuPortalTarget={props.menuPortalTarget}

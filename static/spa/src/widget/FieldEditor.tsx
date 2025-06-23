@@ -121,12 +121,16 @@ export const FieldEditor = (props: FieldEditorProps) => {
   const renderIssueTypeFieldEditor = () => {
     const issueTypeField = field as IssueTypeField;
     const options: Option[] = [];
+    let selectedOption: Option | undefined = undefined;
     for (const fieldOption of issueTypeField.fieldOptions) {
       const option: Option = {
         value: fieldOption.id,
         label: fieldOption.issueType,
       };
       options.push(option);
+      if (props.maybeEditValue?.value === fieldOption.id) {
+        selectedOption = option;
+      }
     }
     return (
       <Select
@@ -135,6 +139,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         isMulti={false}
         isRequired={true}
         isInvalid={!operationOutcome.success}
+        defaultValue={selectedOption}
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
@@ -150,15 +155,19 @@ export const FieldEditor = (props: FieldEditorProps) => {
   }
 
   const renderPriorityFieldEditor = () => {
+    // console.log(`FieldEditor.renderPriorityFieldEditor: maybeEditValue.value = ${props.maybeEditValue?.value}`);
     const priorityField = field as PriorityField;
     const options: Option[] = [];
+    let selectedOption: Option | undefined = undefined;
     for (const fieldOption of priorityField.fieldOptions) {
       const option: Option = {
         value: fieldOption.id,
         label: fieldOption.priority,
       };
       options.push(option);
-
+      if (props.maybeEditValue?.value === fieldOption.id) {
+        selectedOption = option;
+      }
     }
     return (
       <Select
@@ -167,6 +176,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         isMulti={false}
         isRequired={true}
         isInvalid={!operationOutcome.success}
+        defaultValue={selectedOption}
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
@@ -271,13 +281,16 @@ export const FieldEditor = (props: FieldEditorProps) => {
   const renderSelectFieldEditor = () => {
     const selectField: SelectField = field as SelectField;
     const options: Option[] = [];
+    let selectedOption: Option | undefined = undefined;
     for (const fieldOption of selectField.fieldOptions) {
       const option: Option = {
         value: fieldOption.optionId,
         label: fieldOption.value,
       };
       options.push(option);
-
+      if (props.maybeEditValue?.value === fieldOption.optionId) {
+        selectedOption = option;
+      }
     }
     return (
       <Select
@@ -286,6 +299,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         isMulti={false}
         isRequired={true}
         isInvalid={!operationOutcome.success}
+        defaultValue={selectedOption}
         options={options}
         cacheOptions
         isDisabled={!props.enabled}
@@ -301,6 +315,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
   }
 
   const renderSingleUserSelectFieldEditor = () => {
+    const selectedUserAccountIds: string[] = props.maybeEditValue?.value ? [props.maybeEditValue.value] : [];
     return (
       <UsersSelect
         label=""
@@ -309,7 +324,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
         isMulti={false}
         isClearable={true}
         includeAppUsers={false}
-        selectedUsers={[]}
+        selectedUserAccountIds={selectedUserAccountIds}
         menuPortalTarget={document.body}
         onUsersSelect={async (selectedUsers: User[]) => {
           if (selectedUsers.length === 0) {
@@ -332,7 +347,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
       <Textfield
         name='text-field'
         placeholder={undefined  }
-        defaultValue=''
+        defaultValue={props.maybeEditValue?.value || ''}
         isDisabled={!props.enabled}
         isCompact={true}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -502,7 +517,7 @@ export const FieldEditor = (props: FieldEditorProps) => {
     const value = props.maybeEditValue?.value as undefined | any;
     const cascadingSelectValue: undefined | CascadingSelectValue = value ? {
       value: value,
-      id: value?.value,
+      id: value?.id,
       child: {
         value: value?.child?.value,
         id: value?.child?.id,
