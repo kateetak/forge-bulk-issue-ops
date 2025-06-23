@@ -64,7 +64,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssuetypeId);
       // console.log(` * FieldMappingPanel: ${sourceProjectId},${sourceIssueTypeId} maps to ${targetIssuetypeId}`);
       if (targetIssueType === undefined) {
-        console.warn(`FieldMappingPanel.determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
+        // console.warn(`FieldMappingPanel.determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
       } else {
         targetIssueTypeIdsToTargetIssueTypes.set(targetIssuetypeId, targetIssueType);
       }
@@ -84,7 +84,6 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       fieldIdsToFields.set(field.id, field);
     });
     setFieldIdsToFields(fieldIdsToFields);
-
     await refreshFromIssues();
   }
 
@@ -92,6 +91,10 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     const targetIssueTypeIdsToTargetIssueTypes = determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped(
       props.issues, props.allIssueTypes);
     setTargetIssueTypeIdsToTargetIssueTypesBeingMapped(targetIssueTypeIdsToTargetIssueTypes);
+
+    // console.log(`FieldMappingPanel.refreshFromIssues: targetIssueTypeIdsToTargetIssueTypesBeingMapped = ${JSON.stringify(Array.from(targetIssueTypeIdsToTargetIssueTypes.entries()))}`);
+    const allDefaultValuesProvided = targetProjectFieldsModel.areAllFieldValuesSet();
+    props.onAllDefaultValuesProvided(allDefaultValuesProvided);
   }
 
   useEffect(() => {
@@ -271,8 +274,10 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
 
   const renderFieldMappingsState = () => {
     const renderedRows: JSX.Element[] = [];
+    // console.log(`FieldMappingPanel.renderFieldMappingsState: props.fieldMappingsState = ${JSON.stringify(props.fieldMappingsState, null, 2)}`);
     const entries = Array.from(props.fieldMappingsState.projectFieldMappings.targetIssueTypeIdsToMappings.entries());
     entries.forEach(([targetIssueTypeId, fieldOptionMappings]) => {
+      // console.log(`FieldMappingPanel.renderFieldMappingsState:  * targetIssueTypeId = ${targetIssueTypeId}`);
       const targetIssueType = targetIssueTypeIdsToTargetIssueTypesBeingMapped.get(targetIssueTypeId);
       if (targetIssueType) {
         return Array.from(fieldOptionMappings.fieldIdsToFieldMappingInfos.entries()).map(([fieldId, fieldMappingInfo]) => {
@@ -293,6 +298,8 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
             renderedRows.push(renderedRow);
           }
         });
+      } else {
+        // console.warn(`FieldMappingPanel.renderFieldMappingsState: No target issue type found for ID: ${targetIssueTypeId}`);
       }
     });
     const renderedTable = (
