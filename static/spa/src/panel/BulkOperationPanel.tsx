@@ -48,7 +48,7 @@ import { InvocationResult } from 'src/types/InvocationResult';
 
 const showDebug = false;
 const showCompletionStateDebug = false;
-const implyAllIssueTypesWhenNoneAreSelected = false;
+const selectAllIssueTypesWhenNoneAreSelected = false;
 const autoShowFieldMappings = true;
 
 export type BulkOperationPanelProps<StepNameSubtype extends StepName> = {
@@ -232,7 +232,9 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
       setAllIssueTypes(allIssueTypes);
       setLastDataLoadTime(Date.now());
       if (selectedIssueTypesTime === 0) {
-        setSelectedIssueTypes(allIssueTypes);
+        if (selectAllIssueTypesWhenNoneAreSelected) {
+          setSelectedIssueTypes(allIssueTypes);
+        }
       } else {
         // Don't override if there's already a selection
       }
@@ -433,7 +435,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     // console.log(`selectedIssueTypes: `, selectedIssueTypes);
     setIssueMoveOutcome(undefined);
     if (selectedIssueTypes.length === 0) {
-      if (implyAllIssueTypesWhenNoneAreSelected) {
+      if (selectAllIssueTypesWhenNoneAreSelected) {
         setSelectedIssueTypes(allIssueTypes);
       } else {
         setSelectedIssueTypes(selectedIssueTypes);
@@ -584,6 +586,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           possiblySelectableIssueTypes={selectableIssueTypes}
           menuPortalTarget={document.body}
           bulkOperationMode={bulkOperationMode}
+          isClearable={!selectAllIssueTypesWhenNoneAreSelected}
           filterAllowedIssueTypes={filterSourceProjectIssueTypes}
           onIssueTypesSelect={onIssueTypesSelect}
         />

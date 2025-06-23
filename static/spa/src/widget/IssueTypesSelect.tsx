@@ -16,6 +16,7 @@ export type IssueTypesSelectProps = {
   possiblySelectableIssueTypes: IssueType[];
   menuPortalTarget?: HTMLElement;
   bulkOperationMode: BulkOperationMode;
+  isClearable: boolean;
   filterAllowedIssueTypes: (issueTypes: IssueType[], bulkOperationMode: BulkOperationMode) => Promise<IssueType[]>;
   onIssueTypesSelect: (selectedIssueTypes: IssueType[]) => Promise<void>;
 }
@@ -79,6 +80,7 @@ const IssueTypesSelect = (props: IssueTypesSelectProps) => {
         value={initiallySelectedOptions}
         options={options}
         placeholder={props.label}
+        isClearable={props.isClearable}
         menuPortalTarget={props.menuPortalTarget}
         onChange={onChange}
       />
