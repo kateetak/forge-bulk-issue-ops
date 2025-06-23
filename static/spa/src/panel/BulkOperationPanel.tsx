@@ -48,7 +48,7 @@ import { InvocationResult } from 'src/types/InvocationResult';
 
 const showDebug = false;
 const showCompletionStateDebug = false;
-const implyAllIssueTypesWhenNoneAreSelected = true;
+const implyAllIssueTypesWhenNoneAreSelected = false;
 const autoShowFieldMappings = true;
 
 export type BulkOperationPanelProps<StepNameSubtype extends StepName> = {
