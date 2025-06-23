@@ -165,7 +165,7 @@ class BulkOperationRuleEnforcer {
     for (const issue of issuesToMove) {
       const projectCategory = issue.fields.project?.projectCategory;
       const projectCategoryId = projectCategory ? projectCategory.id : undefinedCategoryId;
-      console.log(`bulkOperationRuleEnforcer.buildProjectCategoryIdsToCategories: adding project category ${projectCategoryId} for issue ${issue.key}.`);
+      // console.log(`bulkOperationRuleEnforcer.buildProjectCategoryIdsToCategories: adding project category ${projectCategoryId} for issue ${issue.key}.`);
       sourceProjectCategoryIds.add(projectCategoryId);
     }
     if (sourceProjectCategoryIds.size > 1) {
