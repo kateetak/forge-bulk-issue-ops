@@ -197,7 +197,7 @@ export const MoveOrEditPanel = (props: MoveOrEditPanelProps) => {
 
   const buildButtonLabel = (): string => {
     if (props.issueSelectionState.selectedIssues.length === 0) {
-      return `${props.bulkOperationMode} issues`;
+      return `${props.bulkOperationMode} work items`;
     } else if (props.bulkOperationMode === 'Move') {
       let label = `Move ${props.issueSelectionState.selectedIssues.length} issue${props.issueSelectionState.selectedIssues.length > 1 ? 's' : ''}`;
       if (props.selectedToProject) {

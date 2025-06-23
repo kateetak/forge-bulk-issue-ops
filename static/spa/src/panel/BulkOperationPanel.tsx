@@ -228,6 +228,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   const initialiseSelectedIssueTypes = async (allowedRetryCount: number): Promise<void> => {
     const issueTypesInvocationResult: InvocationResult<IssueType[]> = await jiraDataModel.getIssueTypes();
     if (issueTypesInvocationResult.ok) {
+      const allIssueTypes = issueTypesInvocationResult.data;
       setAllIssueTypes(allIssueTypes);
       setLastDataLoadTime(Date.now());
       if (selectedIssueTypesTime === 0) {
@@ -1045,7 +1046,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
         {isStepApplicableToBulkOperationMode('import-issues') ? renderImportIssuesPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('filter') ? renderFilterPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('issue-selection') ? renderIssuesPanel(lastStepNumber++) : null}
-        {isStepApplicableToBulkOperationMode('issue-type-mapping') ? renderTargetProjectPanel(lastStepNumber++) : null}
+        {isStepApplicableToBulkOperationMode('target-project-selection') ? renderTargetProjectPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('issue-type-mapping') ? renderIssueTypeMappingPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('field-mapping') ? renderFieldValueMappingsPanel(lastStepNumber++) : null}
         {isStepApplicableToBulkOperationMode('edit-fields') ? renderEditFieldsPanel(lastStepNumber++) : null}

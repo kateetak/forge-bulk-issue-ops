@@ -63,7 +63,11 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       const targetIssuetypeId = bulkIssueTypeMappingModel.getTargetIssueTypeId(sourceProjectId, sourceIssueTypeId);
       const targetIssueType = allIssueTypes.find(issueType => issueType.id === targetIssuetypeId);
       // console.log(` * FieldMappingPanel: ${sourceProjectId},${sourceIssueTypeId} maps to ${targetIssuetypeId}`);
-      targetIssueTypeIdsToTargetIssueTypes.set(targetIssuetypeId, targetIssueType);
+      if (targetIssueType === undefined) {
+        console.warn(`FieldMappingPanel.determineTargetIssueTypeIdsToTargetIssueTypesBeingMapped: No target issue type found for source project ${sourceProjectId} and source issue type ${sourceIssueTypeId}`);
+      } else {
+        targetIssueTypeIdsToTargetIssueTypes.set(targetIssuetypeId, targetIssueType);
+      }
     });
     return targetIssueTypeIdsToTargetIssueTypes;
   }
@@ -80,7 +84,8 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       fieldIdsToFields.set(field.id, field);
     });
     setFieldIdsToFields(fieldIdsToFields);
-    fieldIdsToFields;
+
+    await refreshFromIssues();
   }
 
   const refreshFromIssues = async (): Promise<void> => {
