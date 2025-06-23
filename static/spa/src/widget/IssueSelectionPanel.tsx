@@ -286,7 +286,7 @@ export const IssueSelectionPanel = (props: IssueSelectionPanelProps) => {
 
   const renderNoResults = () => {
     return renderPanelMessage(
-      `No issues found matching the search criteria.`, { margin: '20px 0px' }
+      `No work items found matching the search criteria.`, { margin: '20px 0px' }
     );
   }
 

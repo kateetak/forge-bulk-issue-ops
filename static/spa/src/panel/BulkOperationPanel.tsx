@@ -397,8 +397,15 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     setIssueMoveOutcome(undefined);
     setSelectedFromProjects(selectedProjects);
     setSelectedFromProjectsTime(Date.now());
+    updateIssueTypeSelection([]);
+    // updateIssueTypeSelection(allIssueTypes);
     if (bulkOperationMode === 'Edit') {
       setSelectedToProject(selectedProjects[0]);
+      setSelectedToProjectTime(Date.now());
+    } else if (bulkOperationMode === 'Move') {
+      // Clear the selected target project because it needs to go through revalidation logic. i.e the target project
+      // may be an invalid selection based on the newly selected source project(s).
+      setSelectedToProject(undefined);
       setSelectedToProjectTime(Date.now());
     }
     setStepCompletionState('filter', selectedProjects.length > 0 ? 'complete' : 'incomplete');
@@ -431,9 +438,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     updateFieldMappingState(selectedProject);
   }
 
-  const onIssueTypesSelect = async (selectedIssueTypes: IssueType[]): Promise<void> => {
-    // console.log(`selectedIssueTypes: `, selectedIssueTypes);
-    setIssueMoveOutcome(undefined);
+  const updateIssueTypeSelection = async (selectedIssueTypes: IssueType[]): Promise<void> => {
     if (selectedIssueTypes.length === 0) {
       if (selectAllIssueTypesWhenNoneAreSelected) {
         setSelectedIssueTypes(allIssueTypes);
@@ -444,6 +449,12 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
       setSelectedIssueTypes(selectedIssueTypes);
     }
     setSelectedIssueTypesTime(Date.now());
+  }
+
+  const onIssueTypesSelect = async (selectedIssueTypes: IssueType[]): Promise<void> => {
+    // console.log(`selectedIssueTypes: `, selectedIssueTypes);
+    setIssueMoveOutcome(undefined);
+    updateIssueTypeSelection(selectedIssueTypes);
     await onBasicModeSearchIssues(selectedFromProjects, selectedIssueTypes, selectedLabels);
   }
 
@@ -552,12 +563,13 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
   }
 
   const renderToProjectSelect = () => {
-    const allowSelection = issueSelectionState.selectedIssues.length > 0;
+    const allowSelection = issueSelectionState.selectionValidity === 'valid';
     const targetProjectsFilterConditionsChangeTime = selectedIssuesTime;
     return (
       <FormSection>
         <ProjectsSelect 
-          key={`to-project-${selectedIssuesTime}`}
+          // key={`to-project-${selectedIssuesTime}`}
+          key={`to-project-select-${selectedFromProjectsTime}-${selectedIssuesTime}`}
           label="To project"
           isMulti={false}
           isClearable={false}
@@ -580,7 +592,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
     return (
       <FormSection>
         <IssueTypesSelect
-          key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
+          // key={`issue-type-select-${selectedFromProjectsTime}-${selectedIssueTypesTime}`}
           label="Work item types"
           selectedIssueTypes={selectedIssueTypes}
           possiblySelectableIssueTypes={selectableIssueTypes}
@@ -858,7 +870,7 @@ const BulkOperationPanel = (props: BulkOperationPanelProps<any>) => {
           {renderStartFieldMappingButton()}
           {renderFieldMappingIndicator()}
           <IssueTypeMappingPanel
-            key={`issue-type-mapping-panel-${lastDataLoadTime}-${issueSelectionState.selectedIssues.length}-${selectedToProjectTime}`}
+            // key={`issue-type-mapping-panel-${lastDataLoadTime}-${issueSelectionState.selectedIssues.length}-${selectedToProjectTime}`}
             selectedIssues={issueSelectionState.selectedIssues}
             targetProject={selectedToProject}
             bulkOperationMode={bulkOperationMode}

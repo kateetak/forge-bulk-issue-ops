@@ -84,6 +84,8 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       fieldIdsToFields.set(field.id, field);
     });
     setFieldIdsToFields(fieldIdsToFields);
+
+    // 
     await refreshFromIssues();
   }
 
@@ -92,9 +94,18 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
       props.issues, props.allIssueTypes);
     setTargetIssueTypeIdsToTargetIssueTypesBeingMapped(targetIssueTypeIdsToTargetIssueTypes);
 
+
     // console.log(`FieldMappingPanel.refreshFromIssues: targetIssueTypeIdsToTargetIssueTypesBeingMapped = ${JSON.stringify(Array.from(targetIssueTypeIdsToTargetIssueTypes.entries()))}`);
     const allDefaultValuesProvided = targetProjectFieldsModel.areAllFieldValuesSet();
-    props.onAllDefaultValuesProvided(allDefaultValuesProvided);
+    if (allDefaultValuesProvided) {
+      console.log(`FieldMappingPanel.refreshFromIssues: All default values are provide, notifying parent.`);
+      // props.onAllDefaultValuesProvided(allDefaultValuesProvided);
+      setTimeout(() => {
+        // Send the notification to the parent after a short delay and different thread, otherwise it seems it leads to 
+        // an infinite re-rendering loop.
+        props.onAllDefaultValuesProvided(allDefaultValuesProvided);
+      }, 1000);    
+    }
   }
 
   useEffect(() => {
@@ -375,6 +386,7 @@ const FieldMappingPanel = (props: FieldMappingPanelProps) => {
     );
   }
 
+  console.log(`FieldMappingPanel.render: Rendering...`);
   return (
     <div style={{margin: '20px 0px'}}>
       {props.fieldMappingsState.dataRetrieved ? renderFieldMappingsState() : null}

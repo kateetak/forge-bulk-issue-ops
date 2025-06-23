@@ -51,7 +51,8 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds());
 
   const autoSelectMatchingTargetIssueTypes = (): void => {
-    // console.log('autoSelectMatchingTargetIssueTypes: Auto selecting matching target issue types for selected issues.');
+    // console.log('IssueTypeMappingPanel.autoSelectMatchingTargetIssueTypes: Auto selecting matching target issue types for selected issues.');
+    let newMappingsCount = 0;
     let unmappedCount = 0;
     for (const issue of props.selectedIssues) {
       const sourceProject = issue.fields.project;
@@ -63,20 +64,28 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
         // Auto select the same issue type if possible where the source and target issue type names match.
         const matchingTargetIssueType = targetProjectIssueTypes.find(issueType => issueType.name === sourceIssueType.name);
         if (matchingTargetIssueType) {
-          // console.log(`autoSelectMatchingTargetIssueTypes: Auto selecting target issue type: ${matchingTargetIssueType.name} (${matchingTargetIssueType.name}) for source project: ${sourceProject.key}, source issue type: ${sourceIssueType.name}`);
+          // console.log(`IssueTypeMappingPanel.autoSelectMatchingTargetIssueTypes: Auto selecting target issue type: ${matchingTargetIssueType.name} (${matchingTargetIssueType.name}) for source project: ${sourceProject.key}, source issue type: ${sourceIssueType.name}`);
           bulkIssueTypeMappingModel.addMapping(sourceProject.id, sourceIssueType.id, matchingTargetIssueType.id);
+          newMappingsCount++;``
         } else {
           unmappedCount++;
-          // console.log(`autoSelectMatchingTargetIssueTypes: No matching target issue type found for source project: ${sourceProject.id}, source issue type: ${sourceIssueType.id}.`);
+          // console.log(`IssueTypeMappingPanel.autoSelectMatchingTargetIssueTypes: No matching target issue type found for source project: ${sourceProject.id}, source issue type: ${sourceIssueType.id}.`);
         }
       }
     }
+    // const mappedCount =  bulkIssueTypeMappingModel.getMappingsCount();
     const clonedSourceToTargetIssueTypeIds = bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds();
     setClonedSourceToTargetIssueTypeIds(clonedSourceToTargetIssueTypeIds);
     // console.log(`autoSelectMatchingTargetIssueTypes: clonedSourceToTargetIssueTypeIds = ${JSON.stringify(clonedSourceToTargetIssueTypeIds, null, 2)}.`);
     // console.log(`autoSelectMatchingTargetIssueTypes: clonedSourceToTargetIssueTypeIds = ${JSON.stringify(mapToObjectMap(clonedSourceToTargetIssueTypeIds), null, 2)}.`);
     // console.log(`autoSelectMatchingTargetIssueTypes: Finished auto selecting - unmappedCount = ${unmappedCount}.`);
-    props.onIssueTypeMappingChange();
+    console.log(`autoSelectMatchingTargetIssueTypes: newMappingsCount = ${newMappingsCount}.`);
+    if (newMappingsCount > 0) {
+      // Notify the parent component only if the issue type mapping has changed. Otherwise it causes unnecessary renders and performance problems.
+      props.onIssueTypeMappingChange();
+    }
+
+    // setTimeout(props.onIssueTypeMappingChange, 1000);
   }
 
   useEffect(() => {
@@ -93,6 +102,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
   }
 
   const onTargetIssueTypeChange = (sourceProjectId: string, sourceIssueTypeId: string, targetIssueTypeId: string) => {
+    // console.log(`IssueTypeMappingPanel.onTargetIssueTypeChange: sourceProjectId=${sourceProjectId}, sourceIssueTypeId=${sourceIssueTypeId}, targetIssueTypeId=${targetIssueTypeId}`);
     bulkIssueTypeMappingModel.addMapping(sourceProjectId, sourceIssueTypeId, targetIssueTypeId);
     const clonedSourceToTargetIssueTypeIds = bulkIssueTypeMappingModel.cloneSourceToTargetIssueTypeIds();
     setClonedSourceToTargetIssueTypeIds(clonedSourceToTargetIssueTypeIds);
@@ -237,6 +247,7 @@ const IssueTypeMappingPanel = (props: IssueTypeMappingPanelProps) => {
     );
   }
 
+  console.log(`IssueTypeMappingPanel.render: Rendering...`);
   return (
     <div style={{margin: '20px 0px'}}>
       {renderPanel()}
